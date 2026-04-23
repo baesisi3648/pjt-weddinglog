@@ -341,34 +341,6 @@ export default function Calendar() {
   // ────────────────────────────────────────────────────────────────────────
   return (
     <div className="wl-screen wl-cal">
-      {/* Status bar */}
-      <div className="wl-statusbar">
-        <span>9:41</span>
-        <div className="wl-statusbar-right">
-          <span className="wl-sb-dot" />
-          <span className="wl-sb-dot" />
-          <span className="wl-sb-dot" />
-        </div>
-      </div>
-
-      {/* Top bar */}
-      <div className="wl-topbar">
-        <button className="wl-icon-btn" onClick={() => navigate(-1)} aria-label="뒤로">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div className="wl-topbar-title">캘린더</div>
-        <button
-          className="wl-icon-btn"
-          onClick={goToToday}
-          aria-label="오늘"
-          style={{ fontSize: 11, fontWeight: 600, color: '#E8967C' }}
-        >
-          오늘
-        </button>
-      </div>
-
       <div className="wl-scroll">
 
         {/* ── 뷰 토글 탭 ─────────────────────────────────────────────── */}

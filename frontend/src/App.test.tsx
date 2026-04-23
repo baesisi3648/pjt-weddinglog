@@ -26,7 +26,7 @@ describe('App', () => {
 
   it('shows Home page on "/" route', () => {
     renderApp();
-    // Home 핸드오프 포팅 후: weddinglog 로고 텍스트 확인
-    expect(screen.getByText('weddinglog')).toBeInTheDocument();
+    // Header 로고 또는 홈 콘텐츠가 표시되는지 확인
+    expect(screen.getByText(/WeddingLog/i)).toBeInTheDocument();
   });
 });

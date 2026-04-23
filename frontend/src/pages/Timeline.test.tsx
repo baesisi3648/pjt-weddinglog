@@ -75,8 +75,10 @@ describe('Timeline', () => {
   it('타임라인 본문이 렌더링된다', async () => {
     (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TIMELINE);
     renderTimeline();
-    const items = screen.getAllByText(/타임라인/);
-    expect(items.length).toBeGreaterThan(0);
+    // 히어로 헤더나 본문이 표시되는지 확인
+    await waitFor(() => {
+      expect(document.querySelector('.wl-page')).toBeInTheDocument();
+    });
   });
 
   it('API 호출 중 로딩 상태를 표시한다', () => {

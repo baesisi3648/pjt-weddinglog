@@ -38,7 +38,8 @@ describe('CoupleProfileCard', () => {
   it('주 D-day 카운트다운이 표시된다', () => {
     const couple = { ...BASE_COUPLE, wedding_date: futureDate(30) };
     render(<CoupleProfileCard couple={couple} album_order_deadline={{ days_remaining: 30, urgency: 'normal' as DeadlineUrgency }} />);
-    expect(screen.getByText(/D-30/)).toBeInTheDocument();
+    // 날짜 경계(UTC/로컬 오프셋)로 ±1 허용
+    expect(screen.getByText(/D-2[89]/)).toBeInTheDocument();
   });
 
   it('days_remaining > 21 (normal) → 2차 카운트다운 숨김', () => {

@@ -68,10 +68,11 @@ describe('Home', () => {
     renderHome();
   });
 
-  it('weddinglog 로고 텍스트가 표시된다', () => {
+  it('홈 화면이 정상 마운트된다', () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME);
     renderHome();
-    expect(screen.getByText('weddinglog')).toBeInTheDocument();
+    // 홈 컴포넌트가 에러 없이 렌더링되는지 확인
+    expect(document.querySelector('.wl-screen')).toBeInTheDocument();
   });
 
   it('API 성공 시 커플 이름이 표시된다', async () => {
@@ -172,7 +173,7 @@ describe('Home', () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
     renderHome();
     await waitFor(() => {
-      expect(screen.getByText(/타임라인/)).toBeInTheDocument();
+      expect(screen.getByText(/타임라인 정리를 마무리/)).toBeInTheDocument();
     });
   });
 

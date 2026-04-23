@@ -95,25 +95,6 @@ export default function Orders() {
 
   return (
     <div className="wl-page">
-      <div className="wl-page-topbar">
-        <div className="wl-page-brand">
-          <div className="wl-logo-mark">W<span className="wl-heart">♥</span></div>
-          <span className="wl-logo-text">weddinglog</span>
-        </div>
-        <nav className="wl-page-nav">
-          <span onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>홈</span>
-          <span onClick={() => navigate('/calendar')} style={{ cursor: 'pointer' }}>캘린더</span>
-          <span onClick={() => navigate('/timeline')} style={{ cursor: 'pointer' }}>타임라인</span>
-          <span className="is-active">주문 · 앨범</span>
-        </nav>
-        <div className="wl-page-actions">
-          <div className="wl-page-avatar-pair">
-            <span className="wl-tiny-avatar" style={{ background: 'linear-gradient(135deg,#EBB99B,#F5D4BC)' }}>성</span>
-            <span className="wl-tiny-avatar" style={{ background: 'linear-gradient(135deg,#B7ABD4,#D9D2E8)' }}>은</span>
-          </div>
-        </div>
-      </div>
-
       <div className="wl-orders-wrap">
         <header className="wl-orders-hero">
           <div>

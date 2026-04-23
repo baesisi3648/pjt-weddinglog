@@ -55,9 +55,10 @@ describe('Calendar', () => {
     await waitFor(() => expect(listEvents).toHaveBeenCalled());
   });
 
-  it('캘린더 타이틀이 표시된다', async () => {
+  it('캘린더 페이지 핵심 UI가 표시된다', async () => {
     renderCalendar();
-    expect(screen.getByText('캘린더')).toBeInTheDocument();
+    // 월간/리스트 뷰 탭으로 캘린더 페이지 확인
+    expect(screen.getByRole('button', { name: '월간' })).toBeInTheDocument();
   });
 
   it('API mock으로 이벤트 3개가 로드된다', async () => {

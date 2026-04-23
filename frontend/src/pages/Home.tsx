@@ -7,8 +7,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCouple } from '../context/CoupleContext';
 import { getHomeSummary } from '../services/home_api';
 import CoupleProfileCard from '../components/CoupleProfileCard';
+import CoupleProfileEditModal from '../components/CoupleProfileEditModal';
 import CategoryBadge from '../components/CategoryBadge';
-import type { Event, Photo, AlbumOrderDeadline, HomeSummary } from '../types';
+import type { Couple, Event, Photo, AlbumOrderDeadline, HomeSummary } from '../types';
 
 const COUPLE_ID = 'cpl_sample_001';
 
@@ -105,43 +106,14 @@ function RecentPhotosWidget({ photos }: RecentPhotosWidgetProps) {
   );
 }
 
-interface BottomNavProps {
-  active: string;
-}
-
-/**
- * BottomNav
- */
-function BottomNav({ active }: BottomNavProps) {
-  const navigate = useNavigate();
-  const items: { id: string; label: string; icon: React.ReactNode; to: string }[] = [
-    { id: 'home', label: '홈', icon: <IconHome />, to: '/' },
-    { id: 'calendar', label: '캘린더', icon: <IconCal />, to: '/calendar' },
-    { id: 'timeline', label: '타임라인', icon: <IconTime />, to: '/timeline' },
-    { id: 'album', label: '앨범', icon: <IconBook />, to: '/orders' },
-    { id: 'settings', label: '설정', icon: <IconGear />, to: '/' },
-  ];
-  return (
-    <nav className="wl-bottomnav">
-      {items.map((i) => (
-        <div
-          key={i.id}
-          className={`wl-nav-item ${active === i.id ? 'is-active' : ''}`}
-          onClick={() => navigate(i.to)}
-        >
-          <div className="wl-nav-icon">{i.icon}</div>
-          <div className="wl-nav-label">{i.label}</div>
-        </div>
-      ))}
-    </nav>
-  );
-}
 
 export default function Home() {
   const navigate = useNavigate();
+  const { refetch: refetchCouple } = useCouple();
   const [homeData, setHomeData] = useState<HomeSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchHome = useCallback(async () => {
     setLoading(true);
@@ -161,6 +133,12 @@ export default function Home() {
     fetchHome();
   }, [fetchHome]);
 
+  function handleProfileSaved(updated: Couple) {
+    // homeData 내 couple 즉시 갱신 + CoupleContext도 리프레시
+    setHomeData((prev) => prev ? { ...prev, couple: updated } : prev);
+    refetchCouple();
+  }
+
   const couple = homeData?.couple ?? null;
   const upcomingEvents = homeData?.upcoming_events ?? [];
   const recentPhotos = homeData?.recent_photos ?? [];
@@ -177,27 +155,6 @@ export default function Home() {
 
   return (
     <div className="wl-screen wl-home">
-      {/* Status bar */}
-      <div className="wl-statusbar">
-        <span>9:41</span>
-        <div className="wl-statusbar-right">
-          <span className="wl-sb-dot" />
-          <span className="wl-sb-dot" />
-          <span className="wl-sb-dot" />
-        </div>
-      </div>
-
-      {/* Top bar */}
-      <div className="wl-topbar">
-        <div className="wl-logo">
-          <span className="wl-logo-mark">W<span className="wl-heart">♥</span></span>
-          <span className="wl-logo-text">weddinglog</span>
-        </div>
-        <div className="wl-topbar-icons">
-          <IconBell />
-        </div>
-      </div>
-
       <div className="wl-scroll">
         {/* 에러 상태 */}
         {!loading && error && (
@@ -218,14 +175,34 @@ export default function Home() {
 
         {/* 커플 프로필 카드 */}
         {!loading && !error && couple ? (
-          <CoupleProfileCard couple={couple} album_order_deadline={albumDeadline} />
-        ) : !loading && !error ? (
-          /* couple 없으면 더미 히어로 표시 */
+          <div style={{ position: 'relative' }}>
+            <CoupleProfileCard couple={couple} album_order_deadline={albumDeadline} />
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              aria-label="프로필 편집"
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                background: 'rgba(255,255,255,0.85)',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                padding: '5px 10px',
+                fontSize: '12px',
+                color: '#6B7280',
+                cursor: 'pointer',
+                fontWeight: 500,
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              편집
+            </button>
+          </div>
+        ) : !loading && !error && !couple ? (
           <div className="wl-hero">
-            <div className="wl-hero-bg" />
-            <div className="wl-hero-inner">
-              <div className="wl-couple-name">철수 <span className="wl-hrt-inline">♥</span> 영희</div>
-              <div className="wl-dday"><span className="wl-dday-label">결혼까지</span><span className="wl-dday-num">D-?</span></div>
+            <div className="wl-hero-inner" style={{ textAlign: 'center', padding: '32px 16px' }}>
+              <div style={{ fontSize: '14px', color: '#9CA3AF', marginBottom: '8px' }}>커플 정보를 불러올 수 없습니다</div>
+              <div style={{ fontSize: '12px', color: '#D1D5DB' }}>백엔드 API 상태를 확인해주세요</div>
             </div>
           </div>
         ) : null}
@@ -344,58 +321,16 @@ export default function Home() {
         <div className="wl-bottom-spacer" />
       </div>
 
-      {/* Bottom nav */}
-      <BottomNav active="home" />
+      {/* 커플 프로필 편집 모달 */}
+      {couple && (
+        <CoupleProfileEditModal
+          couple={couple}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSaved={handleProfileSaved}
+        />
+      )}
     </div>
   );
 }
 
-/* ---- icons ---- */
-function IconBell() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-      <path d="M10 3c-2.8 0-5 2.2-5 5v3L4 13h12l-1-2V8c0-2.8-2.2-5-5-5zM8 15a2 2 0 104 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function IconHome() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <path d="M3 10.5L11 4l8 6.5V18a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 013 18v-7.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      <path d="M9 19.5v-5h4v5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function IconCal() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <rect x="3.5" y="5" width="15" height="13" rx="2" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M3.5 9h15M7.5 3.5v3M14.5 3.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconTime() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <path d="M4 6h14M4 11h14M4 16h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="6" cy="6" r="1.3" fill="currentColor" />
-      <circle cx="6" cy="11" r="1.3" fill="currentColor" />
-      <circle cx="6" cy="16" r="1.3" fill="currentColor" />
-    </svg>
-  );
-}
-function IconBook() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <path d="M4 4.5h6a2 2 0 012 2v12a1.5 1.5 0 00-1.5-1.5H4v-12.5zM18 4.5h-6a2 2 0 00-2 2v12a1.5 1.5 0 011.5-1.5H18v-12.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function IconGear() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
-      <circle cx="11" cy="11" r="2.6" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M11 2.5v2M11 17.5v2M2.5 11h2M17.5 11h2M5 5l1.5 1.5M15.5 15.5L17 17M5 17l1.5-1.5M15.5 6.5L17 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
