@@ -61,6 +61,64 @@ def count_by_event(db: Session, event_id: str) -> int:
     return len(list_by_event(db, event_id))
 
 
+def list_recent_by_couple(
+    db: Session,
+    couple_id: str,
+    *,
+    limit: int = 6,
+) -> list[Photo]:
+    """커플의 최근 사진 N장 (created_at DESC).
+
+    N+1 방지:
+        Photos.event_id → Events.couple_id 조인 1회로 커플 필터.
+        eager load(joinedload) 는 본 응답에 event 정보가 필요하지 않으므로 생략.
+
+    Args:
+        couple_id: 대상 커플 id.
+        limit: 반환 최대 개수 (기본 6).
+
+    Returns:
+        최신순으로 정렬된 Photo 리스트 (없으면 빈 리스트).
+    """
+    if limit <= 0:
+        return []
+
+    stmt = (
+        select(Photo)
+        .join(Event, Photo.event_id == Event.id)
+        .where(Event.couple_id == couple_id)
+        .order_by(Photo.created_at.desc(), Photo.id.desc())
+        .limit(limit)
+    )
+    return list(db.execute(stmt).scalars().all())
+
+
+def count_by_couple(db: Session, couple_id: str) -> tuple[int, int]:
+    """커플의 (총 사진 수, 선택된 사진 수) 반환.
+
+    Home 화면 photo_counts 집계용. 단일 쿼리로 total/selected 를 구한다.
+    (SQLite/PostgreSQL 양쪽에서 동작하도록 CASE 기반 SUM 사용.)
+    """
+    from sqlalchemy import case, func
+
+    stmt = (
+        select(
+            func.count(Photo.id).label("total"),
+            func.coalesce(
+                func.sum(case((Photo.is_selected.is_(True), 1), else_=0)),
+                0,
+            ).label("selected"),
+        )
+        .select_from(Photo)
+        .join(Event, Photo.event_id == Event.id)
+        .where(Event.couple_id == couple_id)
+    )
+    row = db.execute(stmt).one()
+    total = int(row.total or 0)
+    selected = int(row.selected or 0)
+    return total, selected
+
+
 # -----------------------------------------------------------------------------
 # Upload
 # -----------------------------------------------------------------------------

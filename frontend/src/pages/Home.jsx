@@ -1,38 +1,119 @@
-// @TASK P1.5-S0-T1 - Home 핸드오프 JSX 포팅
-// @SPEC docs/planning/06-tasks.md#P1.5-S0-T1
-// TODO: Phase 2-4에서 실제 API 연동
-import React, { useState } from 'react';
+// @TASK P4-S2-T1~T3 - Home 페이지 실 API 연동
+// @SPEC specs/screens/01_home.yaml
+// @TEST src/pages/Home.test.jsx
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCouple } from '../context/CoupleContext';
+import { getHomeSummary } from '../services/home_api';
+import CoupleProfileCard from '../components/CoupleProfileCard';
+import CategoryBadge from '../components/CategoryBadge';
 
-const DUMMY_TASKS = [
-  { id: 1, label: "스드메 2차 미팅", date: "9/15", done: false, cat: "sdm" },
-  { id: 2, label: "청첩장 시안 확인", date: "9/12", done: true, cat: "invite" },
-  { id: 3, label: "예물 최종 결정", date: "9/18", done: false, cat: "jewel" },
-];
+const COUPLE_ID = 'cpl_sample_001';
 
-const DUMMY_RECENT_LOGS = [
-  { id: 1, tone: "peach", caption: "드레스 투어 2차", date: "9.08" },
-  { id: 2, tone: "lavender", caption: "본식장 답사", date: "9.05" },
-  { id: 3, tone: "mint", caption: "청첩장 미팅", date: "9.02" },
-  { id: 4, tone: "cream", caption: "예물 상담", date: "8.30" },
-];
+// D+N 계산용 헬퍼
+function calcDaysFromToday(dateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.round((today - target) / (1000 * 60 * 60 * 24));
+}
 
+/**
+ * UpcomingTasksWidget — 최대 3개 upcoming_events 표시
+ */
+function UpcomingTasksWidget({ events }) {
+  if (!events || events.length === 0) {
+    return (
+      <div className="wl-card" style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+        진행 중인 일정이 없습니다
+      </div>
+    );
+  }
+
+  return (
+    <div className="wl-card wl-tasks">
+      {events.slice(0, 3).map((ev) => {
+        const diff = calcDaysFromToday(ev.date);
+        const dLabel = diff === 0 ? 'D-Day' : diff < 0 ? `D${diff}` : `D+${diff}`;
+        return (
+          <div key={ev.id} className={`wl-task ${ev.is_completed ? 'is-done' : ''}`}>
+            <div className="wl-task-body">
+              <div className="wl-task-label">{ev.title}</div>
+              <div className="wl-task-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                <CategoryBadge category={ev.category} size="sm" />
+                <span className="wl-task-date" style={{ fontSize: '12px', color: '#9CA3AF' }}>{dLabel}</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * RecentPhotosWidget — 최근 6장 썸네일 3x2 그리드
+ */
+function RecentPhotosWidget({ photos }) {
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="wl-logs" style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+        첫 사진을 올려보세요
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="wl-logs"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '8px',
+      }}
+    >
+      {photos.slice(0, 6).map((photo) => (
+        <Link key={photo.id} to={`/event/${photo.event_id}`} style={{ textDecoration: 'none' }}>
+          <div className="wl-log-card" style={{ textDecoration: 'none' }}>
+            <div className="wl-log-img" style={{ position: 'relative', aspectRatio: '1/1' }}>
+              <img
+                src={photo.file_url}
+                alt={photo.caption || '사진'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
+              />
+            </div>
+            {photo.caption && (
+              <div className="wl-log-caption" style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {photo.caption}
+              </div>
+            )}
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * BottomNav
+ */
 function BottomNav({ active }) {
   const navigate = useNavigate();
   const items = [
-    { id: "home", label: "홈", icon: <IconHome />, to: "/" },
-    { id: "calendar", label: "캘린더", icon: <IconCal />, to: "/calendar" },
-    { id: "timeline", label: "타임라인", icon: <IconTime />, to: "/timeline" },
-    { id: "album", label: "앨범", icon: <IconBook />, to: "/orders" },
-    { id: "settings", label: "설정", icon: <IconGear />, to: "/" },
+    { id: 'home', label: '홈', icon: <IconHome />, to: '/' },
+    { id: 'calendar', label: '캘린더', icon: <IconCal />, to: '/calendar' },
+    { id: 'timeline', label: '타임라인', icon: <IconTime />, to: '/timeline' },
+    { id: 'album', label: '앨범', icon: <IconBook />, to: '/orders' },
+    { id: 'settings', label: '설정', icon: <IconGear />, to: '/' },
   ];
   return (
     <nav className="wl-bottomnav">
       {items.map((i) => (
         <div
           key={i.id}
-          className={`wl-nav-item ${active === i.id ? "is-active" : ""}`}
+          className={`wl-nav-item ${active === i.id ? 'is-active' : ''}`}
           onClick={() => navigate(i.to)}
         >
           <div className="wl-nav-icon">{i.icon}</div>
@@ -44,23 +125,41 @@ function BottomNav({ active }) {
 }
 
 export default function Home() {
-  const [tasks, setTasks] = useState(DUMMY_TASKS);
-  // TODO: Phase 2-4에서 실제 API 연동
-  const { couple } = useCouple();
+  const navigate = useNavigate();
+  const [homeData, setHomeData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const toggleTask = (id) =>
-    setTasks((t) => t.map((x) => x.id === id ? { ...x, done: !x.done } : x));
+  const fetchHome = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getHomeSummary(COUPLE_ID);
+      setHomeData(result);
+    } catch (err) {
+      setError(err.message ?? '홈 정보를 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const recentLogs = DUMMY_RECENT_LOGS;
+  useEffect(() => {
+    fetchHome();
+  }, [fetchHome]);
 
-  // D-day 계산 (커플 데이터 있으면 활용, 없으면 더미 유지)
-  const dDayNum = couple?.wedding_date
-    ? Math.ceil((new Date(couple.wedding_date) - new Date()) / (1000 * 60 * 60 * 24))
-    : 42;
-  const coupleName = couple
-    ? `${couple.groom_name} ♥ ${couple.bride_name}`
-    : "성우 ♥ 은비";
-  const weddingDateStr = couple?.wedding_date ?? "2025. 10. 25 · SAT";
+  const couple = homeData?.couple ?? null;
+  const upcomingEvents = homeData?.upcoming_events ?? [];
+  const recentPhotos = homeData?.recent_photos ?? [];
+  const photoCounts = homeData?.photo_counts ?? { total: 0, selected: 0 };
+  const albumDeadline = homeData?.album_order_deadline ?? null;
+
+  // D+ 상태 감지
+  const isPast = couple?.wedding_date
+    ? calcDaysFromToday(couple.wedding_date) > 0
+    : false;
+
+  // 앨범 주문 CTA 활성화 조건: selected >= 1
+  const isAlbumEnabled = photoCounts.selected >= 1;
 
   return (
     <div className="wl-screen wl-home">
@@ -86,131 +185,147 @@ export default function Home() {
       </div>
 
       <div className="wl-scroll">
-        {/* Couple hero card */}
-        <div className="wl-hero">
-          <div className="wl-hero-bg" />
-          <div className="wl-hero-inner">
-            <div className="wl-avatars">
-              <div className="wl-avatar wl-avatar-a">
-                <div className="wl-avatar-ph">성우</div>
-              </div>
-              <div className="wl-avatars-heart">♥</div>
-              <div className="wl-avatar wl-avatar-b">
-                <div className="wl-avatar-ph">은비</div>
-              </div>
-            </div>
-            <div className="wl-couple-name">
-              성우 <span className="wl-hrt-inline">♥</span> 은비
-            </div>
-            <div className="wl-dday">
-              <span className="wl-dday-label">결혼까지</span>
-              <span className="wl-dday-num">D-{dDayNum}</span>
-            </div>
-            <div className="wl-wedding-date">{weddingDateStr}</div>
+        {/* 에러 상태 */}
+        {!loading && error && (
+          <div
+            style={{
+              margin: '16px',
+              padding: '16px',
+              background: '#FEF2F2',
+              borderRadius: '12px',
+              color: '#EF4444',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontWeight: 600, marginBottom: '4px' }}>홈을 불러오지 못했습니다.</div>
+            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>{error}</div>
+          </div>
+        )}
 
-            <div className="wl-progress">
-              <div className="wl-progress-row">
-                <span>준비 진행률</span>
-                <span className="wl-progress-pct">68%</span>
-              </div>
-              <div className="wl-progress-bar">
-                <div className="wl-progress-fill" style={{ width: "68%" }} />
-              </div>
+        {/* 커플 프로필 카드 */}
+        {!loading && !error && couple ? (
+          <CoupleProfileCard couple={couple} album_order_deadline={albumDeadline} />
+        ) : !loading && !error ? (
+          /* couple 없으면 더미 히어로 표시 */
+          <div className="wl-hero">
+            <div className="wl-hero-bg" />
+            <div className="wl-hero-inner">
+              <div className="wl-couple-name">성우 <span className="wl-hrt-inline">♥</span> 은비</div>
+              <div className="wl-dday"><span className="wl-dday-label">결혼까지</span><span className="wl-dday-num">D-?</span></div>
             </div>
           </div>
-        </div>
+        ) : null}
 
-        {/* This week's tasks */}
-        <section className="wl-section">
-          <header className="wl-section-head">
-            <div>
-              <div className="wl-section-eyebrow">This week</div>
-              <h2 className="wl-section-title">이번 주 할 일</h2>
+        {/* 로딩 */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>불러오는 중…</div>
+        )}
+
+        {/* D+ 상태 메시지 */}
+        {!loading && isPast && (
+          <section className="wl-section" style={{ padding: '0 16px 16px' }}>
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                fontSize: '14px',
+                color: '#92400E',
+              }}
+            >
+              결혼 후 타임라인 정리를 마무리하세요 🎊
+              <div style={{ marginTop: '8px' }}>
+                <Link to="/timeline" style={{ color: '#D97706', fontWeight: 600, textDecoration: 'none' }}>
+                  타임라인 보기 →
+                </Link>
+              </div>
             </div>
-            <button className="wl-link">모두 보기 →</button>
-          </header>
+          </section>
+        )}
 
-          <div className="wl-card wl-tasks">
-            {tasks.map((t) => (
+        {/* 이번 주 할 일 (UpcomingTasksWidget) */}
+        {!loading && (
+          <section className="wl-section">
+            <header className="wl-section-head">
+              <div>
+                <div className="wl-section-eyebrow">This week</div>
+                <h2 className="wl-section-title">이번 주 할 일</h2>
+              </div>
+              <button className="wl-link" onClick={() => navigate('/calendar')}>모두 보기 →</button>
+            </header>
+            <UpcomingTasksWidget events={upcomingEvents} />
+          </section>
+        )}
+
+        {/* 최근 사진 (RecentPhotosWidget) */}
+        {!loading && (
+          <section className="wl-section">
+            <header className="wl-section-head">
+              <div>
+                <div className="wl-section-eyebrow">Recent</div>
+                <h2 className="wl-section-title">최근 기록</h2>
+              </div>
+              <button className="wl-link" onClick={() => navigate('/timeline')}>전체 →</button>
+            </header>
+            <RecentPhotosWidget photos={recentPhotos} />
+          </section>
+        )}
+
+        {/* CTA 버튼 그룹 */}
+        {!loading && (
+          <section className="wl-section">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 0 8px' }}>
+              {/* 캘린더로 이동 (primary) */}
               <button
-                key={t.id}
-                className={`wl-task ${t.done ? "is-done" : ""}`}
-                onClick={() => toggleTask(t.id)}
+                className="wl-btn wl-btn-primary"
+                onClick={() => navigate('/calendar')}
+                style={{ width: '100%' }}
               >
-                <span className={`wl-check ${t.done ? "is-checked" : ""}`}>
-                  {t.done && (
-                    <svg viewBox="0 0 14 14" width="10" height="10">
-                      <path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </span>
-                <div className="wl-task-body">
-                  <div className="wl-task-label">{t.label}</div>
-                  <div className="wl-task-meta">
-                    <span className={`wl-cat-pill wl-cat-${t.cat}`}>
-                      {t.cat === "sdm" ? "스드메" : t.cat === "invite" ? "청첩장" : "예물"}
-                    </span>
-                    <span className="wl-task-date">{t.date}</span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Recent logs */}
-        <section className="wl-section">
-          <header className="wl-section-head">
-            <div>
-              <div className="wl-section-eyebrow">Recent</div>
-              <h2 className="wl-section-title">최근 기록</h2>
-            </div>
-            <button className="wl-link">전체 →</button>
-          </header>
-
-          <div className="wl-logs">
-            {recentLogs.map((l) => (
-              <div key={l.id} className="wl-log-card">
-                <div className={`wl-log-img wl-tone-${l.tone}`}>
-                  <div className="wl-log-img-stripes" />
-                  <div className="wl-log-date">{l.date}</div>
-                </div>
-                <div className="wl-log-caption">{l.caption}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Album CTA */}
-        <section className="wl-section">
-          <div className="wl-album-cta">
-            <div className="wl-album-book">
-              <div className="wl-book-spine" />
-              <div className="wl-book-cover">
-                <div className="wl-book-eyebrow">OUR STORY</div>
-                <div className="wl-book-title">성우 &amp; 은비</div>
-                <div className="wl-book-line" />
-                <div className="wl-book-sub">2024 — 2025</div>
-              </div>
-            </div>
-            <div className="wl-album-copy">
-              <div className="wl-album-eyebrow">Album</div>
-              <div className="wl-album-title">
-                우리의 기록을<br />한 권의 책으로
-              </div>
-              <div className="wl-album-desc">
-                지금까지 쌓인 <b>128장</b>의 순간을 담을 수 있어요
-              </div>
-              {/* TODO: Phase 2-4에서 실제 API 연동 */}
-              <Link to="/order-checkout" className="wl-btn wl-btn-primary" style={{ textDecoration: 'none' }}>
-                앨범 만들기
+                캘린더로 이동
                 <svg width="14" height="14" viewBox="0 0 14 14">
                   <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </Link>
+              </button>
+
+              {/* 앨범 주문하기 (gold accent, photo_counts.selected >= 1일 때만 활성화) */}
+              <button
+                className="wl-btn"
+                disabled={!isAlbumEnabled}
+                onClick={() => isAlbumEnabled && navigate('/timeline')}
+                style={{
+                  width: '100%',
+                  background: isAlbumEnabled ? '#D4A017' : '#E5E7EB',
+                  color: isAlbumEnabled ? '#fff' : '#9CA3AF',
+                  cursor: isAlbumEnabled ? 'pointer' : 'not-allowed',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                앨범 주문하기
+                {isAlbumEnabled && (
+                  <svg width="14" height="14" viewBox="0 0 14 14">
+                    <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+
+              {!isAlbumEnabled && (
+                <div style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center' }}>
+                  사진을 선택하면 앨범 주문이 가능합니다
+                </div>
+              )}
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <div className="wl-bottom-spacer" />
       </div>
@@ -221,7 +336,7 @@ export default function Home() {
   );
 }
 
-/* ---- icons (line, minimal) ---- */
+/* ---- icons ---- */
 function IconBell() {
   return (
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none">

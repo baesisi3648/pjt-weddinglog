@@ -87,6 +87,35 @@ def list_by_couple(
     return list(db.execute(stmt).scalars().all())
 
 
+def list_upcoming_by_couple(
+    db: Session,
+    couple_id: str,
+    *,
+    today: date | None = None,
+    limit: int = 3,
+) -> list[Event]:
+    """오늘 이후의 가장 가까운 이벤트 N개 (date ASC).
+
+    Home 화면 upcoming_events 위젯용.
+
+    Args:
+        couple_id: 대상 커플 id.
+        today: 기준일 (None 이면 date.today()) — 테스트 결정성 보장.
+        limit: 반환 최대 개수 (기본 3).
+    """
+    if limit <= 0:
+        return []
+
+    reference = today if today is not None else date.today()
+    stmt = (
+        select(Event)
+        .where(Event.couple_id == couple_id, Event.date >= reference)
+        .order_by(Event.date.asc(), Event.created_at.asc())
+        .limit(limit)
+    )
+    return list(db.execute(stmt).scalars().all())
+
+
 # -----------------------------------------------------------------------------
 # Read single
 # -----------------------------------------------------------------------------

@@ -120,6 +120,25 @@
 - **이슈**: `python-multipart` 의존성이 requirements에 있었지만 설치 안 되어 있던 에이전트 환경에서 한 번 걸림. Docker 빌드 시점엔 문제없음.
 - **배운 점**: **보안 AC를 "스펙 → 테스트 → 코드" 순으로 TDD하면 의도가 절대 새지 않는다**. `test_dotdot_event_id_rejected` 같은 테스트가 먼저 있으면 구현이 그걸 통과하게 되어 있어서 자동으로 옳은 코드가 나옴.
 
+### 2026-04-23 23:40 — P4 완료: Lv1 MVP 완성 (Timeline + Home)
+- **도구**: backend-specialist + frontend-specialist (병렬)
+- **결과**: Backend 204/204 (+37), Frontend 137/137 (+40)
+- **백엔드 결정**:
+  - Timeline 챕터 그룹핑: 9 카테고리 → 5 챕터 (웨딩촬영/준비의 날들/본식/신혼여행/기타). 빈 챕터는 응답에서 제외 + chapter_number 재부여
+  - `selectinload(Couple.events).selectinload(Event.photos)`로 단일 쿼리 — N+1 완벽 방지
+  - `total_pages_estimated = ceil(selected / 2.5)` (4장당 1페이지 기본 + 타이틀 페이지 반영)
+  - **Council B3 album_order_deadline 백엔드 완성**: 4 urgency 레벨(normal/warning/urgent/expired)을 API에서 분류해 프런트는 색상만 매핑
+  - `today` 파라미터로 테스트 결정성 확보 (freezegun 없이도 깔끔)
+- **프런트 결정**:
+  - TimelineChapter: 큰 번호 "01." + Fraunces 챕터 제목 → **Council 차별화 평가의 "북 메타포" 반영**
+  - optimistic UI: is_selected 체크박스 즉시 토글, API 실패 시 롤백
+  - 인라인 캡션 편집: 더블클릭 → input, Enter/Escape 처리
+  - CoupleProfileCard 2차 카운트다운: `data-urgency` 속성으로 CSS 테스트 용이
+  - Home D+ 상태: "결혼 후 타임라인 정리를 마무리하세요" 메시지 (수동 UX)
+- **서로 상이한 urgency 해석**: backend가 `D-21~D-14 warning / D-14 이하 urgent`로 구현, frontend는 API 응답을 그대로 사용 → 한 곳에서만 규칙 정의(서버가 source of truth). 프런트에서 재계산하지 않아 일관성 보장.
+- **Lv1 MVP 시연 준비**: docker-compose up 시점에 10단계 E2E 플로우 모두 가능한 상태. 테스트 341개(backend 204 + frontend 137)가 통합적으로 증명.
+- **배운 점**: **집계/derived 필드는 반드시 서버가 결정**해서 응답에 포함시켜야 프론트-백엔드 드리프트를 막는다. urgency 같은 "비즈니스 룰 + 날짜 계산"을 프런트에서 계산하면 반드시 차이가 생긴다.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

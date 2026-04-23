@@ -25,8 +25,10 @@ from app.routers import (
     ai_router,
     couples_router,
     events_router,
+    home_router,
     photo_events_router,
     photo_router,
+    timeline_router,
 )
 from app.seed import seed_initial_data
 
@@ -123,6 +125,8 @@ def create_app() -> FastAPI:
     app.include_router(ai_router)
     app.include_router(photo_events_router)
     app.include_router(photo_router)
+    app.include_router(timeline_router)
+    app.include_router(home_router)
 
     @app.get("/health", tags=["meta"])
     async def health_check(request: Request) -> dict[str, object]:

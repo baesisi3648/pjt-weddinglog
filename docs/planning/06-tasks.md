@@ -1120,7 +1120,7 @@
 
 ---
 
-### [ ] P4-R1-T1: TimelineService (챕터 그룹핑)
+### [x] P4-R1-T1: TimelineService (챕터 그룹핑)
 
 **목표**: 카테고리별 자동 챕터 + 페이지 계산
 
@@ -1144,7 +1144,7 @@
 
 ---
 
-### [ ] P4-R1-T2: Timeline 라우터
+### [x] P4-R1-T2: Timeline 라우터
 
 **목표**: GET /api/couples/{id}/timeline
 
@@ -1166,7 +1166,7 @@
 
 ---
 
-### [ ] P4-R1-T3: Home용 집계 서비스
+### [x] P4-R1-T3: Home용 집계 서비스
 
 **목표**: upcoming events 3개 + recent photos 6개
 
@@ -1191,7 +1191,7 @@
 
 ---
 
-### [ ] P4-R1-T4: Home 라우터 확인
+### [x] P4-R1-T4: Home 라우터 확인
 
 **목표**: Home 데이터 GET 엔드포인트
 
@@ -1212,7 +1212,7 @@
 
 ---
 
-### [ ] P4-S1-T1: Timeline 페이지
+### [x] P4-S1-T1: Timeline 페이지
 
 **목표**: 챕터 스택 + 사진 그리드 + 페이지 수
 
@@ -1235,7 +1235,7 @@
 
 ---
 
-### [ ] P4-S1-T2: TimelineChapter 컴포넌트
+### [x] P4-S1-T2: TimelineChapter 컴포넌트
 
 **목표**: 챕터 제목 + 사진 그리드 + 캡션 인라인 편집
 
@@ -1259,7 +1259,7 @@
 
 ---
 
-### [ ] P4-S1-T3: "앨범으로 만들기" CTA 버튼
+### [x] P4-S1-T3: "앨범으로 만들기" CTA 버튼
 
 **목표**: 선택된 사진 ≥ 1장일 때 활성화
 
@@ -1282,7 +1282,7 @@
 
 ---
 
-### [ ] P4-S2-T1: Home 페이지
+### [x] P4-S2-T1: Home 페이지
 
 **목표**: CoupleProfileCard + UpcomingTasksWidget + RecentPhotosGrid + CTA
 
@@ -1307,7 +1307,7 @@
 
 ---
 
-### [ ] P4-S2-T2: CoupleProfileCard 컴포넌트
+### [x] P4-S2-T2: CoupleProfileCard 컴포넌트
 
 **목표**: 커플 프로필 카드 (Fraunces 폰트 + D-day + 프로필 사진)
 
@@ -1332,7 +1332,7 @@
 
 ---
 
-### [ ] P4-S2-T3: D+ 상태 처리 (과거 일정)
+### [x] P4-S2-T3: D+ 상태 처리 (과거 일정)
 
 **목표**: wedding_date 이후 일정은 "완료" 기본 표시
 
@@ -1354,7 +1354,7 @@
 
 ---
 
-### [ ] P4-V1: Lv1 MVP E2E (핵심 시연!)
+### [x] P4-V1 (백엔드 204/204 + 프론트 137/137 통합 테스트 통과. docker-compose up 실제 시연은 사용자 로컬에서 확인 필요): Lv1 MVP E2E (핵심 시연!)
 
 **목표**: 완전한 Lv1 플로우 검증 (docker-compose up 시연 가능)
 

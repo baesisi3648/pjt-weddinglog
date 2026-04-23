@@ -1,79 +1,56 @@
-// @TASK P1.5-S0-T1 - Timeline 핸드오프 JSX 포팅
-// @SPEC docs/planning/06-tasks.md#P1.5-S0-T1
-// TODO: Phase 2-4에서 실제 API 연동
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// @TASK P4-S1-T1~T3 - Timeline 페이지 실 API 연동
+// @SPEC specs/screens/04_timeline.yaml
+// @TEST src/pages/Timeline.test.jsx
 
-const DUMMY_CHAPTERS = [
-  {
-    id: 1,
-    num: "Chapter 01",
-    title: "웨딩촬영",
-    subtitle: "Our First Frames",
-    count: 8,
-    dateRange: "2025. 08. 15 – 08. 20",
-    cat: "photo",
-    photos: [
-      { tone: "peach",    caption: "스튜디오 본촬영" },
-      { tone: "cream",    caption: "야외 세션 · 남산" },
-      { tone: "lavender", caption: "드레스 2차" },
-      { tone: "peach",    caption: "부케 리허설" },
-      { tone: "sky",      caption: "한강 석양 컷" },
-    ],
-  },
-  {
-    id: 2,
-    num: "Chapter 02",
-    title: "준비의 날들",
-    subtitle: "The In-Between Days",
-    count: 12,
-    dateRange: "2025. 07. 02 – 09. 10",
-    cat: "sdm",
-    sub: [
-      { cat: "sdm",   label: "스드메",   count: 5, photos: ["lavender", "cream", "peach"] },
-      { cat: "venue", label: "예식장",   count: 4, photos: ["mint", "cream"] },
-      { cat: "jewel", label: "예물",     count: 3, photos: ["peach", "cream"] },
-    ],
-  },
-  {
-    id: 3,
-    num: "Chapter 03",
-    title: "그 날 — 본식",
-    subtitle: "October Twenty Fifth",
-    count: 15,
-    dateRange: "2025. 10. 25",
-    cat: "wedding",
-    photos: [
-      { tone: "peach",    caption: "입장 전, 대기실" },
-      { tone: "cream",    caption: "첫 만남, 리빌" },
-      { tone: "lavender", caption: "성혼 선언" },
-      { tone: "mint",     caption: "가족 단체 사진" },
-      { tone: "peach",    caption: "피로연 건배" },
-    ],
-  },
-  {
-    id: 4,
-    num: "Chapter 04",
-    title: "첫 여행 — 신혼여행",
-    subtitle: "Our First Trip Together",
-    count: 10,
-    dateRange: "2025. 10. 27 – 11. 04",
-    cat: "honey",
-    photos: [
-      { tone: "sky",      caption: "발리 도착" },
-      { tone: "cream",    caption: "우붓 조식" },
-      { tone: "mint",     caption: "바다 산책" },
-      { tone: "peach",    caption: "선셋 디너" },
-      { tone: "lavender", caption: "마지막 밤" },
-    ],
-  },
-];
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { getTimeline } from '../services/timeline_api';
+import TimelineChapter from '../components/TimelineChapter';
 
-// TODO: Phase 2-4에서 실제 API 연동
+const COUPLE_ID = 'cpl_sample_001';
+
+// 예상 페이지 수 계산 (선택 사진 수 기준 ceil(n / 2.5))
+function calcPages(selectedCount) {
+  if (!selectedCount) return 0;
+  return Math.ceil(selectedCount / 2.5);
+}
+
 export default function Timeline() {
-  const [activeChapter, setActiveChapter] = useState(1);
   const navigate = useNavigate();
-  const chapters = DUMMY_CHAPTERS;
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // 선택 사진 수 로컬 추적 (optimistic UI 반영)
+  const [selectedCount, setSelectedCount] = useState(0);
+
+  const fetchTimeline = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getTimeline(COUPLE_ID);
+      setData(result);
+      setSelectedCount(result.total_selected ?? 0);
+    } catch (err) {
+      setError(err.message ?? '타임라인을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTimeline();
+  }, [fetchTimeline]);
+
+  // 체크박스 토글 후 선택 수 갱신
+  function handleSelectionChange(photoId, newIsSelected) {
+    setSelectedCount((prev) => newIsSelected ? prev + 1 : Math.max(0, prev - 1));
+  }
+
+  const totalPhotos = data?.total_photos ?? 0;
+  const pagesEstimated = calcPages(selectedCount);
+  const chapters = data?.chapters ?? [];
+  const isAlbumEnabled = selectedCount >= 1;
 
   return (
     <div className="wl-page wl-page-timeline">
@@ -84,21 +61,15 @@ export default function Timeline() {
           <span className="wl-logo-text">weddinglog</span>
         </div>
         <nav className="wl-page-nav">
-          <span onClick={() => navigate('/')}>홈</span>
-          <span onClick={() => navigate('/calendar')}>캘린더</span>
+          <span onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>홈</span>
+          <span onClick={() => navigate('/calendar')} style={{ cursor: 'pointer' }}>캘린더</span>
           <span className="is-active">타임라인</span>
-          <span onClick={() => navigate('/orders')}>앨범</span>
+          <span onClick={() => navigate('/orders')} style={{ cursor: 'pointer' }}>앨범</span>
         </nav>
         <div className="wl-page-actions">
-          <button className="wl-icon-btn">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M13 13l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          </button>
           <div className="wl-page-avatar-pair">
-            <span className="wl-tiny-avatar" style={{background: "linear-gradient(135deg,#EBB99B,#F5D4BC)"}}>성</span>
-            <span className="wl-tiny-avatar" style={{background: "linear-gradient(135deg,#B7ABD4,#D9D2E8)"}}>은</span>
+            <span className="wl-tiny-avatar" style={{ background: 'linear-gradient(135deg,#EBB99B,#F5D4BC)' }}>성</span>
+            <span className="wl-tiny-avatar" style={{ background: 'linear-gradient(135deg,#B7ABD4,#D9D2E8)' }}>은</span>
           </div>
         </div>
       </div>
@@ -115,27 +86,37 @@ export default function Timeline() {
               시간 순이 아닌 기억의 결을 따라 묶었어요. 이대로 앨범을 주문하면<br />
               아래 구성대로 한 권의 책이 됩니다.
             </p>
+
+            {/* 실시간 통계 — 총 사진 수 + 예상 페이지 */}
             <div className="wl-tl-stats">
               <div className="wl-stat">
-                <div className="wl-stat-num serif">45</div>
+                <div className="wl-stat-num serif">
+                  {loading ? '—' : `${totalPhotos}장`}
+                </div>
                 <div className="wl-stat-label">총 사진</div>
               </div>
               <div className="wl-stat-sep" />
               <div className="wl-stat">
-                <div className="wl-stat-num serif">04</div>
+                <div className="wl-stat-num serif">
+                  {loading ? '—' : String(chapters.length).padStart(2, '0')}
+                </div>
                 <div className="wl-stat-label">챕터</div>
               </div>
               <div className="wl-stat-sep" />
               <div className="wl-stat">
-                <div className="wl-stat-num serif">128</div>
-                <div className="wl-stat-label">기록된 일</div>
-              </div>
-              <div className="wl-stat-sep" />
-              <div className="wl-stat">
-                <div className="wl-stat-num serif">84<span className="wl-stat-unit">p</span></div>
+                <div className="wl-stat-num serif">
+                  {loading ? '—' : `${pagesEstimated}p`}
+                </div>
                 <div className="wl-stat-label">예상 페이지</div>
               </div>
             </div>
+
+            {/* 인라인 요약 문구 */}
+            {!loading && !error && (
+              <div style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '8px' }}>
+                {`총 ${totalPhotos}장 · ${pagesEstimated}페이지 예상`}
+              </div>
+            )}
           </div>
 
           <div className="wl-tl-hero-book">
@@ -144,7 +125,7 @@ export default function Timeline() {
               <div className="wl-book-big-cover">
                 <div className="wl-book-big-eyebrow">A WEDDING LOG</div>
                 <div className="wl-book-big-title serif">
-                  성우<br/><span className="wl-book-big-amp">&amp;</span><br/>은비
+                  성우<br /><span className="wl-book-big-amp">&amp;</span><br />은비
                 </div>
                 <div className="wl-book-big-line" />
                 <div className="wl-book-big-date serif">MMXXV</div>
@@ -154,112 +135,112 @@ export default function Timeline() {
           </div>
         </header>
 
-        {/* Chapter strip nav */}
-        <nav className="wl-chapter-nav">
-          {chapters.map((c) => (
-            <button
-              key={c.id}
-              className={`wl-chapter-tab ${activeChapter === c.id ? "is-active" : ""}`}
-              onClick={() => setActiveChapter(c.id)}
-            >
-              <span className="wl-chapter-tab-num serif">{String(c.id).padStart(2, "0")}</span>
-              <span className="wl-chapter-tab-title">{c.title}</span>
-              <span className="wl-chapter-tab-count">{c.count}</span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Timeline body */}
-        <div className="wl-tl-body">
-          <div className="wl-tl-rail" />
-
-          {chapters.map((c) => (
-            <article key={c.id} className={`wl-chapter wl-chapter-${c.cat}`}>
-              <div className="wl-chapter-marker">
-                <span className="wl-chapter-dot" style={{ background: `var(--wl-cat-${c.cat})` }} />
-                <span className="wl-chapter-line" />
-              </div>
-
-              <div className="wl-chapter-card">
-                <header className="wl-chapter-head">
-                  <div className="wl-chapter-meta">
-                    <span className="wl-chapter-num">{c.num}</span>
-                    <span className="wl-dot-sep">·</span>
-                    <span className="wl-chapter-range">{c.dateRange}</span>
-                  </div>
-                  <div className="wl-chapter-title-row">
-                    <h2 className="wl-chapter-title serif">{c.title}</h2>
-                    <div className="wl-chapter-sub serif">{c.subtitle}</div>
-                  </div>
-                  <div className="wl-chapter-count-pill">
-                    <span className="serif">{c.count}</span>
-                    <span>장의 사진</span>
-                  </div>
-                </header>
-
-                {/* Body varies by chapter type */}
-                {c.sub ? (
-                  <div className="wl-subcat-grid">
-                    {c.sub.map((s) => (
-                      <div key={s.label} className="wl-subcat">
-                        <div className="wl-subcat-head">
-                          <span className={`wl-cat-pill wl-cat-${s.cat}`}>{s.label}</span>
-                          <span className="wl-subcat-count">{s.count}장</span>
-                        </div>
-                        <div className="wl-subcat-stack">
-                          {s.photos.map((tone, i) => (
-                            <div
-                              key={i}
-                              className={`wl-stack-photo wl-tone-${tone}`}
-                              style={{ zIndex: s.photos.length - i }}
-                            >
-                              <div className="wl-log-img-stripes" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="wl-chapter-scroll">
-                    {c.photos.map((p, i) => (
-                      <figure key={i} className="wl-tl-photo">
-                        <div className={`wl-tl-photo-img wl-tone-${p.tone}`}>
-                          <div className="wl-log-img-stripes" />
-                          <span className="wl-tl-photo-num serif">{String(i + 1).padStart(2, "0")}</span>
-                        </div>
-                        <figcaption className="wl-tl-photo-cap">{p.caption}</figcaption>
-                      </figure>
-                    ))}
-                    <div className="wl-tl-more">
-                      <div className="wl-tl-more-num serif">+{c.count - c.photos.length}</div>
-                      <div className="wl-tl-more-label">더 보기</div>
-                    </div>
-                  </div>
-                )}
-
-                <footer className="wl-chapter-foot">
-                  <button className="wl-link-strong">챕터 편집 →</button>
-                  <button className="wl-link">페이지 미리보기</button>
-                </footer>
-              </div>
-            </article>
-          ))}
-
-          {/* End cap */}
-          <div className="wl-tl-end">
-            <span className="wl-tl-end-dot" />
-            <span className="wl-tl-end-label serif">To be continued…</span>
+        {/* 로딩 상태 */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF', fontSize: '15px' }}>
+            불러오는 중…
           </div>
-        </div>
+        )}
 
-        {/* Bottom CTA */}
+        {/* 에러 상태 */}
+        {!loading && error && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '48px 24px',
+              color: '#EF4444',
+              background: '#FEF2F2',
+              borderRadius: '12px',
+              margin: '24px 0',
+            }}
+          >
+            <div style={{ fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>
+              타임라인을 불러오지 못했습니다.
+            </div>
+            <div style={{ fontSize: '13px', color: '#9CA3AF', marginBottom: '16px' }}>{error}</div>
+            <button
+              className="wl-btn wl-btn-ghost"
+              onClick={fetchTimeline}
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
+
+        {/* 빈 상태 */}
+        {!loading && !error && chapters.length === 0 && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '64px 24px',
+              color: '#6B7280',
+            }}
+          >
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📷</div>
+            <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+              아직 사진이 없습니다.
+            </div>
+            <div style={{ fontSize: '14px', color: '#9CA3AF', marginBottom: '24px' }}>
+              일정을 만들고 사진을 추가해보세요.
+            </div>
+            <Link
+              to="/calendar"
+              className="wl-btn wl-btn-primary"
+              style={{ textDecoration: 'none', display: 'inline-block' }}
+            >
+              캘린더로 이동
+            </Link>
+          </div>
+        )}
+
+        {/* 챕터 스트립 네비게이션 */}
+        {!loading && !error && chapters.length > 0 && (
+          <nav className="wl-chapter-nav">
+            {chapters.map((c) => (
+              <button
+                key={c.id}
+                className="wl-chapter-tab"
+                onClick={() => {
+                  const el = document.getElementById(`chapter-${c.id}`);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+              >
+                <span className="wl-chapter-tab-num serif">{String(c.chapter_number ?? c.id).padStart(2, '0')}</span>
+                <span className="wl-chapter-tab-title">{c.title}</span>
+                <span className="wl-chapter-tab-count">{c.photo_count ?? c.photos?.length ?? 0}</span>
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {/* 타임라인 본문 */}
+        {!loading && !error && chapters.length > 0 && (
+          <div className="wl-tl-body">
+            <div className="wl-tl-rail" />
+
+            {chapters.map((chapter) => (
+              <div key={chapter.id} id={`chapter-${chapter.id}`}>
+                <TimelineChapter
+                  chapter={chapter}
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
+            ))}
+
+            <div className="wl-tl-end">
+              <span className="wl-tl-end-dot" />
+              <span className="wl-tl-end-label serif">To be continued…</span>
+            </div>
+          </div>
+        )}
+
+        {/* 앨범 주문 CTA 섹션 */}
         <section className="wl-order-cta">
           <div className="wl-order-left">
             <div className="wl-order-eyebrow">ORDER</div>
             <h2 className="wl-order-title serif">이 기록을 한 권의 책으로</h2>
             <p className="wl-order-desc">
-              하드커버 · 84페이지 · 아트지 · 무광 라미네이팅. 인쇄 전 미리보기를 열어
+              하드커버 · {pagesEstimated || '—'}페이지 · 아트지 · 무광 라미네이팅. 인쇄 전 미리보기를 열어
               순서와 캡션을 한번 더 확인할 수 있어요.
             </p>
             <div className="wl-order-specs">
@@ -268,12 +249,12 @@ export default function Timeline() {
                 <span className="wl-spec-v">22 × 28 cm</span>
               </div>
               <div className="wl-order-spec">
-                <span className="wl-spec-k">페이지</span>
-                <span className="wl-spec-v">84p</span>
+                <span className="wl-spec-k">사진</span>
+                <span className="wl-spec-v">{selectedCount}장 선택됨</span>
               </div>
               <div className="wl-order-spec">
-                <span className="wl-spec-k">커버</span>
-                <span className="wl-spec-v">하드커버 · 린넨</span>
+                <span className="wl-spec-k">페이지</span>
+                <span className="wl-spec-v">{pagesEstimated}p 예상</span>
               </div>
               <div className="wl-order-spec">
                 <span className="wl-spec-k">배송</span>
@@ -281,25 +262,39 @@ export default function Timeline() {
               </div>
             </div>
           </div>
+
           <div className="wl-order-right">
             <div className="wl-order-price">
               <div className="wl-order-price-eyebrow">예상 가격</div>
-              <div className="wl-order-price-num serif">
-                ₩ 89,000
-              </div>
+              <div className="wl-order-price-num serif">₩ 89,000</div>
               <div className="wl-order-price-sub">커플 첫 주문 · 20% 할인 적용</div>
             </div>
-            {/* TODO: Phase 2-4에서 실제 API 연동 */}
+
+            {/* 앨범으로 만들기 CTA — selected >= 1 일 때만 활성화 */}
             <button
               className="wl-btn wl-btn-primary wl-btn-lg"
-              onClick={() => navigate('/order-checkout')}
+              disabled={!isAlbumEnabled}
+              onClick={() => isAlbumEnabled && navigate('/order-checkout')}
+              style={{
+                background: isAlbumEnabled ? '#D4A017' : '#E5E7EB',
+                color: isAlbumEnabled ? '#fff' : '#9CA3AF',
+                cursor: isAlbumEnabled ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s',
+              }}
             >
-              이 기록을 앨범으로 만들기
+              앨범으로 만들기
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M3 8h10M8 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <button className="wl-btn wl-btn-ghost">전체 미리보기</button>
+
+            {!isAlbumEnabled && (
+              <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '6px', textAlign: 'center' }}>
+                사진을 1장 이상 선택해주세요
+              </div>
+            )}
+
+            <button className="wl-btn wl-btn-ghost" style={{ marginTop: '8px' }}>전체 미리보기</button>
           </div>
         </section>
       </div>
