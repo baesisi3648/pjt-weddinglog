@@ -1,0 +1,28 @@
+# 개발자용 Docker Compose Override
+# 사용법: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# - 소스 bind-mount로 HMR (파일 수정 즉시 반영)
+# - uvicorn --reload + Vite dev server
+# - node_modules / __pycache__는 익명 볼륨으로 호스트 오염 방지
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - /app/__pycache__
+      - /app/.pytest_cache
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - LOG_LEVEL=DEBUG
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+    environment:
+      - VITE_API_URL=http://localhost:${API_PORT:-8000}

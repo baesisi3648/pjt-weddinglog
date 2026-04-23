@@ -43,18 +43,18 @@
 
 ---
 
-## 빌드 단계 (예정)
+## 빌드 단계
 
-<!-- Phase 0~8 진행 중 발생한 AI 도구 사용 이슈를 아래에 시간순으로 기록 -->
-
-<!-- 예시 템플릿:
-### 2026-04-24 HH:MM — {제목}
-- **도구**: 
-- **문제**: 
-- **시도**: 
-- **해결**: 
-- **배운 점**: 
--->
+### 2026-04-23 16:30 — P0 완료: 보일러플레이트 병렬 위임
+- **도구**: Claude Code (auto-orchestrate) + backend-specialist + frontend-specialist (병렬)
+- **결과**: 40 파일, backend 13/13 pytest 통과, frontend 보일러플레이트 + 6 라우트 placeholder 완성
+- **주요 결정**:
+  - SQLAlchemy 2.0 동기 모드(SQLite 단일 파일 기준) — async 복잡도 회피
+  - OpenAI 검증은 `models.list()` (토큰 소비 없이 네트워크·인증만 확인)
+  - CORS는 `field_validator(mode="before")`로 쉼표 분리 파싱
+  - Windows 호환성: `python-magic-bin; sys_platform == "win32"`, Linux는 apt `libmagic1`
+  - Docker 멀티스테이지 + Frontend는 `serve`로 정적 서빙(프로덕션)
+- **배운 점**: backend/frontend 병렬 위임 시 **enum 값 일치 검증**을 양쪽 모두에 박아두니 조정 비용 0. `specs/domain/resources.yaml`이 계약서 역할을 정확히 했다.
 
 ---
 

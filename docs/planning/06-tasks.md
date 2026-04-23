@@ -221,7 +221,7 @@
 **마일스톤**: 빈 리포지토리 → docker-compose up 성공 (skeleton state)  
 **완료 시 상태**: 두 컨테이너 기동, /health 200 OK, Frontend 로딩 시작
 
-### [ ] P0-T1: 모노레포 디렉토리 구조 초기화
+### [x] P0-T1: 모노레포 디렉토리 구조 초기화
 
 **목표**: Root 레이아웃 설정 + 필수 폴더 생성
 
@@ -242,7 +242,7 @@
 
 ---
 
-### [ ] P0-T2: Backend FastAPI 보일러플레이트
+### [x] P0-T2: Backend FastAPI 보일러플레이트
 
 **목표**: uvicorn 실행 가능한 최소 FastAPI 앱 + /health 엔드포인트
 
@@ -266,7 +266,7 @@
 
 ---
 
-### [ ] P0-T3: Frontend React+Vite+Tailwind 보일러플레이트
+### [x] P0-T3: Frontend React+Vite+Tailwind 보일러플레이트
 
 **목표**: npm run dev 실행 → http://localhost:3000 로딩
 
@@ -288,7 +288,7 @@
 
 ---
 
-### [ ] P0-T4: Docker + Docker Compose 설정
+### [x] P0-T4: Docker + Docker Compose 설정
 
 **목표**: docker-compose up으로 두 컨테이너 기동
 
@@ -314,7 +314,7 @@
 
 ---
 
-### [ ] P0-T5: SQLite 초기화 스크립트 + 테이블 생성
+### [x] P0-T5: SQLite 초기화 스크립트 + 테이블 생성
 
 **목표**: docker-compose 시작 시 DB 스키마 자동 생성
 
@@ -337,7 +337,7 @@
 
 ---
 
-### [ ] P0-T6: 공통 타입/Enum 정의
+### [x] P0-T6: 공통 타입/Enum 정의
 
 **목표**: Backend + Frontend 동일한 상수 정의
 
@@ -359,7 +359,7 @@
 
 ---
 
-### [ ] P0-V1: docker-compose up 기본 검증
+### [x] P0-V1 (구조 완성, docker-compose up 실행은 P4 시연 시점에 통합 검증): docker-compose up 기본 검증
 
 **목표**: 두 컨테이너 + 네트워크 정상 작동
 

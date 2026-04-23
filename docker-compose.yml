@@ -1,0 +1,52 @@
+# 심사자용 Docker Compose (프로덕션 프로파일)
+# - 소스 bind-mount 없음 (이미지에 COPY된 코드로 실행)
+# - uvicorn --reload 없음 (안정 동작)
+# - Vite build 후 serve로 정적 파일 서빙
+#
+# 사용법:
+#   docker-compose up
+#
+# 개발자는 추가로 docker-compose.dev.yml을 override로 사용:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weddinglog-backend
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/weddinglog.db}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - UPLOAD_DIR=/app/data/uploads
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: weddinglog-frontend
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: weddinglog-network
