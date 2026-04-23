@@ -56,6 +56,21 @@
   - Docker 멀티스테이지 + Frontend는 `serve`로 정적 서빙(프로덕션)
 - **배운 점**: backend/frontend 병렬 위임 시 **enum 값 일치 검증**을 양쪽 모두에 박아두니 조정 비용 0. `specs/domain/resources.yaml`이 계약서 역할을 정확히 했다.
 
+### 2026-04-23 17:10 — P1 완료: Couple 리소스 + 공통 레이아웃
+- **도구**: backend-specialist + frontend-specialist (병렬)
+- **결과**: Backend 47/47 테스트 통과 (기존 13 + Couple 34), Frontend 25/25 통과
+- **백엔드 결정**:
+  - Couple ID: `cpl_{secrets.token_urlsafe(8)}` (예측 불가 + 가독성)
+  - `d_day` 는 Pydantic `@computed_field` — Response 직렬화 시 자동 포함
+  - `seed_initial_data()` 멱등성 보장 (`db.query(Couple).count() > 0` 가드)
+  - Lifespan 훅에 seed 자동 호출
+- **프런트 결정**:
+  - `CoupleContext` 마운트 시 `cpl_sample_001` 고정 조회 (과제 범위 단일 커플 가정)
+  - `useDday(weddingDate)` 훅은 순수 계산 (hook 안에 state 없음 — useMemo 기반)
+  - `Layout`은 `<Outlet />` 중첩 라우팅, Header sticky + backdrop-blur
+- **이슈**: backend-specialist가 자체적으로 `worktree/phase-1-couple` 브랜치를 만들어 커밋함. auto-orchestrate 표준 워크플로우이지만 사용자 규칙(Phase 끝 main 커밋)과 달라, 메인에서 `git merge --squash`로 단일 커밋으로 통합.
+- **배운 점**: 서브에이전트의 worktree 작업은 `merge --squash` + 메인에서 Phase 단위 커밋 구조가 "명시적 Phase 경계"와 궁합 잘 맞음. worktree 자체는 `.gitignore`로 제외.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

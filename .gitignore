@@ -55,3 +55,6 @@ build/
 
 # ===== Docker =====
 docker-compose.override.yml
+
+# ===== Git worktrees (specialist 작업 임시 폴더) =====
+worktree/

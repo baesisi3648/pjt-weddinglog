@@ -19,7 +19,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.database import SessionLocal
 from app.init_db import init_db
+from app.routers import couples_router
+from app.seed import seed_initial_data
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +70,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # DB 테이블 생성
     init_db()
 
+    # 초기 샘플 데이터 시딩 (멱등성 보장)
+    _seed_session = SessionLocal()
+    try:
+        seed_initial_data(_seed_session)
+    finally:
+        _seed_session.close()
+
     # OpenAI 가용성 1회 체크 → app.state 에 캐시
     app.state.openai_available = _check_openai_available(settings.OPENAI_API_KEY)
 
@@ -100,6 +110,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # API 라우터 등록
+    app.include_router(couples_router)
 
     @app.get("/health", tags=["meta"])
     async def health_check(request: Request) -> dict[str, object]:

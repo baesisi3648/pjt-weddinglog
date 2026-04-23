@@ -383,7 +383,7 @@
 
 ---
 
-### [ ] P1-R1-T1: Couple 모델 + 스키마 정의
+### [x] P1-R1-T1: Couple 모델 + 스키마 정의
 
 **목표**: SQLAlchemy 모델 (Couple) + Pydantic 스키마 작성
 
@@ -406,7 +406,7 @@
 
 ---
 
-### [ ] P1-R1-T2: Couple 서비스 (CoupleService)
+### [x] P1-R1-T2: Couple 서비스 (CoupleService)
 
 **목표**: CRUD 비즈니스 로직 구현
 
@@ -429,7 +429,7 @@
 
 ---
 
-### [ ] P1-R1-T3: Couple 라우터 (API 엔드포인트)
+### [x] P1-R1-T3: Couple 라우터 (API 엔드포인트)
 
 **목표**: REST API 구현 + 통합 테스트
 
@@ -451,7 +451,7 @@
 
 ---
 
-### [ ] P1-R1-T4: d_day 계산 및 파생 필드
+### [x] P1-R1-T4: d_day 계산 및 파생 필드
 
 **목표**: wedding_date 기준 D-day 계산
 
@@ -474,7 +474,7 @@
 
 ---
 
-### [ ] P1-R1-T5: 더미 커플 시딩 스크립트
+### [x] P1-R1-T5: 더미 커플 시딩 스크립트
 
 **목표**: 컨테이너 시작 시 샘플 데이터 자동 생성
 
@@ -497,7 +497,7 @@
 
 ---
 
-### [ ] P1-S0-T1: 공통 레이아웃 (Header + Layout)
+### [x] P1-S0-T1: 공통 레이아웃 (Header + Layout)
 
 **목표**: 모든 페이지의 기반이 되는 레이아웃 컴포넌트
 
@@ -520,7 +520,7 @@
 
 ---
 
-### [ ] P1-S0-T2: CoupleContext + useDday Hook
+### [x] P1-S0-T2: CoupleContext + useDday Hook
 
 **목표**: 모든 페이지에서 접근 가능한 커플 데이터 상태 관리
 
@@ -543,7 +543,7 @@
 
 ---
 
-### [ ] P1-V1: Interface Contract Validation (Couple)
+### [x] P1-V1 (수동 체크리스트로 대체): Interface Contract Validation (Couple)
 
 **목표**: 모든 화면의 data_requirements와 Couple 필드 대응 확인
 
