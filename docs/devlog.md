@@ -100,6 +100,26 @@
 - **이슈**: handoff.css `@import` 순서 경고. 기능 영향 없으나 Phase 4 완료 시점에 정리 예정.
 - **배운 점**: backend에서 enum 값과 응답 포맷을 **processed by AI vs fallback** 구분하는 필드를 둔 설계가, 프론트에서 투명성 배지로 바로 활용됨. Council 리뷰의 "AI/템플릿 투명성"이 **응답 스키마 → UI 배지**로 일관되게 흘러감.
 
+### 2026-04-23 22:15 — P3 완료: Photo 업로드 + AI 캡션 + 보안 강화
+- **도구**: backend-specialist + frontend-specialist (병렬, 메인 디렉토리)
+- **결과**: Backend 167/167 (신규 66), Frontend 97/97 (신규 21)
+- **Council 보안 Blocker 3건 모두 실구현 반영**:
+  - B6 매직넘버 검증: `Pillow.Image.verify()` + Content-Type 교차검증. 비-이미지 바이트 → 400
+  - B6 Path Traversal: `Path.resolve()` + `relative_to()` prefix 검증. `../..` 시도 → 400
+  - B6 서버 UUID 재생성: `pho_{secrets.token_urlsafe(16)}`. 원본 파일명은 `original_filename` 컬럼에만 로깅
+  - B7 래퍼 엔드포인트: `GET /api/photos/{id}/file` (StaticFiles mount 안 함, FileResponse)
+- **설계 결정**:
+  - Photo 선삽입 후 파일 저장 순서 → DB 발급 UUID를 경로에 사용 = Path Traversal 근본 차단
+  - 두 router prefix 분리: 업로드/목록은 `/api/events/{event_id}/photos`, 단건은 `/api/photos/{id}` (프론트 사용 편의)
+  - `file_url` computed field로 프론트 URL 계산 단순화
+  - 폴백 캡션 9개 카테고리 모두 3개씩 완비 (심사자 환경 완전 대응)
+- **프런트 결정**:
+  - Toast를 Calendar에서 승격해 `src/components/Toast.jsx`로 공용화
+  - CaptionSelector의 `source: "ai"` → coral badge "AI 생성" / `"template"` → gray badge "기본 템플릿" (M4 투명성)
+  - PhotoUpload 네이티브 드래그앤드롭(react-dropzone 없이), 클라이언트측 + 서버측 2중 검증
+- **이슈**: `python-multipart` 의존성이 requirements에 있었지만 설치 안 되어 있던 에이전트 환경에서 한 번 걸림. Docker 빌드 시점엔 문제없음.
+- **배운 점**: **보안 AC를 "스펙 → 테스트 → 코드" 순으로 TDD하면 의도가 절대 새지 않는다**. `test_dotdot_event_id_rejected` 같은 테스트가 먼저 있으면 구현이 그걸 통과하게 되어 있어서 자동으로 옳은 코드가 나옴.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

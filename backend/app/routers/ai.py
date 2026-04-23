@@ -16,14 +16,14 @@ from __future__ import annotations
 import logging
 from datetime import date as _date
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.event import Event
 from app.schemas.event import EventResponse
-from app.services import couple_service
+from app.services import couple_service, photo_service
 from app.services.ai_service import AIService
 
 logger = logging.getLogger(__name__)
@@ -127,4 +127,71 @@ async def generate_checklist(
     return ChecklistResponse(
         source=source,
         events=[EventResponse.model_validate(e) for e in orm_events],
+    )
+
+
+# -----------------------------------------------------------------------------
+# POST /api/ai/caption (P3-R1-T6)
+# -----------------------------------------------------------------------------
+class CaptionRequest(BaseModel):
+    event_id: str = Field(..., description="이벤트 ID (category/date 소스)")
+    photo_id: str | None = Field(
+        default=None,
+        description="사진 ID (응답 에코백용, 선택)",
+    )
+    memo: str | None = Field(
+        default=None,
+        description="사용자 보조 메모 (이벤트 memo 를 덮어씀, 선택)",
+    )
+
+
+class CaptionResponse(BaseModel):
+    source: str = Field(
+        ..., description='"ai" 또는 "template"'
+    )
+    captions: list[str] = Field(..., description="캡션 3개")
+    photo_id: str | None = Field(
+        default=None,
+        description="요청에서 전달된 photo_id 에코백",
+    )
+
+
+@router.post(
+    "/caption",
+    response_model=CaptionResponse,
+    summary="AI 사진 캡션 3개 생성",
+    description=(
+        "이벤트 컨텍스트(category/date/memo) 기반으로 한국어 캡션 3개를 생성한다. "
+        "OpenAI 키가 없거나 실패하면 카테고리별 사전 캡션으로 폴백."
+    ),
+)
+async def generate_caption(
+    payload: CaptionRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> CaptionResponse:
+    event = db.get(Event, payload.event_id)
+    if event is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event not found: {payload.event_id}",
+        )
+
+    # photo_id 가 주어졌다면 존재 검증 (에코백 이전에 유효성 확인).
+    if payload.photo_id is not None:
+        photo_service.get_or_404(db, payload.photo_id)
+
+    memo = payload.memo if payload.memo is not None else event.memo
+
+    ai_service = AIService(request.app.state)
+    result = await ai_service.generate_captions(
+        category=event.category,
+        event_date=event.date,
+        memo=memo,
+    )
+
+    return CaptionResponse(
+        source=result["source"],
+        captions=list(result["captions"]),
+        photo_id=payload.photo_id,
     )

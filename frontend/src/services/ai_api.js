@@ -4,6 +4,23 @@
 import api from './api';
 
 /**
+ * AI 캡션 생성 요청
+ * POST /api/ai/caption
+ * @param {string} eventId
+ * @param {string} photoId
+ * @param {string} memo
+ * @returns {{ captions: string[], source: 'ai'|'template' }}
+ */
+export async function requestCaption(eventId, photoId, memo) {
+  const res = await api.post('/ai/caption', {
+    event_id: eventId,
+    photo_id: photoId,
+    memo: memo ?? '',
+  });
+  return res.data;
+}
+
+/**
  * AI 체크리스트 자동 생성 요청
  * POST /api/ai/checklist
  * @param {string} coupleId

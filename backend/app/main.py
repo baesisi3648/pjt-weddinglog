@@ -21,7 +21,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import SessionLocal
 from app.init_db import init_db
-from app.routers import ai_router, couples_router, events_router
+from app.routers import (
+    ai_router,
+    couples_router,
+    events_router,
+    photo_events_router,
+    photo_router,
+)
 from app.seed import seed_initial_data
 
 logger = logging.getLogger(__name__)
@@ -115,6 +121,8 @@ def create_app() -> FastAPI:
     app.include_router(couples_router)
     app.include_router(events_router)
     app.include_router(ai_router)
+    app.include_router(photo_events_router)
+    app.include_router(photo_router)
 
     @app.get("/health", tags=["meta"])
     async def health_check(request: Request) -> dict[str, object]:

@@ -32,6 +32,7 @@ from app.database import Base
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.couple import Couple
+    from app.models.photo import Photo
 
 
 def _generate_event_id() -> str:
@@ -84,6 +85,13 @@ class Event(Base):
 
     # 관계: Couple 과 양방향 연결.
     couple: Mapped["Couple"] = relationship(back_populates="events")
+
+    # 관계: Event 삭제 시 관련 Photo 도 ORM cascade 로 함께 삭제 (P3-R1-T1).
+    photos: Mapped[list["Photo"]] = relationship(
+        back_populates="event",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     __table_args__ = (
         Index("idx_events_couple_date", "couple_id", "date"),

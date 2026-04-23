@@ -4,6 +4,15 @@
 import api from './api';
 
 /**
+ * 단일 일정 조회
+ * GET /api/couples/{couple_id}/events/{event_id}
+ */
+export async function getEvent(coupleId, eventId) {
+  const res = await api.get(`/couples/${coupleId}/events/${eventId}`);
+  return res.data;
+}
+
+/**
  * 월별 일정 목록 조회
  * GET /api/couples/{couple_id}/events?month=YYYY-MM
  */
