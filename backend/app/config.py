@@ -10,6 +10,7 @@ Pydantic Settings 로 12-factor 환경변수 로드.
 """
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -39,13 +40,12 @@ class Settings(BaseSettings):
         description="OpenAI API key (optional — falls back to templates)",
     )
 
-    # CORS — 환경변수에서는 쉼표 분리 문자열, 내부에서는 list[str]
-    CORS_ORIGINS: list[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:3000",
-            "http://localhost:5173",
-        ],
-        description="허용된 CORS 오리진 목록",
+    # CORS — str 로 받고 cors_origins_list property 에서 파싱
+    # (pydantic-settings 2.x 가 list[str] 에 대해 JSON 파싱을 강제하여,
+    # 쉼표 분리 형식의 환경변수가 JSONDecodeError 로 실패하는 이슈 회피)
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,http://localhost:5173",
+        description="허용된 CORS 오리진 (쉼표 분리 문자열 또는 JSON 배열)",
     )
 
     # 로깅
@@ -57,18 +57,25 @@ class Settings(BaseSettings):
         description="사진 업로드 루트 디렉터리",
     )
 
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def _split_cors_origins(cls, v: object) -> object:
-        """쉼표 분리 문자열을 list 로 분해 (환경변수에서 리스트 입력 지원)."""
-        if isinstance(v, str):
-            # JSON 배열 문자열 지원은 pydantic-settings 가 자동 처리하므로
-            # 쉼표 분리 케이스만 명시적으로 처리
-            stripped = v.strip()
-            if stripped.startswith("["):
-                return stripped
-            return [item.strip() for item in v.split(",") if item.strip()]
-        return v
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """CORS_ORIGINS 문자열을 list[str] 로 파싱한다.
+
+        지원 형식:
+        - 쉼표 분리: "http://a.com,http://b.com"
+        - JSON 배열: '["http://a.com", "http://b.com"]'
+        """
+        raw = self.CORS_ORIGINS.strip()
+        if not raw:
+            return []
+        if raw.startswith("["):
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, list):
+                    return [str(x).strip() for x in parsed if str(x).strip()]
+            except json.JSONDecodeError:
+                pass
+        return [item.strip() for item in raw.split(",") if item.strip()]
 
     @field_validator("LOG_LEVEL")
     @classmethod

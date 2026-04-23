@@ -161,6 +161,16 @@
 - **해결**: `frontend/index.html`의 `main.jsx` → `main.tsx` 교체 (1줄).
 - **배운 점**: TS 마이그레이션에서 **파일 확장자 변경은 소스만 아니라 참조 체인 전체**(index.html, vite.config 진입점, 테스트 import 경로 등)를 훑어야 한다. 위임 AC에 "`grep -r '\.jsx' src/ index.html` 0건 확인"을 명시했으면 예방 가능했을 것. Rollup이 Vite dev보다 엄격한 덕분에 프로덕션 빌드 시점에서 잡힘 — 안전망 역할.
 
+### 2026-04-24 11:30 — Backend CORS_ORIGINS 파싱 실패 + CSS @import 순서 경고
+- **도구**: Claude Code (메인)
+- **문제 1 (치명)**: Docker 빌드는 성공했으나 backend 컨테이너 기동 시 `pydantic_settings.SettingsError: error parsing value for field "CORS_ORIGINS"` + `json.JSONDecodeError: Expecting value`로 크래시. 의존하는 frontend도 `depends_on: backend healthy`라 함께 기동 실패.
+- **원인**: `pydantic-settings` **2.14.0**(Docker 빌드 시점 최신) 버전에서 `list[str]` 타입 필드에 대해 **env source가 JSON 배열 파싱을 강제**. `field_validator(mode="before")`보다 먼저 호출되어 쉼표 분리 문자열(`http://localhost:3100,...`)이 JSON 파싱으로 즉시 실패.
+  - 로컬 pytest 환경에서는 `.env`가 없고 default_factory의 list가 바로 주입되어 통과 → Docker 환경에서만 노출되는 이슈.
+- **해결**: `CORS_ORIGINS` 필드를 `str`로 변경, `cors_origins_list` property에서 JSON/CSV 양쪽 파싱. `main.py`에서 `allow_origins=settings.cors_origins_list`.
+- **문제 2 (경고)**: Vite build `[vite:css] @import must precede all other statements (besides @charset or empty @layer)`. `globals.css`에서 `@tailwind` 뒤에 `@import './handoff.css'`가 위치.
+- **해결**: `@import`를 최상단으로 이동. 빌드는 원래도 통과했지만 CSS 스펙 준수 + 프로덕션 번들 안정성.
+- **배운 점**: **로컬 테스트 ≠ 프로덕션 빌드 환경**. SQLAlchemy 2.0.49, Pydantic 2.13, pydantic-settings 2.14 등 Docker가 자동 최신 설치. `requirements.txt`에 `>=` pinning만 있으면 빌드 시점의 최신 버전 거동을 커버 불가. **제출 직전에 빌드 시점 버전 pinning 권고** (`==` or `~=`로 메이저 버전 고정). 하지만 과제 범위에서는 이번 픽스로 충분.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)
