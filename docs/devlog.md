@@ -153,6 +153,14 @@
 - **배운 점**: 마이그레이션 위임 시 "원본 파일 제거까지 AC에 포함"을 명시 필요. 한 단계 위에서 "add + remove"를 명시해야 모호성 제거. 또한 `find src \( -name '*.jsx' -o -name '*.js' \) -delete`가 안전 + 빠름.
 - **04-tech-stack.md 업데이트**: 프론트엔드 언어 섹션 신설, TS 선택 이유 3가지(실서비스 전환/타입=계약/Props 계약)와 트레이드오프 문서화. 면접 "왜 TS?" 답변 바로 준비됨.
 
+### 2026-04-24 11:00 — TS 마이그레이션 잔여 이슈: index.html 참조 오류
+- **도구**: Claude Code (메인)
+- **문제**: Docker 빌드 중 Vite가 `[vite]: Rollup failed to resolve import "/src/main.jsx" from "/app/index.html"` 에러로 실패. vite build 단계에서 컨테이너 빌드 중단.
+- **원인**: frontend-specialist가 `main.jsx` → `main.tsx`로 파일은 바꿨지만 **`index.html`의 `<script type="module" src="/src/main.jsx">` 참조는 업데이트하지 않음**. `.jsx` 원본을 삭제한 이후부터 생긴 잠복 버그. 로컬 `npm run dev`는 Vite dev 서버가 자동 확장자 해석으로 넘어갔을 수 있지만, **프로덕션 `vite build` + Rollup은 엄격해서 에러 발생**.
+- **포트 충돌 상황도 겹침**: 사용자 환경에서 PID 24980(개인 포트폴리오 서버)이 3000 점유 중. `.env`의 `WEB_PORT=3100` 변경으로 우회. **과제 평가 포인트 "포트 변경 가능"이 실전에서 정확히 필요한 상황 시연**.
+- **해결**: `frontend/index.html`의 `main.jsx` → `main.tsx` 교체 (1줄).
+- **배운 점**: TS 마이그레이션에서 **파일 확장자 변경은 소스만 아니라 참조 체인 전체**(index.html, vite.config 진입점, 테스트 import 경로 등)를 훑어야 한다. 위임 AC에 "`grep -r '\.jsx' src/ index.html` 0건 확인"을 명시했으면 예방 가능했을 것. Rollup이 Vite dev보다 엄격한 덕분에 프로덕션 빌드 시점에서 잡힘 — 안전망 역할.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)
