@@ -1,0 +1,371 @@
+version: "2.0"
+
+description: "WeddingLog Shared Components — 모든 화면에서 재사용되는 공통 컴포넌트"
+
+shared_components:
+  - id: category_badge
+    type: badge
+    description: "카테고리를 시각적으로 표현하는 배지"
+    props:
+      - category: enum[WEDDING_PHOTO, STUDIO_DRESS_MAKEUP, VENUE, GIFT, INVITATION, REHEARSAL, CEREMONY, HONEYMOON, ETC]
+    color_mapping:
+      WEDDING_PHOTO:
+        bg: coral-100
+        text: coral-700
+      STUDIO_DRESS_MAKEUP:
+        bg: lavender-100
+        text: lavender-700
+      VENUE:
+        bg: lavender-100
+        text: lavender-700
+      GIFT:
+        bg: lavender-100
+        text: lavender-700
+      INVITATION:
+        bg: lavender-100
+        text: lavender-700
+      REHEARSAL:
+        bg: mint-100
+        text: mint-700
+      CEREMONY:
+        bg: mint-100
+        text: mint-700
+      HONEYMOON:
+        bg: mint-100
+        text: mint-700
+      ETC:
+        bg: gray-100
+        text: gray-700
+    style:
+      padding: "px-3 py-1"
+      radius: "rounded-full"
+      font: "Pretendard 12px, font-medium"
+    used_by: [calendar, event_detail, timeline, orders]
+
+  - id: button_primary
+    type: button
+    description: "기본 주요 버튼 (Coral)"
+    props:
+      - label: string
+      - onClick: function
+      - disabled: boolean (default: false)
+      - loading: boolean (default: false)
+      - size: enum[sm, md, lg] (default: md)
+    style:
+      bg: coral-500
+      text: white
+      padding:
+        sm: "px-3 py-1.5"
+        md: "px-4 py-2"
+        lg: "px-6 py-3"
+      radius: "rounded-lg"
+      font: "Pretendard 14px, font-medium"
+      hover: "bg-coral-600"
+      focus: "outline-2 outline-offset-2 outline-coral-500"
+      disabled: "opacity-50 cursor-not-allowed"
+    used_by: [모든 화면]
+
+  - id: button_secondary
+    type: button
+    description: "보조 버튼 (Gray)"
+    props:
+      - label: string
+      - onClick: function
+      - disabled: boolean (default: false)
+    style:
+      bg: gray-200
+      text: gray-700
+      padding: "px-4 py-2"
+      radius: "rounded-lg"
+      font: "Pretendard 14px, font-medium"
+      hover: "bg-gray-300"
+    used_by: [모든 화면]
+
+  - id: button_accent_cta
+    type: button
+    description: "강조 CTA 버튼 (Gold)"
+    props:
+      - label: string
+      - onClick: function
+      - size: enum[md, lg] (default: md)
+    style:
+      bg: gold-500
+      text: white
+      padding:
+        md: "px-4 py-2"
+        lg: "px-6 py-3"
+      radius: "rounded-lg"
+      font: "Pretendard 14px, font-medium, font-bold"
+      hover: "bg-gold-600"
+      shadow: "shadow-md"
+    emphasis: "크고 눈에 띄는 배치 (하단 또는 우측)"
+    used_by: [home, timeline, order_checkout]
+
+  - id: button_outline
+    type: button
+    description: "아웃라인 버튼 (Border + Text)"
+    props:
+      - label: string
+      - onClick: function
+      - variant: enum[coral, gray] (default: coral)
+    style:
+      border: "2px border"
+      text: "variant color"
+      bg: white
+      padding: "px-4 py-2"
+      radius: "rounded-lg"
+    used_by: [calendar, event_detail]
+
+  - id: toast_message
+    type: toast
+    description: "일시적 알림 메시지"
+    props:
+      - message: string
+      - variant: enum[success, error, info, warning] (default: success)
+      - duration: number (milliseconds, default: 3000)
+      - position: enum[top-right, bottom-right] (default: bottom-right)
+    style:
+      success: "bg-green-500 text-white"
+      error: "bg-red-500 text-white"
+      info: "bg-blue-500 text-white"
+      warning: "bg-yellow-500 text-white"
+      padding: "px-4 py-3"
+      radius: "rounded-lg"
+      shadow: "shadow-lg"
+      animation: "fade-in 200ms, fade-out 200ms at duration-100ms"
+
+  - id: empty_state
+    type: empty_state
+    description: "데이터 없음 상태"
+    props:
+      - icon: string (icon name or SVG path)
+      - title: string
+      - subtitle: string (optional)
+      - cta_label: string (optional)
+      - cta_action: function (optional)
+    style:
+      layout: "flex flex-col items-center justify-center py-12"
+      icon: "w-16 h-16 text-gray-300 mb-4"
+      title: "text-lg font-medium text-gray-700"
+      subtitle: "text-sm text-gray-500 mt-2"
+      cta: "mt-4 button_primary"
+    used_by: [calendar, timeline, orders]
+
+  - id: loading_spinner
+    type: spinner
+    description: "로딩 인디케이터"
+    props:
+      - size: enum[sm, md, lg] (default: md)
+      - color: string (default: coral-500)
+    style:
+      animation: "spin 1s linear infinite"
+      size:
+        sm: "w-4 h-4"
+        md: "w-8 h-8"
+        lg: "w-12 h-12"
+
+  - id: modal_dialog
+    type: modal
+    description: "다이얼로그 모달"
+    props:
+      - title: string
+      - children: ReactNode
+      - onClose: function
+      - size: enum[sm, md, lg] (default: md)
+      - showCloseButton: boolean (default: true)
+    style:
+      overlay: "fixed inset-0 bg-black bg-opacity-50 z-40"
+      dialog:
+        bg: white
+        padding: "p-6"
+        radius: "rounded-2xl"
+        shadow: "shadow-lg"
+        z_index: "z-50"
+      size:
+        sm: "max-w-sm"
+        md: "max-w-md"
+        lg: "max-w-lg"
+
+  - id: confirmation_dialog
+    type: modal
+    description: "확인 다이얼로그"
+    props:
+      - title: string
+      - message: string
+      - onConfirm: function
+      - onCancel: function
+      - confirmLabel: string (default: "확인")
+      - cancelLabel: string (default: "취소")
+    layout:
+      - title: "bold, center"
+      - message: "text-center, mt-4"
+      - buttons:
+          - button_cancel: "secondary, 50%"
+          - button_confirm: "primary (red if danger), 50%"
+
+  - id: input_text
+    type: input
+    description: "텍스트 입력 필드"
+    props:
+      - label: string (optional)
+      - placeholder: string (optional)
+      - value: string
+      - onChange: function
+      - required: boolean (default: false)
+      - error: string (optional)
+      - maxLength: number (optional)
+    style:
+      border: "border-2 border-gray-300"
+      padding: "px-3 py-2"
+      radius: "rounded-lg"
+      focus: "border-coral-500 ring-2 ring-coral-100"
+      error: "border-red-500"
+      font: "Pretendard 14px"
+
+  - id: input_date
+    type: input
+    description: "날짜 선택 필드"
+    props:
+      - label: string (optional)
+      - value: date
+      - onChange: function
+      - min: date (optional)
+      - max: date (optional)
+    style:
+      border: "border-2 border-gray-300"
+      radius: "rounded-lg"
+      focus: "border-coral-500"
+
+  - id: select_dropdown
+    type: select
+    description: "드롭다운 선택"
+    props:
+      - label: string (optional)
+      - value: string
+      - onChange: function
+      - options: array[{label, value}]
+      - required: boolean (default: false)
+    style:
+      border: "border-2 border-gray-300"
+      padding: "px-3 py-2"
+      radius: "rounded-lg"
+      focus: "border-coral-500"
+
+  - id: checkbox
+    type: input
+    description: "체크박스"
+    props:
+      - label: string (optional)
+      - checked: boolean
+      - onChange: function
+      - disabled: boolean (default: false)
+    style:
+      size: "w-5 h-5"
+      color: "checked: coral-500, unchecked: gray-300"
+      focus: "ring-2 ring-coral-100"
+
+  - id: radio_group
+    type: input
+    description: "라디오 버튼 그룹"
+    props:
+      - label: string (optional)
+      - value: string
+      - onChange: function
+      - options: array[{label, value}]
+    style:
+      gap: "gap-4"
+      item:
+        - radio: "w-5 h-5 checked: coral-500"
+        - label: "ml-2 Pretendard 14px"
+
+  - id: textarea
+    type: input
+    description: "여러 줄 텍스트 입력"
+    props:
+      - label: string (optional)
+      - placeholder: string (optional)
+      - value: string
+      - onChange: function
+      - rows: number (default: 4)
+      - maxLength: number (optional)
+    style:
+      border: "border-2 border-gray-300"
+      padding: "p-3"
+      radius: "rounded-lg"
+      focus: "border-coral-500 ring-2 ring-coral-100"
+      font: "Pretendard 14px"
+      resize: "resize-none"
+
+  - id: card
+    type: container
+    description: "카드 컨테이너"
+    props:
+      - children: ReactNode
+      - padding: enum[sm, md, lg] (default: md)
+      - shadow: boolean (default: true)
+      - onClick: function (optional)
+    style:
+      bg: white
+      padding:
+        sm: "p-3"
+        md: "p-6"
+        lg: "p-8"
+      radius: "rounded-xl"
+      shadow: "shadow-md"
+      hover: "shadow-lg transition-shadow"
+
+  - id: badge
+    type: label
+    description: "일반 배지 (숫자, 상태 표시)"
+    props:
+      - label: string
+      - variant: enum[primary, secondary, success, error, warning] (default: primary)
+      - size: enum[sm, md, lg] (default: sm)
+    style:
+      primary: "bg-coral-100 text-coral-700"
+      secondary: "bg-gray-100 text-gray-700"
+      success: "bg-green-100 text-green-700"
+      error: "bg-red-100 text-red-700"
+      warning: "bg-yellow-100 text-yellow-700"
+      padding: "px-2 py-1"
+      radius: "rounded-md"
+      font: "Pretendard 12px, font-bold"
+
+  - id: divider
+    type: visual
+    description: "구분선"
+    props:
+      - color: string (default: gray-200)
+      - thickness: enum[thin, medium, thick] (default: thin)
+    style:
+      thin: "border-t-1"
+      medium: "border-t-2"
+      thick: "border-t-4"
+
+  - id: progress_bar
+    type: visual
+    description: "진행 바"
+    props:
+      - value: number (0-100)
+      - showLabel: boolean (default: false)
+    style:
+      bg: "bg-gray-200"
+      fill: "bg-coral-500"
+      height: "h-2"
+      radius: "rounded-full"
+      animation: "smooth transition, transition-all 300ms"
+
+  - id: stepper
+    type: control
+    description: "단계 표시 컴포넌트"
+    props:
+      - steps: array[{label, completed, current}]
+      - currentStep: number
+      - orientation: enum[horizontal, vertical] (default: horizontal)
+    layout:
+      - step_item:
+          - number: "1, 2, 3, 4..."
+          - label: "스텝 이름"
+          - state: "pending (gray), current (coral), completed (green with checkmark)"
+      - connector: "between steps"
+

@@ -1,0 +1,162 @@
+# Calendar — 월간 캘린더, 리스트 뷰, 일정 CRUD
+
+version: "2.0"
+
+screen:
+  name: 캘린더
+  route: /calendar
+  layout: single-column
+  level: Lv1
+  purpose: "결혼 준비 일정을 월간 캘린더와 리스트로 보기, 일정 CRUD"
+  design_reference: "reference/WeddingLog-handoff/weddinglog/project/components/Calendar.jsx"
+
+data_requirements:
+  - resource: events
+    needs: [id, title, date, category, is_completed, memo]
+    filters: {couple_id: "?couple_id", month: "?YYYY-MM"}
+    mutations: [create, update, delete, toggle_complete]
+
+  - resource: couples
+    needs: [id, wedding_date, d_day]
+    filters: {id: "?couple_id"}
+
+components:
+  - id: calendar_header
+    type: header
+    function: "월 네비게이션, 오늘 버튼"
+    layout:
+      - button: "< 이전"
+        action: navigate_month(-1)
+      - title: "2026년 4월"
+        font: Fraunces 24px
+      - button: "다음 >"
+        action: navigate_month(+1)
+      - button: "오늘"
+        action: scroll_to_today()
+
+  - id: calendar_grid
+    type: grid
+    function: "42개 셀 (6주 × 7일), 일정 색상점 표시"
+    layout:
+      - grid: "7 cols (일~토)"
+      - cell_height: "min 80px for touch"
+      - each_cell:
+          - date_number: "오른쪽 위 모서리, 작은 폰트"
+          - event_dots: "카테고리별 색상 점 (최대 3개 표시)"
+          - overflow: "'+2' 텍스트 if > 3개"
+      - special: "D-day는 배경색 coral-100"
+
+  - id: view_toggle
+    type: tab_group
+    function: "월간 / 리스트 뷰 토글"
+    options:
+      - label: "월간"
+        value: calendar
+        default: true
+      - label: "리스트"
+        value: list
+
+  - id: event_list_view
+    type: list
+    function: "리스트 뷰일 때만 표시"
+    visibility: "view == 'list'"
+    layout:
+      - section_header: "월 (예: 2026년 4월)"
+      - each_event:
+          - icon: "카테고리 아이콘, 컬러"
+          - title: "일정 제목"
+          - date: "YYYY.MM.DD 형식"
+          - photo_badge: "사진 개수 (예: '3장')"
+          - checkbox: "완료 토글"
+          - actions: "편집, 삭제 버튼"
+      - scroll: "vertical, height-fit"
+
+  - id: category_filter
+    type: filter
+    function: "카테고리별 필터링 (선택)"
+    options:
+      - label: "모두"
+        value: null
+        default: true
+      - label: "웨딩촬영"
+        value: WEDDING_PHOTO
+      - label: "스드메"
+        value: STUDIO_DRESS_MAKEUP
+      - label: "준비"
+        value: "[VENUE, GIFT, INVITATION]"
+      - label: "본식"
+        value: CEREMONY
+      - label: "신혼여행"
+        value: HONEYMOON
+
+  - id: event_modal
+    type: modal
+    function: "일정 추가 버튼, EventForm 모달"
+    trigger: "button '일정 추가' (top right, gold)"
+    contents:
+      - form: "EventForm"
+        fields:
+          - title: "input text, required, max 100자"
+          - date: "date picker, required"
+          - category: "select enum, required"
+          - memo: "textarea, nullable, max 500자"
+      - actions:
+          - button_save: "저장 (coral)"
+          - button_cancel: "취소"
+
+user_flows:
+  - name: "월간 캘린더 탐색"
+    steps:
+      - "캘린더 뷰 진입 → 현재 월 표시"
+      - "< 또는 > 클릭 → 월 변경"
+      - "일정 있는 날짜 시각적 강조"
+
+  - name: "일정 생성"
+    steps:
+      - "'일정 추가' 버튼 클릭 → 모달 표시"
+      - "제목, 날짜, 카테고리, 메모 입력"
+      - "'저장' 클릭 → POST /api/couples/{couple_id}/events"
+      - "토스트: '일정이 저장되었습니다'"
+
+  - name: "일정 완료 토글"
+    steps:
+      - "리스트 뷰에서 체크박스 클릭"
+      - "PATCH /api/couples/{couple_id}/events/{event_id}/complete"
+      - "UI에서 취소선 표시 (opacity 50%)"
+
+edge_cases:
+  - condition: "빈 월 (일정 없음)"
+    behavior: "캘린더는 정상 표시, 리스트 뷰에선 '이 달에 일정이 없습니다' 메시지"
+
+  - condition: "카테고리 필터 적용 중"
+    behavior: "선택된 카테고리의 일정만 표시, 필터 상태 유지"
+
+  - condition: "모바일에서 일정 많은 날 (5개 이상)"
+    behavior: "'+N' 텍스트로만 표시, 탭 시 상세 팝업"
+
+tests:
+  - name: "월간 캘린더 렌더링"
+    when: "/calendar 접속"
+    then:
+      - "42개 셀 모두 표시"
+      - "현재 월의 일정들이 컬러 점으로 표시"
+      - "D-day 셀 배경색 coral-100"
+
+  - name: "네비게이션 동작"
+    when: "'다음' 버튼 클릭"
+    then: "다음 월의 캘린더 표시, URL 변경 없음 (상태 관리)"
+
+  - name: "일정 추가 폼"
+    when: "'일정 추가' 버튼 클릭"
+    then:
+      - "모달 표시"
+      - "date picker 기본값: 오늘"
+      - "category: null (필수 선택)"
+
+  - name: "일정 완료 상태"
+    when: "리스트 뷰에서 체크박스 클릭"
+    then:
+      - "is_completed true로 변경"
+      - "UI에서 취소선 표시 (text-decoration: line-through)"
+      - "opacity 50%"
+

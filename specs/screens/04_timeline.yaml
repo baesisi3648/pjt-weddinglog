@@ -1,0 +1,191 @@
+# Timeline — 챕터별 사진 정렬, 앨범 미리보기, 선택/해제
+
+version: "2.0"
+
+screen:
+  name: 타임라인
+  route: /timeline
+  layout: single-column
+  level: Lv1
+  purpose: "카테고리별 챕터로 정렬된 사진들을 '책의 미리보기'처럼 보기"
+  design_reference: "reference/WeddingLog-handoff/weddinglog/project/components/Timeline.jsx"
+
+data_requirements:
+  - resource: photos
+    needs: [id, event_id, file_path, caption, is_selected, sort_order]
+    filters:
+      - couple_id: "?couple_id"
+      - is_selected: true (기본)
+      - group_by: category (챕터 그룹핑)
+    mutations: [toggle_photo_selection, update_caption_inline]
+
+  - resource: events
+    needs: [id, date, category, title]
+    filters: {couple_id: "?couple_id"}
+    purpose: "챕터 제목 및 카테고리 매핑"
+
+derived_data:
+  - chapters: "카테고리별 자동 그룹 (WEDDING_PHOTO, CEREMONY, HONEYMOON, ETC)"
+  - total_pages_estimated: "선택 사진 수 기반 (ceil(count / 2.5))"
+
+components:
+  - id: timeline_header
+    type: header
+    function: "타임라인 제목, 사진 개수, 예상 페이지 수"
+    layout:
+      - title: "'타임라인' (Fraunces 28px, coral-500)"
+      - summary: "'총 XX장의 추억' (Pretendard 16px)"
+      - pages_estimated: "'XX페이지로 예상됩니다' (gray-600)"
+
+  - id: chapter_list
+    type: section
+    function: "스크롤 가능한 챕터 스택"
+    layout: vertical, gap-6
+    children:
+      - chapter_1:
+          - title: "'웨딩촬영' (Fraunces 24px, coral-500)"
+          - photo_count_badge: "'8장' (coral-100 배경)"
+          - photo_grid:
+              - grid_cols: "md:2, sm:2, lg:3"
+              - each_photo:
+                  - thumbnail: "사진 이미지"
+                  - caption: "사진 아래 1~2줄"
+                  - checkbox: "is_selected 토글"
+                  - behavior_on_toggle:
+                      - checked: "opacity 100%"
+                      - unchecked: "opacity 50% (시각적 구분)"
+
+      - chapter_2:
+          - title: "'준비의 날들' (Fraunces 24px, lavender-500)"
+          - photo_count_badge: "'12장'"
+          - photo_grid: "(동일 구조)"
+
+      - chapter_3:
+          - title: "'그 날 — 본식' (Fraunces 24px, mint-500)"
+          - photo_count_badge: "'15장'"
+          - photo_grid: "(동일 구조)"
+
+      - chapter_4:
+          - title: "'첫 여행 — 신혼여행' (Fraunces 24px, mint-500)"
+          - photo_count_badge: "'10장'"
+          - photo_grid: "(동일 구조)"
+
+  - id: chapter_category_mapping
+    type: reference
+    mapping:
+      WEDDING_PHOTO: "웨딩촬영 (coral)"
+      STUDIO_DRESS_MAKEUP: "준비의 날들 (lavender)"
+      VENUE: "준비의 날들 (lavender)"
+      GIFT: "준비의 날들 (lavender)"
+      INVITATION: "준비의 날들 (lavender)"
+      REHEARSAL: "준비의 날들 (lavender)"
+      CEREMONY: "그 날 — 본식 (mint)"
+      HONEYMOON: "첫 여행 — 신혼여행 (mint)"
+      ETC: "기타 (gray)"
+
+  - id: cta_buttons
+    type: button_group
+    position: bottom
+    layout: horizontal
+    actions:
+      - button_edit: "'수정하기' (secondary)"
+        action: "toggle caption inline edit mode"
+        enabled: true
+
+      - button_order: "'앨범으로 만들기' (gold-500, emphasized)"
+        navigate_to: /order-checkout
+        enabled_when: "selected_photos >= 1"
+        size: "lg"
+
+user_flows:
+  - name: "타임라인 탐색"
+    steps:
+      - "진입 → 챕터별 사진 그리드 표시"
+      - "스크롤 → 다음 챕터 확인"
+      - "각 사진 아래 캡션 표시"
+
+  - name: "사진 선택/해제"
+    steps:
+      - "사진의 체크박스 클릭 → is_selected 토글"
+      - "선택: opacity 100%"
+      - "미선택: opacity 50% (회색)"
+      - "PATCH /api/photos/{photo_id}/is_selected"
+      - "총 선택 사진 수 및 예상 페이지 수 즉시 업데이트"
+
+  - name: "앨범 주문 진행"
+    steps:
+      - "모든 사진 확인 완료"
+      - "'앨범으로 만들기' 버튼 클릭"
+      - "/order-checkout으로 이동 (선택된 사진 전달)"
+
+edge_cases:
+  - condition: "전체 사진 0장"
+    behavior: "'아직 사진이 없습니다' 빈 상태 메시지, 캘린더 링크 제공"
+
+  - condition: "선택된 사진 0장"
+    behavior: "'선택된 사진이 없습니다. 최소 1장 이상 선택하세요' 경고"
+    button_state: "'앨범으로 만들기' 버튼 비활성화 (disabled, gray)"
+
+  - condition: "챕터 순서 변경 요청 (드래그)"
+    behavior: "드래그 핸들로 순서 변경 가능, 변경 후 저장 (선택)"
+
+design_tokens:
+  chapter_colors:
+    wedding: coral-500
+    preparation: lavender-500
+    ceremony: mint-500
+    honeymoon: mint-500
+
+  typography:
+    chapter_title:
+      font: Fraunces
+      weight: 600
+      size: 24px
+
+    caption:
+      font: Pretendard
+      weight: 400
+      size: 14px
+      line_height: 1.4
+      color: gray-700
+
+  spacing:
+    chapter_gap: gap-6
+    photo_gap: gap-4
+    padding: p-6
+
+tests:
+  - name: "타임라인 초기 로드"
+    when: "GET /timeline"
+    then:
+      - "모든 챕터 표시"
+      - "각 챕터별 사진 그리드 표시"
+      - "선택된 사진(is_selected=true) 표시"
+      - "미선택 사진은 opacity 50%"
+
+  - name: "사진 선택 토글"
+    when: "체크박스 클릭"
+    then:
+      - "is_selected 값 즉시 변경 (optimistic update)"
+      - "UI: opacity 변경"
+      - "PATCH /api/photos/{photo_id}/is_selected 백그라운드 실행"
+      - "예상 페이지 수 재계산 및 업데이트"
+
+  - name: "페이지 수 추정 계산"
+    when: "사진 선택/해제"
+    then:
+      - "formula: ceil(selected_photo_count / 2.5)"
+      - "45장 선택 시: ceil(45/2.5) = 18페이지"
+      - "타임라인 헤더에 '18페이지로 예상됩니다' 표시"
+
+  - name: "CTA 활성화"
+    when: "selected_photos >= 1"
+    then: "'앨범으로 만들기' 버튼 활성화 (gold-500)"
+
+  - name: "빈 타임라인"
+    when: "사진 0장"
+    then:
+      - "'아직 사진이 없습니다' 메시지"
+      - "'캘린더로 이동' 링크"
+      - "CTA 버튼 비활성화"
+

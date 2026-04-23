@@ -1,0 +1,264 @@
+# OrderCheckout — 4단계 주문 체크아웃 (판형, 표지, 배송정보)
+
+version: "2.0"
+
+screen:
+  name: 앨범 주문
+  route: /order-checkout
+  layout: stepper
+  level: Lv2
+  purpose: "타임라인에서 선택한 사진을 앨범으로 주문하는 4단계 프로세스"
+  design_reference: "reference/WeddingLog-handoff/weddinglog/project/components/OrderCheckout.jsx"
+
+data_requirements:
+  - resource: photos
+    needs: [id, file_path, is_selected]
+    filters: {couple_id: "?couple_id", is_selected: true}
+    purpose: "Step 1에서 선택된 사진 확인"
+
+  - resource: couples
+    needs: [id, groom_name, bride_name, wedding_date]
+    filters: {id: "?couple_id"}
+    purpose: "배송 정보의 기본값"
+
+derived_data:
+  - total_photos: "선택된 사진 총 개수"
+  - total_pages_estimated: "ceil(total_photos / 2.5)"
+  - price_total: "base_price * quantity + cover_premium * quantity"
+
+stepper:
+  total_steps: 4
+  progress_indicator: horizontal
+  steps:
+    - step_1: "앨범 확인"
+    - step_2: "옵션 선택"
+    - step_3: "배송 정보"
+    - step_4: "주문 완료"
+
+components:
+  - id: order_stepper
+    type: stepper
+    function: "4단계 진행도 표시"
+    layout:
+      - style: "horizontal on desktop, vertical on mobile"
+      - step_states: "[pending, current, completed]"
+      - current: "Step {N}"
+      - completed: "checkmark icon + grayed out"
+
+  - id: step_1_album_confirmation
+    type: form_section
+    step: 1
+    contents:
+      - title: "'앨범 구성 확인'"
+      - section: "total_info"
+        content:
+          - text: "'총 XX장의 사진 선택됨' (Pretendard 18px, bold)"
+          - text: "'예상 페이지: XX페이지' (gray-600)"
+      - section: "chapter_list"
+        layout: "각 챕터별 사진 개수"
+        content:
+          - checkbox: "챕터별 포함 여부 토글 (모두 기본 checked)"
+          - label: "'{ChapterName}' - {PhotoCount}장"
+      - button_next: "'다음' (coral-500, full-width)"
+
+  - id: step_2_option_selection
+    type: form_section
+    step: 2
+    contents:
+      - title: "'옵션 선택'"
+      - fieldgroup: "format_select"
+        label: "'판형'"
+        options:
+          - radio_square: "정사각형 (21×21cm) - 180,000원/권"
+            value: SQUARE
+            default: true
+          - radio_a4: "A4 (21×29.7cm) - 200,000원/권"
+            value: A4
+        on_change: "price_total 재계산"
+
+      - fieldgroup: "cover_select"
+        label: "'표지'"
+        options:
+          - radio_soft: "소프트커버 (기본)"
+            value: SOFT
+            price_premium: 0
+            default: true
+          - radio_hard: "하드커버 (+20,000원/권)"
+            value: HARD
+            price_premium: 20000
+        on_change: "price_total 재계산"
+
+      - fieldgroup: "quantity_select"
+        label: "'수량 (1~10권)'"
+        input: "number spinner or select dropdown"
+        value: "1"
+        min: 1
+        max: 10
+        on_change: "price_total 재계산"
+
+      - section: "price_summary"
+        layout: "left-align, larger fonts"
+        content:
+          - line_base: "1권 기본가: 180,000원 (or 200,000)"
+          - line_cover: "표지 추가: +20,000원 (if HARD)"
+          - line_total: "총 가격: 600,000원 (or calculated)"
+          - note: "'3권 주동 시 총 60만원입니다. 부모님께도 드릴 수 있네요!' (secondary color)"
+
+      - button_prev: "'이전' (gray, 50% width)"
+      - button_next: "'다음' (coral-500, 50% width)"
+
+  - id: step_3_shipping_info
+    type: form_section
+    step: 3
+    contents:
+      - title: "'배송 정보 입력'"
+      - fieldgroup: "recipient_name"
+        label: "'수령인'"
+        input: "text input, required, min 2자"
+        placeholder: "'홍길동'"
+        validation: "2자 이상"
+
+      - fieldgroup: "recipient_phone"
+        label: "'연락처 (휴대폰)'"
+        input: "tel input, required, format: 010-XXXX-XXXX"
+        placeholder: "'010-1234-5678'"
+        validation: "휴대폰 포맷 검증"
+        error: "'유효한 휴대폰 번호를 입력하세요'"
+
+      - fieldgroup: "recipient_address"
+        label: "'주소'"
+        input: "text input, required"
+        placeholder: "'서울시 강남구 테헤란로 123, 456호'"
+        validation: "필수"
+
+      - summary: "주문 요약 카드"
+        content:
+          - line: "판형: 정사각형"
+          - line: "표지: 하드커버"
+          - line: "수량: 3권"
+          - line: "총 가격: 600,000원"
+
+      - button_prev: "'이전' (gray, 50%)"
+      - button_next: "'주문하기' (coral-500, 50%)"
+
+  - id: step_4_order_complete
+    type: form_section
+    step: 4
+    contents:
+      - success_icon: "큰 체크마크 아이콘 (w-20 h-20, coral-500)"
+      - title: "'주문이 완료되었습니다!' (Fraunces 28px)"
+      - order_id_section:
+          - label: "'주문 ID'"
+          - value: "'ord_20261025_001' (monospace, selectable)"
+          - button_copy: "'복사' (outline)"
+          - action_copy: "클릭 → 클립보드에 복사 → 토스트 '복사되었습니다'"
+
+      - expected_delivery_date:
+          - label: "'예상 배송일'"
+          - value: "'주문일 + 14일' (예: 주문 2026-10-25 → 예상 배송 2026-11-08)"
+          - note: "(타이밍 UX: 페르소나 C의 결혼식+14일 내 수령 요구사항 충족)"
+
+      - quantity_specific_message:
+          - condition: "quantity == 1"
+          - text: "'1권도 충분합니다. 우리 둘만의 기록.' (secondary color, 감성적 톤)"
+
+      - order_summary:
+          - title: "'주문 요약'"
+          - lines:
+              - "판형: 정사각형 21×21cm"
+              - "표지: 하드커버"
+              - "수량: 3권"
+              - "선택 사진: 45장"
+              - "총 가격: 600,000원"
+
+      - button_orders_page: "'주문 관리 페이지로' (coral-500, full-width)"
+        action: "navigate to /orders"
+
+      - button_home: "'홈으로 돌아가기' (secondary)"
+        action: "navigate to /"
+
+navigation_buttons:
+  - button_prev: "'이전' (Step 2 이상)"
+    visibility: "step >= 2"
+    action: "step -= 1"
+
+  - button_next_or_submit: "Step 1-3: '다음' | Step 4: '주문하기'"
+    action: "next_step() or POST /api/couples/{couple_id}/orders"
+
+  - button_cancel: "'취소' (언제든 가능, confirm modal)"
+    action:
+      - modal: "주문을 취소하시겠습니까?"
+      - button_confirm: "'취소 확인' (red)"
+        action: "navigate to /timeline"
+      - button_keep: "'계속하기' (secondary)"
+        action: "close modal, stay on step"
+
+user_flows:
+  - name: "Step 1 → 4 순차 진행"
+    steps:
+      - "Step 1: 선택 사진 및 예상 페이지 확인 → '다음' 클릭"
+      - "Step 2: 판형/표지/수량 선택, 가격 즉시 업데이트 → '다음' 클릭"
+      - "Step 3: 배송 정보 입력, 폼 검증 → '주문하기' 클릭"
+      - "Step 4: 성공 메시지 + 주문 ID → '/orders' 또는 '/'로 이동"
+
+  - name: "가격 실시간 계산"
+    steps:
+      - "수량 변경 시 → formula: (base_price + cover_premium) * quantity 계산"
+      - "가격 요약 즉시 업데이트"
+
+  - name: "주문 생성 API 호출"
+    steps:
+      - "Step 4: '주문하기' 버튼 클릭"
+      - "POST /api/couples/{couple_id}/orders"
+      - "payload: {format, cover_type, quantity, chapters, recipient_name, recipient_phone, recipient_address}"
+      - "response: {order_id, status: 'pending', created_at}"
+
+edge_cases:
+  - condition: "사진 0장으로 진입"
+    behavior: "Step 1에서 '최소 1장 이상의 사진을 선택하세요' 경고, Step 1 폼 차단"
+
+  - condition: "수량 범위 1-10 벗어남 (예: 0 또는 11)"
+    behavior: "'수량은 1~10권 사이만 가능합니다' 검증 에러"
+
+  - condition: "수령인 정보 미입력"
+    behavior: "Step 3에서 빨간 테두리 + '필수 항목입니다' 에러 메시지"
+
+  - condition: "전화번호 포맷 오류"
+    behavior: "형식 검증 실패, '010-XXXX-XXXX 형식으로 입력하세요' 에러"
+
+  - condition: "Step 이탈 후 재진입"
+    behavior: "상태 유지 (Context 또는 LocalStorage), 마지막 step으로 복귀"
+
+tests:
+  - name: "Step 1 로드"
+    when: "GET /order-checkout"
+    then:
+      - "선택된 사진 총 개수 표시"
+      - "예상 페이지 수 표시 (ceil(count/2.5))"
+      - "각 챕터별 사진 개수 표시"
+      - "'다음' 버튼 활성화"
+
+  - name: "Step 2 가격 계산"
+    when: "수량을 1에서 3으로 변경"
+    then:
+      - "base_price: 180,000 (SQUARE)"
+      - "cover_premium: 0 (SOFT) → 20,000 (HARD)"
+      - "total = (180,000 + cover_premium) * 3"
+      - "가격 요약 즉시 업데이트"
+
+  - name: "Step 3 폼 검증"
+    when: "필수 필드 공백으로 '주문하기' 클릭"
+    then:
+      - "필수 필드에 빨간 테두리"
+      - "'필수 항목입니다' 에러 메시지"
+      - "제출 차단"
+
+  - name: "Step 4 주문 생성"
+    when: "Step 3 완료 후 '주문하기' 클릭"
+    then:
+      - "POST /api/couples/{couple_id}/orders 호출"
+      - "response: {order_id, status, created_at}"
+      - "order_id 표시 + 복사 버튼"
+      - "주문 요약 표시"
+      - "'주문 관리' 또는 '홈' 버튼 활성화"
+

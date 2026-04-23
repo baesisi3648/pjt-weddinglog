@@ -1,0 +1,165 @@
+version: "2.0"
+
+description: "WeddingLog Domain Resources - 4개 핵심 리소스 정의"
+
+resources:
+  couples:
+    description: "커플 프로필"
+    fields:
+      - id: UUID 자동 생성
+      - groom_name: string, 신랑 이름
+      - bride_name: string, 신부 이름
+      - wedding_date: date, 결혼 예정일 (D-day 기준점)
+      - profile_photo_path: string (nullable), 프로필 사진 경로
+      - tagline: string (nullable), 한 줄 소개
+      - created_at: timestamp, 생성일
+    derived:
+      - d_day: number, wedding_date 기준 D-day 계산 (음수=D이전, 양수=D이후)
+    mutations:
+      - create: 새 커플 프로필 생성
+      - update: 프로필 정보 수정 (이름, 사진, tagline)
+    relations:
+      events: one-to-many, 커플이 보유한 모든 일정
+      orders: one-to-many, 커플이 생성한 모든 주문
+    constraints:
+      groom_name: 2자 이상, 필수
+      bride_name: 2자 이상, 필수
+      wedding_date: 과거/미래 모두 가능
+
+  events:
+    description: "결혼 준비 일정"
+    fields:
+      - id: UUID 자동 생성
+      - couple_id: UUID, 커플 참조
+      - title: string, 일정 제목
+      - date: date, 일정 날짜
+      - category: enum, WEDDING_PHOTO|STUDIO_DRESS_MAKEUP|VENUE|GIFT|INVITATION|REHEARSAL|CEREMONY|HONEYMOON|ETC
+      - memo: text (nullable), 메모
+      - is_completed: boolean (default: false), 완료 여부
+      - is_ai_generated: boolean (default: false), AI 생성 여부
+      - created_at: timestamp
+      - updated_at: timestamp
+    filters:
+      - couple_id: 커플별 조회
+      - month: YYYY-MM 월별 조회
+      - category: 카테고리별 필터링
+      - is_completed: 완료/미완료 필터
+    mutations:
+      - create: 새 일정 생성
+      - update: 일정 정보 수정 (제목, 날짜, 카테고리, 메모)
+      - delete: 일정 삭제 (첨부 사진도 함께 삭제)
+      - toggle_complete: 완료 상태 토글
+    relations:
+      couple: many-to-one, 소속 커플
+      photos: one-to-many, 첨부 사진들
+    constraints:
+      category: enum 값만 허용, 필수
+      max_photos_per_event: 10장
+      memo: nullable, 길이 제한 없음
+
+  photos:
+    description: "일정 첨부 사진"
+    fields:
+      - id: UUID 자동 생성 (unguessable — secrets.token_urlsafe(16) 기반, 외부 노출 가능하지만 추측 불가)
+      - event_id: UUID, 일정 참조
+      - file_path: string, 파일 저장 경로 (/uploads/photos/{event_id}/photo_{id}.jpg)
+      - caption: string (nullable), 사진 캡션
+      - is_selected: boolean (default: true), 앨범 포함 여부
+      - sort_order: integer (default: 0), 정렬 순서
+      - created_at: timestamp
+    filters:
+      - event_id: 일정별 조회
+      - couple_id: 커플별 조회 (event 거쳐)
+      - is_selected: 선택됨/미선택 필터
+    queries:
+      - name: by_couple_recent
+        description: "커플의 최근 사진 N개 (Event join)"
+        endpoint_hint: "GET /api/couples/{couple_id}/photos?limit=N&sort=recent"
+        implementation_note: "SQLAlchemy joinedload(Event.photos)로 N+1 방지"
+      - name: by_couple_selected
+        description: "커플의 is_selected=true 사진 전체 (Timeline/Order용)"
+        endpoint_hint: "GET /api/couples/{couple_id}/timeline 또는 주문 생성 시 내부 사용"
+    mutations:
+      - upload: 새 사진 업로드
+      - delete: 사진 삭제
+      - update_caption: 캡션 수정
+      - toggle_selection: is_selected 토글
+    relations:
+      event: many-to-one, 소속 일정
+    constraints:
+      file_size: "최대 5MB"
+      file_type: "[image/jpeg, image/png]"
+      max_per_event: 10
+      caption: nullable, 길이 제한 없음
+      filename_format: "{event_id}/photo_{id}.{ext}"
+
+  orders:
+    description: "앨범 주문"
+    fields:
+      - id: UUID 자동 생성 (ord_YYYYMMDD_001 형식)
+      - couple_id: UUID, 커플 참조
+      - format: enum, SQUARE|A4
+      - cover_type: enum, HARD|SOFT
+      - quantity: integer, 주문 수량 (1-10)
+      - chapters: JSON, 포함 챕터 및 사진 ID 목록
+      - recipient_name: string, 수령인
+      - recipient_phone: string, 연락처
+      - recipient_address: string, 배송 주소
+      - status: enum (default: pending), pending|processing|completed
+      - created_at: timestamp
+      - updated_at: timestamp
+    derived:
+      - total_price: integer, 총 가격 (quantity * base_price + cover_surcharge)
+      - total_pages_estimated: integer, 예상 페이지 수 (사진 수 기반, ceil(photo_count / 2.5))
+      - base_price: integer, format별 기본가 (SQUARE=150000, A4=180000)
+      - cover_surcharge: integer, cover_type별 추가금 (HARD=20000, SOFT=0)
+    filters:
+      - couple_id: 커플별 조회
+      - status: 상태별 필터
+    mutations:
+      - create: 새 주문 생성
+      - update_status: 상태 변경 (pending→processing→completed, 역방향 불가)
+      - export_zip: 주문 데이터 ZIP 다운로드 (Lv3)
+    relations:
+      couple: many-to-one, 주문 커플
+    constraints:
+      format: enum 값만 허용, 필수
+      cover_type: enum 값만 허용, 필수
+      quantity: 1-10 범위, 필수
+      status_transition: "pending → processing → completed (일방향, 역전 불가)"
+      min_photos: 1개 이상 (빈 앨범 주문 차단)
+      status_values: "[pending, processing, completed]"
+
+  ai_services:
+  description: "AI 서비스 (OpenAI API 또는 폴백)"
+  operations:
+    - name: generate_checklist
+      description: "결혼 준비 체크리스트 자동 생성"
+      input:
+        wedding_date: date, 결혼 예정일
+        budget_level: string (optional), low|mid|high
+        prep_start: date (optional), 준비 시작 시점
+      output:
+        - type: Event[]
+        - count: 15개 항목
+        - is_ai_generated: true
+      fallback: "사전정의 15개 템플릿 반환 (D-180 ~ D+14)"
+
+    - name: generate_captions
+      description: "사진 캡션 AI 생성"
+      input:
+        photo_id: UUID
+        event_context:
+          category: enum
+          date: date
+          memo: string
+      output:
+        - type: string[]
+        - count: 3개 옵션
+        - length: 20-40자
+      fallback: "카테고리별 사전 캡션 3개 로테이션"
+      constraints:
+        - 1인칭(나) 또는 1복수(우리) 시점
+        - 감성적이고 긍정적 톤
+        - 결혼 의미 드러내기
+

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>WeddingLog — Detail & Timeline</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles-v2.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="components/EventDetail.jsx"></script>
+<script type="text/babel" src="components/Timeline.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState: useStateV2, useEffect: useEffectV2 } = React;
+
+const TWEAK_DEFAULTS_V2 = /*EDITMODE-BEGIN*/{
+  "accent": "gold",
+  "bookHue": "coral"
+}/*EDITMODE-END*/;
+
+const ACCENTS_V2 = {
+  coral:    { name: "Coral",    primary: "#E8967C", deep: "#D2795E" },
+  lavender: { name: "Lavender", primary: "#B7ABD4", deep: "#8B7CB0" },
+  mint:     { name: "Mint",     primary: "#9BC2AB", deep: "#6E9E82" },
+  gold:     { name: "Gold",     primary: "#D8B370", deep: "#A78441" },
+};
+
+function AppV2() {
+  const [tweaks, setTweaks] = useStateV2(TWEAK_DEFAULTS_V2);
+  const [editMode, setEditMode] = useStateV2(false);
+
+  useEffectV2(() => {
+    const onMsg = (e) => {
+      if (!e.data) return;
+      if (e.data.type === "__activate_edit_mode") setEditMode(true);
+      if (e.data.type === "__deactivate_edit_mode") setEditMode(false);
+    };
+    window.addEventListener("message", onMsg);
+    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  useEffectV2(() => {
+    const a = ACCENTS_V2[tweaks.accent] || ACCENTS_V2.coral;
+    document.documentElement.style.setProperty("--wl-coral",   a.primary);
+    document.documentElement.style.setProperty("--wl-coral-2", a.deep);
+  }, [tweaks]);
+
+  const setKey = (key, value) => {
+    const next = Object.assign({}, tweaks, { [key]: value });
+    setTweaks(next);
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, "*");
+  };
+
+  return (
+    <div className="wl-stage wl-stage-v2">
+      <div className="wl-stage-inner">
+        <header className="wl-stage-header">
+          <div className="wl-stage-brand">
+            <div className="wl-logo-mark">W<span className="wl-heart">♥</span></div>
+            <div className="wl-stage-brand-text">
+              <div className="wl-stage-brand-name">WeddingLog</div>
+              <div className="wl-stage-brand-kr">웨 딩 로 그</div>
+            </div>
+          </div>
+          <div className="wl-stage-meta">
+            <strong>Detail & Timeline</strong>
+            <div>Screen 03 · 04 — Desktop Web</div>
+          </div>
+        </header>
+
+        <h1 className="wl-stage-title">
+          기록하고, <em>묶어내고</em>,<br />
+          한 권이 되어가는 과정.
+        </h1>
+        <p className="wl-stage-sub">
+          일정 하나하나에 사진과 메모를 덧붙이면, 그 순간들이 자동으로 챕터로 묶여
+          한 권의 결혼앨범 미리보기가 됩니다.
+        </p>
+
+        <div className="wl-mockups" data-screen-label="Mockups v2">
+          <div className="wl-mockup" data-screen-label="03 Event Detail">
+            <div className="wl-mockup-label">
+              <span className="wl-mockup-label-num">03</span>
+              <span className="wl-mockup-label-text">Event Detail & Edit</span>
+              <span className="wl-mockup-label-sub">일정 상세 / 편집</span>
+            </div>
+            <EventDetail />
+          </div>
+
+          <div className="wl-mockup" data-screen-label="04 Timeline">
+            <div className="wl-mockup-label">
+              <span className="wl-mockup-label-num">04</span>
+              <span className="wl-mockup-label-text">Timeline · Book Preview</span>
+              <span className="wl-mockup-label-sub">타임라인 — 앨범 미리보기</span>
+            </div>
+            <TimelineScreen />
+          </div>
+        </div>
+
+        <footer className="wl-stage-footer">
+          <span>WeddingLog · v0.2 mockup</span>
+          <span>Fraunces · Pretendard · warm pastel system</span>
+        </footer>
+      </div>
+
+      {editMode && (
+        <div className="wl-tweaks">
+          <div className="wl-tweaks-title">Tweaks</div>
+          <div className="wl-tweaks-sub">Design adjustments</div>
+          <div className="wl-tweaks-row">
+            <label className="wl-tweaks-label">포인트 컬러</label>
+            <div className="wl-tweaks-opts">
+              {Object.entries(ACCENTS_V2).map(([k, v]) => (
+                <button
+                  key={k}
+                  className={`wl-tweaks-swatch ${tweaks.accent === k ? "is-active" : ""}`}
+                  onClick={() => setKey("accent", k)}
+                >
+                  <span className="sw" style={{ background: v.primary }} />
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<AppV2 />);
+</script>
+</body>
+</html>

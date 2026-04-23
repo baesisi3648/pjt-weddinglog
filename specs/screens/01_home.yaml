@@ -1,0 +1,182 @@
+# Home — 결혼 준비 한눈에, D-day 카운트다운, 다음 할 일 및 최근 사진
+
+version: "2.0"
+
+screen:
+  name: 홈
+  route: /
+  layout: single-column
+  level: Lv1
+  purpose: "결혼 준비 상황 한눈에 보기, 다음 단계 안내"
+  design_reference: "reference/WeddingLog-handoff/weddinglog/project/components/Home.jsx"
+
+data_requirements:
+  - resource: couples
+    needs: [id, groom_name, bride_name, wedding_date, profile_photo_path, tagline]
+    derived: [d_day, album_order_deadline_d_day]
+    filters: {id: "?couple_id"}
+    relation: primary
+
+  - resource: events
+    needs: [id, title, date, category, is_completed]
+    filters: {couple_id: "?couple_id", upcoming: true, limit: 3}
+    purpose: "이번주 할 일 위젯"
+
+  - resource: photos
+    needs: [id, file_path, caption]
+    filters: {couple_id: "?couple_id", limit: 6, sort: recent}
+    purpose: "최근 사진 6개"
+
+components:
+  - id: couple_profile_card
+    type: card
+    position: top
+    function: "커플 이름 + D-day 카운트다운 + 프로필 사진 + 2차 카운트다운(앨범 주문 추천)"
+    data_source: {resource: couples}
+    layout:
+      - section: profile_image
+        content: "원형 사진 또는 기본 아이콘"
+      - section: couple_name
+        content: "신랑 ♥ 신부 (Fraunces Bold 28px)"
+      - section: d_day_countdown
+        content: "크고 임팩트있는 숫자 (Fraunces 48px)"
+      - section: secondary_countdown
+        content: "앨범 주문 추천 카운트다운"
+        logic:
+          - condition: "wedding_date 미래 && wedding_date - 21일 <= 오늘 <= wedding_date"
+            display: "앨범 주문 추천: D-{wedding_date - 오늘}일"
+            color_scheme:
+              - "D-21~D-14: yellow-400 (경고)"
+              - "D-14 이하: red-500 (긴급)"
+          - condition: "wedding_date가 과거"
+            display: "D+{오늘 - wedding_date}일 · 앨범 주문 기한 만료"
+            color: "gray-400"
+          - condition: "그 외 (D-21 초과)"
+            display: "숨김"
+
+  - id: upcoming_tasks_widget
+    type: list
+    position: main
+    function: "다음 3개 일정 표시, 카테고리별 색상"
+    data_source: {resource: events, filter: upcoming}
+    layout:
+      - title: "이번 주 할 일"
+      - items: "최대 3개 일정, 각각 카테고리 배지 + 제목 + 날짜"
+      - empty_state: "진행 중인 일정이 없습니다"
+
+  - id: recent_photos_grid
+    type: grid
+    position: main
+    function: "최근 6장 썸네일 3x2 그리드"
+    data_source: {resource: photos, filter: recent, limit: 6}
+    layout:
+      - grid_cols: "3 cols on desktop, 2 on mobile"
+      - empty_state: "첫 사진을 올려보세요"
+      - action: "사진 보기" 링크 → /timeline
+
+  - id: cta_buttons
+    type: button_group
+    position: bottom
+    layout: horizontal
+    actions:
+      - id: nav_calendar
+        label: "캘린더로 이동"
+        variant: primary
+        navigate_to: /calendar
+        enabled: true
+
+      - id: nav_album
+        label: "앨범 주문하기"
+        variant: accent_cta
+        navigate_to: /timeline
+        enabled_when: "selected_photos >= 5"
+
+user_flows:
+  - name: "진입 시 현황 확인"
+    steps:
+      - "랜딩 → D-day 숫자 확인"
+      - "이번주 할 일 3개 확인"
+      - "최근 등록 사진 썸네일 확인"
+
+  - name: "앨범 주문 유도"
+    steps:
+      - "사진 충분히 쌓임 (5장+) → CTA 활성화"
+      - "사용자 클릭 → /timeline으로 이동"
+
+edge_cases:
+  - condition: "결혼일이 과거 (D+ 상태)"
+    behavior: "D-day는 D+N으로 표시, 축하 메시지 추가"
+
+  - condition: "사진 0장"
+    behavior: "최근 사진 위젯 대신 '첫 사진을 올려보세요' 빈 상태 표시"
+
+  - condition: "일정 0건"
+    behavior: "이번주 할 일 위젯 대신 '캘린더에서 일정을 추가하세요' 빈 상태"
+
+  - condition: "커플 프로필 미설정"
+    behavior: "더미 데이터 환경에서는 샘플 커플(김성우 ♥ 이은비) 자동 로드"
+
+design_tokens:
+  typography:
+    couple_name:
+      font: Fraunces
+      weight: 700
+      size: 28px
+      line_height: 1.2
+
+    d_day:
+      font: Fraunces
+      weight: 700
+      size: 48px
+      line_height: 1.0
+      color: primary (coral-500)
+
+    section_title:
+      font: Fraunces
+      weight: 600
+      size: 20px
+      color: primary (coral-500)
+
+    body:
+      font: Pretendard
+      weight: 400
+      size: 16px
+      line_height: 1.5
+
+  colors:
+    primary: coral-500
+    accent: gold-500
+    background: coral-50
+    text_primary: gray-900
+    text_secondary: gray-600
+
+  spacing:
+    card_padding: p-6
+    section_gap: gap-4
+    button_gap: gap-3
+
+  radius:
+    card: rounded-xl
+    button: rounded-lg
+
+tests:
+  - name: "더미 커플로 초기 로드"
+    when: "GET / 접속"
+    then:
+      - "커플 이름(신랑 ♥ 신부) 표시됨"
+      - "D-day 숫자 표시됨"
+      - "다음 일정 최대 3개 표시됨"
+      - "최근 사진 최대 6개 표시됨"
+
+  - name: "사진 충분 시 CTA 활성화"
+    when: "선택된 사진이 5장 이상"
+    then: "'앨범 주문하기' 버튼 활성화되고 gold-500 강조"
+
+  - name: "D+ 상태 표시"
+    when: "wedding_date가 과거"
+    then: "D-day 레이블이 'D+N' 형식으로 표시, 축하 메시지 포함"
+
+  - name: "사진 없을 때"
+    when: "photos.count == 0"
+    then: "최근 사진 영역 대신 '첫 사진을 올려보세요' 메시지 표시"
+

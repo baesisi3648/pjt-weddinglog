@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>WeddingLog — UI Mockup</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="components/Home.jsx"></script>
+<script type="text/babel" src="components/Calendar.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "coral",
+  "heroTone": "lavender"
+}/*EDITMODE-END*/;
+
+const ACCENTS = {
+  coral:    { name: "Coral",    primary: "#E8967C", deep: "#D2795E" },
+  lavender: { name: "Lavender", primary: "#B7ABD4", deep: "#8B7CB0" },
+  mint:     { name: "Mint",     primary: "#9BC2AB", deep: "#6E9E82" },
+  gold:     { name: "Gold",     primary: "#D8B370", deep: "#A78441" },
+};
+
+const HERO_TONES = {
+  peach:    "linear-gradient(180deg, #FBE7D7 0%, #F6ECE0 100%)",
+  lavender: "linear-gradient(180deg, #ECE4F4 0%, #F4EDF6 100%)",
+  mint:     "linear-gradient(180deg, #E4EFE8 0%, #F1F4EE 100%)",
+  cream:    "linear-gradient(180deg, #F7EEE0 0%, #F9F3E8 100%)",
+};
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (!e.data) return;
+      if (e.data.type === "__activate_edit_mode") setEditMode(true);
+      if (e.data.type === "__deactivate_edit_mode") setEditMode(false);
+    };
+    window.addEventListener("message", onMsg);
+    window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // Apply tweaks to CSS vars
+  useEffect(() => {
+    const a = ACCENTS[tweaks.accent] || ACCENTS.coral;
+    document.documentElement.style.setProperty("--wl-coral",   a.primary);
+    document.documentElement.style.setProperty("--wl-coral-2", a.deep);
+    // Hero bg
+    const tone = HERO_TONES[tweaks.heroTone] || HERO_TONES.peach;
+    const bg = document.querySelector(".wl-hero-bg");
+    if (bg) bg.style.background = tone;
+  }, [tweaks]);
+
+  const setKey = (key, value) => {
+    const next = { ...tweaks, [key]: value };
+    setTweaks(next);
+    window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: value } }, "*");
+  };
+
+  return (
+    <div className="wl-stage">
+      <div className="wl-stage-inner">
+        <header className="wl-stage-header">
+          <div className="wl-stage-brand">
+            <div className="wl-logo-mark">W<span className="wl-heart">♥</span></div>
+            <div className="wl-stage-brand-text">
+              <div className="wl-stage-brand-name">WeddingLog</div>
+              <div className="wl-stage-brand-kr">웨 딩 로 그</div>
+            </div>
+          </div>
+          <div className="wl-stage-meta">
+            <strong>UI Mockup</strong>
+            <div>Home · Calendar · Desktop 1440</div>
+          </div>
+        </header>
+
+        <h1 className="wl-stage-title">
+          두 사람의 결혼 준비,<br />
+          <em>한 권의 기록</em>으로.
+        </h1>
+        <p className="wl-stage-sub">
+          커플이 함께 쓰는 공유 캘린더에 준비 과정을 기록하고,
+          쌓인 순간들을 한 권의 결혼앨범으로 주문하는 감성 기록 서비스.
+        </p>
+
+        <div className="wl-mockups" data-screen-label="01 Main Mockups">
+          <div className="wl-mockup" data-screen-label="01 Home">
+            <div className="wl-mockup-label">
+              <span className="wl-mockup-label-num">01</span>
+              <span className="wl-mockup-label-text">Home</span>
+              <span className="wl-mockup-label-sub">메인 홈</span>
+            </div>
+            <div className="wl-phone">
+              <div className="wl-phone-inner">
+                <Home />
+              </div>
+            </div>
+          </div>
+
+          <div className="wl-mockup" data-screen-label="02 Calendar">
+            <div className="wl-mockup-label">
+              <span className="wl-mockup-label-num">02</span>
+              <span className="wl-mockup-label-text">Calendar</span>
+              <span className="wl-mockup-label-sub">월간 캘린더</span>
+            </div>
+            <div className="wl-phone">
+              <div className="wl-phone-inner">
+                <CalendarScreen />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer className="wl-stage-footer">
+          <span>WeddingLog · v0.1 mockup</span>
+          <span>Fraunces · Pretendard · warm pastel system</span>
+        </footer>
+      </div>
+
+      {editMode && (
+        <div className="wl-tweaks">
+          <div className="wl-tweaks-title">Tweaks</div>
+          <div className="wl-tweaks-sub">Design adjustments</div>
+
+          <div className="wl-tweaks-row">
+            <label className="wl-tweaks-label">포인트 컬러</label>
+            <div className="wl-tweaks-opts">
+              {Object.entries(ACCENTS).map(([k, v]) => (
+                <button
+                  key={k}
+                  className={`wl-tweaks-swatch ${tweaks.accent === k ? "is-active" : ""}`}
+                  onClick={() => setKey("accent", k)}
+                >
+                  <span className="sw" style={{ background: v.primary }} />
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="wl-tweaks-row">
+            <label className="wl-tweaks-label">히어로 배경 톤</label>
+            <div className="wl-tweaks-opts">
+              {[
+                ["peach", "Peach", "#F5D4BC"],
+                ["lavender", "Lavender", "#D9D2E8"],
+                ["mint", "Mint", "#C5DDCE"],
+                ["cream", "Cream", "#F3E8D6"],
+              ].map(([k, label, sw]) => (
+                <button
+                  key={k}
+                  className={`wl-tweaks-swatch ${tweaks.heroTone === k ? "is-active" : ""}`}
+                  onClick={() => setKey("heroTone", k)}
+                >
+                  <span className="sw" style={{ background: sw }} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

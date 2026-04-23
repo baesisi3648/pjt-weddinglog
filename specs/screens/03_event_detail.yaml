@@ -1,0 +1,182 @@
+# EventDetail — 사진 업로드, AI 캡션 생성, 일정 편집
+
+version: "2.0"
+
+screen:
+  name: 일정 상세
+  route: /events/:event_id
+  layout: single-column
+  level: Lv1
+  purpose: "특정 일정의 메모, 사진 업로드, AI 캡션 관리"
+  design_reference: "reference/WeddingLog-handoff/weddinglog/project/components/EventDetail.jsx"
+
+data_requirements:
+  - resource: events
+    needs: [id, couple_id, title, date, category, memo, is_completed, is_ai_generated]
+    filters: {event_id: "?event_id"}
+    mutations: [update]
+
+  - resource: photos
+    needs: [id, event_id, file_path, caption, is_selected, sort_order]
+    filters: {event_id: "?event_id"}
+    mutations: [upload, delete, update_caption, toggle_selection]
+
+  - resource: ai_services
+    operation: generate_captions
+    input: {photo_id, event_context: {category, date, memo}}
+    output: [captions: string[3]]
+
+components:
+  - id: event_header
+    type: header
+    function: "뒤로 가기, 제목, 날짜, 카테고리 배지, 편집/삭제"
+    layout:
+      - back_button: "← 뒤로"
+      - title: "일정 제목 (Fraunces 28px)"
+      - date: "YYYY.MM.DD (gray-600)"
+      - category_badge: "카테고리 컬러 배지"
+      - actions: "편집, 삭제 버튼"
+
+  - id: event_form
+    type: form
+    function: "일정 정보 편집"
+    fields:
+      - title: "text input, required, max 100자"
+      - date: "date picker, required"
+      - category: "select enum, required"
+      - memo: "textarea, nullable, max 500자, placeholder: '메모를 입력하세요...'"
+    layout: "collapsible (편집 버튼 클릭 시 펼침)"
+
+  - id: photo_upload_zone
+    type: drop_zone
+    function: "드래그 앤 드롭 또는 파일 선택으로 사진 업로드"
+    layout:
+      - border: "dashed, 2px gray-300"
+      - content:
+          - icon: "cloud icon (coral-300)"
+          - text: "사진을 여기로 드래그하세요 (16px)"
+          - link: "또는 클릭하여 선택"
+      - hidden_input: "type='file' accept='image/*' multiple"
+    validation:
+      - max_per_event: 10
+      - max_size_per_file: 5MB
+      - allowed_types: "[image/jpeg, image/png]"
+      - error_messages:
+          - "이 일정에는 최대 10장까지만 업로드 가능합니다"
+          - "파일이 너무 큽니다 (최대 5MB)"
+          - "지원하지 않는 이미지 형식입니다 (JPG, PNG만 가능)"
+
+  - id: upload_progress
+    type: progress_bar
+    function: "업로드 중 진행도 표시 (0-100%)"
+    visibility: "uploading == true"
+
+  - id: photo_grid
+    type: grid
+    function: "업로드된 사진 썸네일, 호버 시 삭제 버튼"
+    layout:
+      - grid_cols: "md:3, sm:2, lg:4"
+      - gap: "gap-4"
+      - each_photo:
+          - thumbnail: "사진 이미지"
+          - hover_overlay:
+              - delete_button: "X 버튼 (white, semi-transparent bg)"
+              - action: "DELETE /api/photos/{photo_id}"
+          - caption_input: "아래에 캡션 입력 필드"
+      - counter: "총 사진 개수 (예: '5/10')"
+
+  - id: caption_selector
+    type: section
+    function: "각 사진 아래 캡션 입력 + AI 추천"
+    layout:
+      - label: "캡션"
+      - input: "text input or textarea, placeholder: '캡션을 입력하세요...'"
+      - button: "'AI 캡션 추천' (lavender-500)"
+      - action_ai:
+          - on_click: "POST /api/ai/caption"
+          - show_options: "3개 라디오 버튼"
+          - fallback: "기본 템플릿 3개"
+      - button: "'적용' or auto-save on blur"
+
+  - id: action_buttons
+    type: button_group
+    position: bottom
+    layout: horizontal
+    actions:
+      - button_save: "'저장' (coral-500, full-width or 50%)"
+        action: "PUT /api/couples/{couple_id}/events/{event_id}"
+        includes: "[title, date, category, memo]"
+
+      - button_cancel: "'취소' (gray-200)"
+        action: "navigate back"
+
+user_flows:
+  - name: "사진 업로드 + 드래그앤드롭"
+    steps:
+      - "드롭존에 사진 드래그 → 자동 업로드"
+      - "또는 클릭으로 파일 선택 → 업로드"
+      - "토스트: '사진이 업로드되었습니다'"
+      - "썸네일 즉시 표시"
+
+  - name: "AI 캡션 요청 → 선택/수정 → 저장"
+    steps:
+      - "사진 아래 'AI 캡션 추천' 버튼 클릭"
+      - "로딩 스피너 표시 (1-3초)"
+      - "3개 캡션 옵션 표시 (라디오 버튼)"
+      - "하나 선택 또는 직접 입력"
+      - "'적용' 클릭 → 캡션 저장"
+      - "저장 버튼으로 일정 업데이트"
+
+  - name: "사진 삭제"
+    steps:
+      - "썸네일 호버 → X 버튼 표시"
+      - "클릭 → 확인 모달 (선택)"
+      - "DELETE /api/photos/{photo_id}"
+      - "그리드에서 즉시 제거"
+
+edge_cases:
+  - condition: "사진 10장 초과 시도"
+    behavior: "'최대 10장까지만 업로드 가능합니다' 경고, 업로드 차단"
+
+  - condition: "5MB 초과 파일"
+    behavior: "'파일이 너무 큽니다 (최대 5MB)' 경고, 해당 파일 스킵"
+
+  - condition: "JPG/PNG 아닌 포맷"
+    behavior: "'지원하지 않는 형식입니다' 경고, 해당 파일 스킵"
+
+  - condition: "AI 폴백 상황 (OpenAI API 실패)"
+    behavior: "3개 기본 템플릿 반환, '기본 템플릿을 사용 중입니다' 안내 메시지"
+
+  - condition: "사진 0장 상태에서 저장"
+    behavior: "경고 없음 (사진은 선택, 일정은 필수)"
+
+tests:
+  - name: "일정 로드"
+    when: "GET /events/:event_id"
+    then:
+      - "제목, 날짜, 카테고리 표시"
+      - "기존 사진 그리드 표시 (있으면)"
+      - "각 사진의 기존 캡션 표시 (있으면)"
+
+  - name: "사진 업로드"
+    when: "파일을 드롭존에 드래그"
+    then:
+      - "진행도 바 표시 (0-100%)"
+      - "POST /api/events/{event_id}/photos"
+      - "완료 후 썸네일 즉시 표시"
+      - "그리드 카운트 업데이트 (N/10)"
+
+  - name: "AI 캡션 생성"
+    when: "사진의 'AI 캡션 추천' 클릭"
+    then:
+      - "로딩 스피너 (코드: coral-500)"
+      - "POST /api/ai/caption with {photo_id, category, date, memo}"
+      - "3개 옵션 표시 (또는 기본 템플릿)"
+      - "라디오 버튼으로 선택 가능"
+
+  - name: "캡션 저장"
+    when: "라디오 선택 후 '적용' 클릭"
+    then:
+      - "PUT /api/photos/{photo_id}/caption"
+      - "입력 필드에 캡션 반영"
+

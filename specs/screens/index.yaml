@@ -1,0 +1,51 @@
+version: "2.0"
+
+description: "WeddingLog Screen Inventory - 6개 화면 목록 및 라우팅"
+
+screens:
+  - id: home
+    name: 홈
+    route: /
+    file: 01_home.yaml
+    level: Lv1
+    description: "결혼 준비 상황 한눈에, 다음 단계 안내"
+
+  - id: calendar
+    name: 캘린더
+    route: /calendar
+    file: 02_calendar.yaml
+    level: Lv1
+    description: "월간 캘린더 및 일정 관리 (CRUD)"
+
+  - id: event_detail
+    name: 일정 상세
+    route: /events/:event_id
+    file: 03_event_detail.yaml
+    level: Lv1
+    description: "사진 업로드, AI 캡션 생성"
+
+  - id: timeline
+    name: 타임라인
+    route: /timeline
+    file: 04_timeline.yaml
+    level: Lv1
+    description: "챕터별 사진 정렬, 앨범 미리보기"
+
+  - id: order_checkout
+    name: 앨범 주문
+    route: /order-checkout
+    file: 05_order_checkout.yaml
+    level: Lv2
+    description: "4단계 주문 체크아웃"
+
+  - id: orders
+    name: 주문 관리
+    route: /orders
+    file: 06_orders.yaml
+    level: "Lv2 + Lv3"
+    description: "주문 조회, 상태 관리, ZIP 익스포트"
+
+design_system:
+  tokens_file: ../shared/design-tokens.yaml
+  components_file: ../shared/components.yaml
+
