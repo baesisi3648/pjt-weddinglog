@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Handoff CSS — wl-* 클래스 (styles.css + styles-v2.css + styles-v3.css 병합) */
+@import './handoff.css';
+
 @layer base {
   body {
     font-family: 'Pretendard', sans-serif;

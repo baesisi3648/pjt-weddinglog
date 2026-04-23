@@ -24,8 +24,9 @@ describe('App', () => {
     // 렌더링이 에러 없이 완료되면 통과
   });
 
-  it('shows Home placeholder on "/" route', () => {
+  it('shows Home page on "/" route', () => {
     renderApp();
-    expect(screen.getByRole('heading', { name: /Home/i })).toBeInTheDocument();
+    // Home 핸드오프 포팅 후: weddinglog 로고 텍스트 확인
+    expect(screen.getByText('weddinglog')).toBeInTheDocument();
   });
 });

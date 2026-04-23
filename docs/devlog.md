@@ -71,6 +71,19 @@
 - **이슈**: backend-specialist가 자체적으로 `worktree/phase-1-couple` 브랜치를 만들어 커밋함. auto-orchestrate 표준 워크플로우이지만 사용자 규칙(Phase 끝 main 커밋)과 달라, 메인에서 `git merge --squash`로 단일 커밋으로 통합.
 - **배운 점**: 서브에이전트의 worktree 작업은 `merge --squash` + 메인에서 Phase 단위 커밋 구조가 "명시적 Phase 경계"와 궁합 잘 맞음. worktree 자체는 `.gitignore`로 제외.
 
+### 2026-04-23 18:40 — P1.5 완료: UI 스모크 포팅 (Council 리뷰 반영 핵심)
+- **도구**: frontend-specialist (메인 디렉토리 직접 작업, worktree 없이)
+- **결과**: 6 페이지 1,614줄 포팅 + handoff.css 통합 2,829줄. 37/37 테스트 통과.
+- **의의**: Council UX 리뷰어가 지적한 Blocker B4("핸드오프 JSX 6개 포팅 태스크 부재") 해결. 이 단계 없이 P2부터 바로 TDD로 갔으면 Phase 2-4 동안 "이미 있는 UI를 다시 쓰는" 낭비 발생했을 것.
+- **포팅 전략**:
+  - UMD `const { useState } = React;` → ES Module `import React, { useState } from 'react'`
+  - `useStateV3`, `useStateC` 같은 suffix 변수명 → 일반 이름으로 정리
+  - `postMessage` edit mode 로직 제거 (Claude Design UI 내 편집 모드는 프로덕션 불필요)
+  - 페이지 간 이동 `<a href>` / `onClick` → `<Link to>` / `useNavigate()`
+  - JSX 마크업·className·텍스트 전부 그대로 유지 (디자인 보존)
+  - 3개 CSS 파일(styles/styles-v2/styles-v3) 병합 우선순위 v3>v2>v1
+- **배운 점**: 디자인 핸드오프가 있을 때 **"포팅 Phase" 선행**이 TDD 대체재가 된다. 스모크 테스트는 "마운트 + 키워드 1개 존재"만으로 충분 (세부 인터랙션은 Phase 2-4에서 API 연동 시 추가). Relaxed TDD 정책이 정확히 들어맞음.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)
