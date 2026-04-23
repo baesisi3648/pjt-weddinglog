@@ -15,14 +15,48 @@ WeddingLog는 **면접관이 납득할 수 있는 기술 선택**을 우선으�
 | 영역 | 기술 | 버전 | 선택 이유 |
 |------|------|------|---------|
 | **백엔드** | FastAPI | 0.104+ | Python 자산, 빠른 API 개발, 자동 Swagger 문서 |
-| **프론트엔드** | React | 18+ | 포트폴리오 기술, 컴포넌트 재사용성, 풍부한 생태계 |
-| **빌드 도구** | Vite | 5+ | 초저속 핫 리로드, 최소 설정 |
+| **프론트엔드** | React + **TypeScript** | 18+ / 5.5+ | 컴포넌트 재사용성 + 타입 안전성(실서비스 전환 대비), 팀 협업 용이 |
+| **빌드 도구** | Vite | 5+ | 초저속 핫 리로드, TSX 기본 지원, 최소 설정 |
 | **스타일링** | Tailwind CSS | 3+ | 유틸리티 기반 빠른 스타일링, 디자인 토큰 일관성 |
 | **상태관리** | Context API | - | Lv1 규모에서 충분, 의존성 최소화 |
 | **데이터베이스** | SQLite | 3.40+ | 배포 간편, 외부 서버 불필요, 과제 규모 최적 |
 | **파일 저장** | 로컬 파일시스템 | - | Docker 볼륨으로 관리, 외부 의존 제거 |
 | **컨테이너화** | Docker Compose | 2.20+ | 과제 필수 요구사항, 재현성 보장 |
 | **AI** | OpenAI API | GPT-4o-mini | 비용 효율성, 폴백 전략 보유 |
+
+---
+
+## 프론트엔드 언어: TypeScript (v5.5)
+
+### 선택 이유 (P1.5 이후 전환)
+
+**핵심 1: 실서비스 전환 가능성**
+- 과제가 회사 실서비스로 이어질 수 있다는 판단 하에, 유지보수 수명이 길어질 것을 대비.
+- 스위트북은 포토북 인쇄 **API 회사** → 주문 데이터(`Order`, `Chapter`) 계약 정합성이 비즈니스 핵심. 런타임 에러를 컴파일 타임으로 당기는 가치가 크다.
+
+**핵심 2: 타입이 곧 계약**
+- `specs/domain/resources.yaml`의 리소스 정의를 `src/types/*.ts`로 1:1 미러링.
+- Pydantic 응답 스키마 ↔ TS 인터페이스 일치로 Backend-Frontend 드리프트 원천 차단.
+- 예: `DeadlineUrgency = 'normal' | 'warning' | 'urgent' | 'expired'` 리터럴 유니온으로 4 urgency 규칙을 타입 수준에서 강제.
+
+**핵심 3: Props 계약**
+- 각 컴포넌트의 Props를 인터페이스로 명시 → 리팩토링 시 변경 영향도 IDE가 즉시 드러냄.
+- Gemini/Claude Code 같은 AI 도구의 코드 생성 정확도도 올라감 (타입이 컨텍스트 보강).
+
+### 트레이드오프
+
+| 선택 | vs | 거절 이유 |
+|------|----|---------:|
+| **TypeScript 5.5** | 순수 JavaScript | 현재 20+ 컴포넌트·7 API 클라이언트 유지보수 시 타입 없는 상태는 회귀 위험 ↑, 채용 과제에서도 “왜 JS만?” 답변 약함 |
+| **TypeScript** | Flow | 생태계 축소, React 공식 예제·라이브러리 모두 TS 기본 |
+| **strict: true** | strict: false | any 남용 차단, 빈 옵션(strictNullChecks 등) 세분 제어보다 일괄 strict로 일관성 확보 |
+
+### 마이그레이션 노트
+
+- P0~P1.5 동안은 JSX로 빠르게 UI 확정 → P2 진입 전에 TSX로 일괄 이식.
+- 모든 .jsx/.js → .tsx/.ts 확장자 변환 + `tsconfig.json` strict 설정.
+- `src/types/` 폴더에 도메인 타입 중앙 집중 (couple, event, photo, ai, timeline, home).
+- 137개 테스트 모두 TSX로 이식 후 `tsc --noEmit` 0 errors.
 
 ---
 

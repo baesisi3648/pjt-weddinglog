@@ -139,6 +139,20 @@
 - **Lv1 MVP 시연 준비**: docker-compose up 시점에 10단계 E2E 플로우 모두 가능한 상태. 테스트 341개(backend 204 + frontend 137)가 통합적으로 증명.
 - **배운 점**: **집계/derived 필드는 반드시 서버가 결정**해서 응답에 포함시켜야 프론트-백엔드 드리프트를 막는다. urgency 같은 "비즈니스 룰 + 날짜 계산"을 프런트에서 계산하면 반드시 차이가 생긴다.
 
+### 2026-04-24 01:15 — TypeScript 마이그레이션 (전체 Frontend)
+- **도구**: frontend-specialist
+- **사용자 판단**: "회사 실서비스 전환 가능성을 고려하면 TS가 유리. 지금 전환"
+- **결과**: `.jsx`/`.js` 43개 → `.tsx`/`.ts` 52개(types/ 폴더 추가분). `tsc --noEmit` 0 errors. 기존 137 테스트 유지.
+- **진행**:
+  - tsconfig.json (strict, target ES2022, jsx react-jsx) + tsconfig.node.json
+  - `src/types/{couple,event,photo,ai,timeline,home,index}.ts` 중앙 타입 모음
+  - 각 컴포넌트 Props 인터페이스 명시 (React.FC 대신 함수 시그니처 직접 타입)
+  - services는 `api.get<Event[]>(...)` Generic 주입
+  - CoupleContext는 `CoupleContextValue` 인터페이스로 계약화
+- **이슈**: frontend-specialist가 `.jsx` 원본을 삭제하지 않고 `.tsx`를 추가만 해서 테스트가 274개(기존 137×2)로 중복 실행됨. 메인 세션에서 `find -delete`로 중복 제거 후 52 TS 파일만 남김.
+- **배운 점**: 마이그레이션 위임 시 "원본 파일 제거까지 AC에 포함"을 명시 필요. 한 단계 위에서 "add + remove"를 명시해야 모호성 제거. 또한 `find src \( -name '*.jsx' -o -name '*.js' \) -delete`가 안전 + 빠름.
+- **04-tech-stack.md 업데이트**: 프론트엔드 언어 섹션 신설, TS 선택 이유 3가지(실서비스 전환/타입=계약/Props 계약)와 트레이드오프 문서화. 면접 "왜 TS?" 답변 바로 준비됨.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)
