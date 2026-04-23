@@ -21,8 +21,8 @@ def test_seed_creates_sample_couple_when_empty(db_session: Session) -> None:
     assert len(couples) == 1
     sample = couples[0]
     assert sample.id == "cpl_sample_001"
-    assert sample.groom_name == "성우"
-    assert sample.bride_name == "은비"
+    assert sample.groom_name == "철수"
+    assert sample.bride_name == "영희"
 
 
 def test_seed_is_idempotent(db_session: Session) -> None:

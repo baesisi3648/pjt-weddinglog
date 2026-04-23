@@ -18,24 +18,24 @@ from app.services import couple_service
 class TestCoupleServiceCreate:
     def test_create_couple(self, db_session: Session) -> None:
         payload = CoupleCreate(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
-            tagline="성우 ♥ 은비",
+            tagline="철수 ♥ 영희",
         )
         couple = couple_service.create(db_session, payload)
 
         assert couple.id.startswith("cpl_")
-        assert couple.groom_name == "성우"
-        assert couple.bride_name == "은비"
+        assert couple.groom_name == "철수"
+        assert couple.bride_name == "영희"
         assert couple.wedding_date == date(2026, 10, 25)
-        assert couple.tagline == "성우 ♥ 은비"
+        assert couple.tagline == "철수 ♥ 영희"
 
 
 class TestCoupleServiceGet:
     def test_get_by_id_found(self, db_session: Session) -> None:
         payload = CoupleCreate(
-            groom_name="성우", bride_name="은비", wedding_date=date(2026, 10, 25)
+            groom_name="철수", bride_name="영희", wedding_date=date(2026, 10, 25)
         )
         created = couple_service.create(db_session, payload)
 
@@ -55,7 +55,7 @@ class TestCoupleServiceGet:
 class TestCoupleServiceUpdate:
     def test_update_partial(self, db_session: Session) -> None:
         payload = CoupleCreate(
-            groom_name="성우", bride_name="은비", wedding_date=date(2026, 10, 25)
+            groom_name="철수", bride_name="영희", wedding_date=date(2026, 10, 25)
         )
         created = couple_service.create(db_session, payload)
 
@@ -63,7 +63,7 @@ class TestCoupleServiceUpdate:
         updated = couple_service.update(db_session, created.id, update)
 
         assert updated.tagline == "새 태그라인"
-        assert updated.groom_name == "성우"  # 변경 없음
+        assert updated.groom_name == "철수"  # 변경 없음
 
     def test_update_not_found_raises_404(self, db_session: Session) -> None:
         with pytest.raises(HTTPException) as exc_info:

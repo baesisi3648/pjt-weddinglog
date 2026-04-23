@@ -30,8 +30,8 @@ def _seed_couple(db: Session, cid: str = "cpl_r_test") -> str:
         db.add(
             Couple(
                 id=cid,
-                groom_name="성우",
-                bride_name="은비",
+                groom_name="철수",
+                bride_name="영희",
                 wedding_date=date(2026, 10, 25),
             )
         )

@@ -33,10 +33,10 @@ def seed_initial_data(db: Session) -> None:
 
     sample = Couple(
         id=SAMPLE_COUPLE_ID,
-        groom_name="성우",
-        bride_name="은비",
+        groom_name="철수",
+        bride_name="영희",
         wedding_date=date(2026, 10, 25),
-        tagline="성우 ♥ 은비, 2026.10.25",
+        tagline="철수 ♥ 영희, 2026.10.25",
         profile_photo_path=None,
     )
     db.add(sample)

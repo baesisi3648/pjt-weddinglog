@@ -30,8 +30,8 @@ function pastDate(days: number): string {
 const MOCK_HOME = {
   couple: {
     id: 'cpl_001',
-    groom_name: '성우',
-    bride_name: '은비',
+    groom_name: '철수',
+    bride_name: '영희',
     wedding_date: futureDate(60),
     profile_photo_path: null,
     tagline: '우리만의 이야기',
@@ -78,8 +78,8 @@ describe('Home', () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME);
     renderHome();
     await waitFor(() => {
-      expect(screen.getByText(/성우/)).toBeInTheDocument();
-      expect(screen.getByText(/은비/)).toBeInTheDocument();
+      expect(screen.getByText(/철수/)).toBeInTheDocument();
+      expect(screen.getByText(/영희/)).toBeInTheDocument();
     });
   });
 
@@ -105,7 +105,7 @@ describe('Home', () => {
   it('urgency=normal → 2차 카운트다운 숨김', async () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME);
     renderHome();
-    await waitFor(() => screen.getByText(/성우/));
+    await waitFor(() => screen.getByText(/철수/));
     expect(screen.queryByText(/앨범 주문 추천/)).not.toBeInTheDocument();
   });
 

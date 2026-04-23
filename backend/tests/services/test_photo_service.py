@@ -61,8 +61,8 @@ def _upload_file(content: bytes, content_type: str, name: str) -> UploadFile:
 def _make_event(db: Session, suffix: str) -> Event:
     couple = Couple(
         id=f"cpl_{suffix}",
-        groom_name="성우",
-        bride_name="은비",
+        groom_name="철수",
+        bride_name="영희",
         wedding_date=date(2026, 10, 25),
     )
     db.add(couple)

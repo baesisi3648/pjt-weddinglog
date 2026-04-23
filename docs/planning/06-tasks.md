@@ -482,12 +482,12 @@
 
 **TDD 순서**:
 - RED: `tests/test_seed.py` — DB에 couples 테이블 1행 확인
-- GREEN: `backend/app/seed.py` (성우♥은비, wedding_date=2026-10-25)
+- GREEN: `backend/app/seed.py` (철수♥영희, wedding_date=2026-10-25)
 - REFACTOR: 멱등성 보장 (중복 실행해도 안전)
 
 **Acceptance Criteria**:
 - [ ] `backend/app/seed.py` 생성
-- [ ] 커플 1개 (성우, 은비, 2026-10-25) 자동 삽입
+- [ ] 커플 1개 (철수, 영희, 2026-10-25) 자동 삽입
 - [ ] main.py 초기화 단계에서 seed 실행 (init_db() 후)
 - [ ] 중복 시딩 방지 (exists check)
 - [ ] pytest 검증 통과
@@ -1364,7 +1364,7 @@
 1. [ ] docker-compose up (data/ 디렉토리 삭제 후 클린 상태)
    - Backend 기동 30초 이내
    - Frontend 기동 30초 이내
-   - 더미 커플 자동 시딩 (성우♥은비)
+   - 더미 커플 자동 시딩 (철수♥영희)
    
 2. [ ] Home 페이지 진입 (http://localhost:3000)
    - CoupleProfileCard 표시 (이름, D-day)
@@ -2020,7 +2020,7 @@
 - REFACTOR: 멱등성 보장
 
 **Acceptance Criteria**:
-- [ ] 커플 1개 (성우♥은비, wedding_date=2026-10-25)
+- [ ] 커플 1개 (철수♥영희, wedding_date=2026-10-25)
 - [ ] 10-15개 사전 등록 일정 (AI 체크리스트 스타일)
 - [ ] 각 일정 3-5개 더미 사진 (Unsplash API 또는 로컬 placeholder)
 - [ ] 각 사진 캡션 (사전정의 또는 AI 생성)

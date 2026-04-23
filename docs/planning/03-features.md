@@ -31,17 +31,17 @@
 | bride_name | string | Y | 신부 이름 |
 | wedding_date | date | Y | 결혼 예정일 (D-day 기준점) |
 | profile_photo | file | N | 커플 프로필 사진 (선택) |
-| tagline | string | N | 한 줄 소개 (예: "성우 ♥ 은비, 2025.10.25") |
+| tagline | string | N | 한 줄 소개 (예: "철수 ♥ 영희, 2025.10.25") |
 
 **출력**:
 ```json
 {
   "id": "couple_001",
-  "groom_name": "김성우",
-  "bride_name": "이은비",
+  "groom_name": "김철수",
+  "bride_name": "이영희",
   "wedding_date": "2026-10-25",
   "profile_photo_url": "/uploads/profile_001.jpg",
-  "tagline": "성우 ♥ 은비, 2026.10.25",
+  "tagline": "철수 ♥ 영희, 2026.10.25",
   "d_day_countdown": 187,
   "created_at": "2026-04-23T10:00:00Z"
 }
@@ -312,8 +312,8 @@ GET /api/couples/{couple_id}/timeline
 ```json
 {
   "couple": {
-    "groom": "김성우",
-    "bride": "이은비",
+    "groom": "김철수",
+    "bride": "이영희",
     "wedding_date": "2026-10-25"
   },
   "chapters": [
@@ -586,8 +586,8 @@ GET /api/orders/{order_id}
 {
   "id": "ord_20261025_001",
   "couple": {
-    "groom": "김성우",
-    "bride": "이은비"
+    "groom": "김철수",
+    "bride": "이영희"
   },
   "format": "SQUARE",
   "cover_type": "HARD",
@@ -682,8 +682,8 @@ order_20261025_001.zip
 {
   "order_id": "ord_20261025_001",
   "couple": {
-    "groom": "김성우",
-    "bride": "이은비",
+    "groom": "김철수",
+    "bride": "이영희",
     "wedding_date": "2026-10-25"
   },
   "format": "SQUARE",

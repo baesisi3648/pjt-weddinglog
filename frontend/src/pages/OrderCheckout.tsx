@@ -54,7 +54,7 @@ export default function OrderCheckout() {
         <div className="wl-page-crumbs">
           <span>앨범 주문</span>
           <span className="wl-crumb-sep">·</span>
-          <span>성우 &amp; 은비의 기록</span>
+          <span>철수 &amp; 영희의 기록</span>
         </div>
         <div className="wl-page-actions">
           <button className="wl-btn wl-btn-ghost">임시 저장</button>
@@ -249,14 +249,14 @@ export default function OrderCheckout() {
         <aside className="wl-order-summary">
           <div className="wl-sum-card">
             <div className="wl-sum-eyebrow">Order summary</div>
-            <h3 className="wl-sum-title serif">성우 &amp; 은비의 기록</h3>
+            <h3 className="wl-sum-title serif">철수 &amp; 영희의 기록</h3>
 
             <div className="wl-sum-book-preview">
               <div className={`wl-sum-book ${format === 'a4' ? 'is-a4' : ''} ${cover === 'soft' ? 'is-soft' : ''}`}>
                 <div className="wl-sum-book-spine" />
                 <div className="wl-sum-book-cover">
                   <div className="wl-sum-book-eyebrow">A WEDDING LOG</div>
-                  <div className="wl-sum-book-title serif">성우<br/>&amp;<br/>은비</div>
+                  <div className="wl-sum-book-title serif">철수<br/>&amp;<br/>영희</div>
                   <div className="wl-sum-book-line" />
                   <div className="wl-sum-book-date serif">MMXXV</div>
                 </div>

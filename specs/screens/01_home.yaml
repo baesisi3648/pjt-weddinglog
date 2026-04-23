@@ -114,7 +114,7 @@ edge_cases:
     behavior: "이번주 할 일 위젯 대신 '캘린더에서 일정을 추가하세요' 빈 상태"
 
   - condition: "커플 프로필 미설정"
-    behavior: "더미 데이터 환경에서는 샘플 커플(김성우 ♥ 이은비) 자동 로드"
+    behavior: "더미 데이터 환경에서는 샘플 커플(김철수 ♥ 이영희) 자동 로드"
 
 design_tokens:
   typography:

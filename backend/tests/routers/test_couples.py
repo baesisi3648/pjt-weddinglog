@@ -19,16 +19,16 @@ def test_get_couple_not_found_returns_404(client: TestClient) -> None:
 
 def test_create_couple_then_get(client: TestClient) -> None:
     payload = {
-        "groom_name": "성우",
-        "bride_name": "은비",
+        "groom_name": "철수",
+        "bride_name": "영희",
         "wedding_date": "2026-10-25",
-        "tagline": "성우 ♥ 은비",
+        "tagline": "철수 ♥ 영희",
     }
     create_resp = client.post("/api/couples/", json=payload)
     assert create_resp.status_code in (200, 201)
     created = create_resp.json()
     assert created["id"].startswith("cpl_")
-    assert created["groom_name"] == "성우"
+    assert created["groom_name"] == "철수"
     assert "d_day" in created
     assert isinstance(created["d_day"], int)
 
@@ -37,8 +37,8 @@ def test_create_couple_then_get(client: TestClient) -> None:
     assert get_resp.status_code == 200
     fetched = get_resp.json()
     assert fetched["id"] == created["id"]
-    assert fetched["groom_name"] == "성우"
-    assert fetched["tagline"] == "성우 ♥ 은비"
+    assert fetched["groom_name"] == "철수"
+    assert fetched["tagline"] == "철수 ♥ 영희"
     assert "d_day" in fetched
 
 
@@ -47,8 +47,8 @@ def test_update_couple_tagline(client: TestClient) -> None:
     create_resp = client.post(
         "/api/couples/",
         json={
-            "groom_name": "성우",
-            "bride_name": "은비",
+            "groom_name": "철수",
+            "bride_name": "영희",
             "wedding_date": "2026-10-25",
         },
     )
@@ -63,7 +63,7 @@ def test_update_couple_tagline(client: TestClient) -> None:
     assert update_resp.status_code == 200
     updated = update_resp.json()
     assert updated["tagline"] == "새로운 태그라인"
-    assert updated["groom_name"] == "성우"
+    assert updated["groom_name"] == "철수"
 
 
 def test_update_not_found_returns_404(client: TestClient) -> None:
@@ -80,7 +80,7 @@ def test_create_rejects_short_groom_name(client: TestClient) -> None:
         "/api/couples/",
         json={
             "groom_name": "성",
-            "bride_name": "은비",
+            "bride_name": "영희",
             "wedding_date": "2026-10-25",
         },
     )
@@ -91,7 +91,7 @@ def test_create_rejects_short_bride_name(client: TestClient) -> None:
     response = client.post(
         "/api/couples/",
         json={
-            "groom_name": "성우",
+            "groom_name": "철수",
             "bride_name": "은",
             "wedding_date": "2026-10-25",
         },

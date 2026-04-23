@@ -32,8 +32,8 @@ def _seed_couple(
     if existing is None:
         c = Couple(
             id=cid,
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=wedding,
         )
         db.add(c)

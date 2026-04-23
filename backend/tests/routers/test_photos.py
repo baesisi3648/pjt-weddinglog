@@ -55,8 +55,8 @@ def _seed_event(db: Session, suffix: str) -> str:
     db.add(
         Couple(
             id=couple_id,
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
         )
     )

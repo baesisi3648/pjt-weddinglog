@@ -20,8 +20,8 @@ class TestCoupleModel:
     def test_id_auto_generates_with_cpl_prefix(self, db_session: Session) -> None:
         """id 는 'cpl_' 접두 + 랜덤 토큰으로 자동 생성된다."""
         couple = Couple(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
         )
         db_session.add(couple)
@@ -34,7 +34,7 @@ class TestCoupleModel:
     def test_ids_are_unique(self, db_session: Session) -> None:
         """자동 생성되는 id 는 인스턴스마다 달라야 한다."""
         c1 = Couple(
-            groom_name="성우", bride_name="은비", wedding_date=date(2026, 10, 25)
+            groom_name="철수", bride_name="영희", wedding_date=date(2026, 10, 25)
         )
         c2 = Couple(
             groom_name="철수", bride_name="영희", wedding_date=date(2026, 11, 11)
@@ -48,8 +48,8 @@ class TestCoupleModel:
         """created_at 은 기본값으로 현재 시각이 들어간다."""
         before = datetime.utcnow() - timedelta(seconds=1)
         couple = Couple(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
         )
         db_session.add(couple)
@@ -61,8 +61,8 @@ class TestCoupleModel:
     def test_optional_fields_default_none(self, db_session: Session) -> None:
         """profile_photo_path, tagline 은 기본 None."""
         couple = Couple(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
         )
         db_session.add(couple)
@@ -75,13 +75,13 @@ class TestCoupleModel:
 class TestCoupleCreateSchema:
     def test_valid_payload(self) -> None:
         payload = CoupleCreate(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
             tagline="사랑해",
         )
-        assert payload.groom_name == "성우"
-        assert payload.bride_name == "은비"
+        assert payload.groom_name == "철수"
+        assert payload.bride_name == "영희"
         assert payload.tagline == "사랑해"
 
     def test_groom_name_min_length_rejected(self) -> None:
@@ -89,7 +89,7 @@ class TestCoupleCreateSchema:
         with pytest.raises(ValidationError):
             CoupleCreate(
                 groom_name="성",
-                bride_name="은비",
+                bride_name="영희",
                 wedding_date=date(2026, 10, 25),
             )
 
@@ -97,7 +97,7 @@ class TestCoupleCreateSchema:
         """bride_name 1자 이하는 거부되어야 한다."""
         with pytest.raises(ValidationError):
             CoupleCreate(
-                groom_name="성우",
+                groom_name="철수",
                 bride_name="은",
                 wedding_date=date(2026, 10, 25),
             )
@@ -106,7 +106,7 @@ class TestCoupleCreateSchema:
         with pytest.raises(ValidationError):
             CoupleCreate(
                 groom_name="",
-                bride_name="은비",
+                bride_name="영희",
                 wedding_date=date(2026, 10, 25),
             )
 
@@ -133,25 +133,25 @@ class TestCoupleResponseSchema:
     def test_response_from_attributes(self, db_session: Session) -> None:
         """ORM 객체에서 from_attributes 로 생성 가능해야 한다."""
         couple = Couple(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
-            tagline="성우 ♥ 은비",
+            tagline="철수 ♥ 영희",
         )
         db_session.add(couple)
         db_session.flush()
 
         response = CoupleResponse.model_validate(couple)
         assert response.id == couple.id
-        assert response.groom_name == "성우"
+        assert response.groom_name == "철수"
         assert response.wedding_date == date(2026, 10, 25)
         assert response.created_at is not None
 
     def test_response_contains_d_day_field(self, db_session: Session) -> None:
         """응답 스키마에 d_day 필드가 있어야 한다 (derived)."""
         couple = Couple(
-            groom_name="성우",
-            bride_name="은비",
+            groom_name="철수",
+            bride_name="영희",
             wedding_date=date(2026, 10, 25),
         )
         db_session.add(couple)

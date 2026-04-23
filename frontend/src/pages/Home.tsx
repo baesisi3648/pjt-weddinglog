@@ -224,7 +224,7 @@ export default function Home() {
           <div className="wl-hero">
             <div className="wl-hero-bg" />
             <div className="wl-hero-inner">
-              <div className="wl-couple-name">성우 <span className="wl-hrt-inline">♥</span> 은비</div>
+              <div className="wl-couple-name">철수 <span className="wl-hrt-inline">♥</span> 영희</div>
               <div className="wl-dday"><span className="wl-dday-label">결혼까지</span><span className="wl-dday-num">D-?</span></div>
             </div>
           </div>

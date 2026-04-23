@@ -127,7 +127,7 @@ export default function Timeline() {
               <div className="wl-book-big-cover">
                 <div className="wl-book-big-eyebrow">A WEDDING LOG</div>
                 <div className="wl-book-big-title serif">
-                  성우<br /><span className="wl-book-big-amp">&amp;</span><br />은비
+                  철수<br /><span className="wl-book-big-amp">&amp;</span><br />영희
                 </div>
                 <div className="wl-book-big-line" />
                 <div className="wl-book-big-date serif">MMXXV</div>

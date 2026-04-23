@@ -29,8 +29,8 @@ from app.schemas.photo import PhotoCaptionUpdate, PhotoResponse
 def _make_event(db: Session, suffix: str = "photo") -> Event:
     couple = Couple(
         id=f"cpl_{suffix}",
-        groom_name="성우",
-        bride_name="은비",
+        groom_name="철수",
+        bride_name="영희",
         wedding_date=date(2026, 10, 25),
     )
     db.add(couple)

@@ -31,8 +31,8 @@ from app.services import event_service
 def _make_couple(db: Session, cid: str) -> Couple:
     couple = Couple(
         id=cid,
-        groom_name="성우",
-        bride_name="은비",
+        groom_name="철수",
+        bride_name="영희",
         wedding_date=date(2026, 10, 25),
     )
     db.add(couple)

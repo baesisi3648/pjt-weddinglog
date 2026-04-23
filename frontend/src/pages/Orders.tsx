@@ -58,7 +58,7 @@ const DUMMY_ORDERS: Order[] = [
       { name: '첫 여행', count: 10 },
     ],
     shipping: {
-      recipient: '김성우',
+      recipient: '김철수',
       phone: '010-1234-****',
       addr: '서울 성동구 성수이로 22, 404호 (04783)',
     },

@@ -8,8 +8,8 @@ import type { DeadlineUrgency } from '../types';
 
 const BASE_COUPLE: Couple = {
   id: 'cpl_001',
-  groom_name: '성우',
-  bride_name: '은비',
+  groom_name: '철수',
+  bride_name: '영희',
   wedding_date: null,
   profile_photo_path: null,
   tagline: '우리만의 이야기',
@@ -31,8 +31,8 @@ describe('CoupleProfileCard', () => {
   it('커플 이름이 렌더링된다', () => {
     const couple = { ...BASE_COUPLE, wedding_date: futureDate(60) };
     render(<CoupleProfileCard couple={couple} album_order_deadline={{ days_remaining: 60, urgency: 'normal' as DeadlineUrgency }} />);
-    expect(screen.getByText(/성우/)).toBeInTheDocument();
-    expect(screen.getByText(/은비/)).toBeInTheDocument();
+    expect(screen.getByText(/철수/)).toBeInTheDocument();
+    expect(screen.getByText(/영희/)).toBeInTheDocument();
   });
 
   it('주 D-day 카운트다운이 표시된다', () => {
