@@ -14,11 +14,15 @@ from __future__ import annotations
 
 import secrets
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:  # pragma: no cover
+    from app.models.event import Event
 
 
 def _generate_couple_id() -> str:
@@ -51,6 +55,13 @@ class Couple(Base):
     tagline: Mapped[str | None] = mapped_column(String(200), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    # 관계: Couple 삭제 시 관련 Event 도 ORM cascade 로 함께 삭제.
+    events: Mapped[list["Event"]] = relationship(
+        back_populates="couple",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     def __repr__(self) -> str:  # pragma: no cover

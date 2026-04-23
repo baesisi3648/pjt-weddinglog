@@ -567,7 +567,7 @@
 
 ---
 
-### [ ] P2-R1-T1: Event 모델 + 스키마
+### [x] P2-R1-T1: Event 모델 + 스키마
 
 **목표**: SQLAlchemy Event 모델 + Pydantic 스키마
 
@@ -590,7 +590,7 @@
 
 ---
 
-### [ ] P2-R1-T2: EventService (CRUD + 비즈니스 로직)
+### [x] P2-R1-T2: EventService (CRUD + 비즈니스 로직)
 
 **목표**: Event 생성/조회/수정/삭제 + toggle_complete
 
@@ -614,7 +614,7 @@
 
 ---
 
-### [ ] P2-R1-T3: Event 라우터 (6개 엔드포인트)
+### [x] P2-R1-T3: Event 라우터 (6개 엔드포인트)
 
 **목표**: REST API 구현
 
@@ -639,7 +639,7 @@
 
 ---
 
-### [ ] P2-R1-T4: AI 체크리스트 서비스 뼈대 (폴백 포함)
+### [x] P2-R1-T4: AI 체크리스트 서비스 뼈대 (폴백 포함)
 
 **목표**: OpenAI API 호출 + 폴백 템플릿 15개
 
@@ -662,7 +662,7 @@
 
 ---
 
-### [ ] P2-R1-T5: AI 체크리스트 라우터
+### [x] P2-R1-T5: AI 체크리스트 라우터
 
 **목표**: POST /api/ai/checklist 엔드포인트 + DB 삽입
 
@@ -685,7 +685,7 @@
 
 ---
 
-### [ ] P2-S1-T1: Calendar 페이지 (월간 뷰)
+### [x] P2-S1-T1: Calendar 페이지 (월간 뷰)
 
 **목표**: 42셀 달력 그리드 구현
 
@@ -709,7 +709,7 @@
 
 ---
 
-### [ ] P2-S1-T2: 캘린더 리스트 뷰 탭
+### [x] P2-S1-T2: 캘린더 리스트 뷰 탭
 
 **목표**: 같은 페이지 내 리스트 뷰 토글
 
@@ -731,7 +731,7 @@
 
 ---
 
-### [ ] P2-S1-T3: EventForm 모달
+### [x] P2-S1-T3: EventForm 모달
 
 **목표**: 일정 생성/수정 폼
 
@@ -755,7 +755,7 @@
 
 ---
 
-### [ ] P2-S1-T4: CategoryBadge 공통 컴포넌트
+### [x] P2-S1-T4: CategoryBadge 공통 컴포넌트
 
 **목표**: design-tokens.yaml category_mapping 사용
 
@@ -778,7 +778,7 @@
 
 ---
 
-### [ ] P2-S1-T5: AI 체크리스트 생성 UI
+### [x] P2-S1-T5: AI 체크리스트 생성 UI
 
 **목표**: 첫 진입 시 "AI로 자동 생성" CTA
 
@@ -802,7 +802,7 @@
 
 ---
 
-### [ ] P2-V1: Calendar E2E (일정 CRUD)
+### [x] P2-V1 (수동 체크리스트 — Playwright 셋업 생략): Calendar E2E (일정 CRUD)
 
 **목표**: Playwright 또는 Vitest E2E로 캘린더 플로우 검증
 

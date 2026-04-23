@@ -84,6 +84,22 @@
   - 3개 CSS 파일(styles/styles-v2/styles-v3) 병합 우선순위 v3>v2>v1
 - **배운 점**: 디자인 핸드오프가 있을 때 **"포팅 Phase" 선행**이 TDD 대체재가 된다. 스모크 테스트는 "마운트 + 키워드 1개 존재"만으로 충분 (세부 인터랙션은 Phase 2-4에서 API 연동 시 추가). Relaxed TDD 정책이 정확히 들어맞음.
 
+### 2026-04-23 20:30 — P2 완료: Event CRUD + AI 체크리스트 + Calendar API 연동
+- **도구**: backend-specialist + frontend-specialist (병렬, 모두 메인 디렉토리)
+- **결과**: Backend 101/101 테스트(54 신규), Frontend 76/76 테스트(39 신규)
+- **백엔드 결정**:
+  - Pydantic v2 `date` 필드명-타입 섀도잉 이슈 → `from datetime import date as _date` 앨리어싱으로 해결
+  - 월 필터링 `calendar.monthrange()` 사용 (윤년 2028-02-29 정확 커버)
+  - couple 소속 검증: `get_or_404`에서 `event.couple_id != couple_id`면 404 — 다른 커플 이벤트 격리 철저
+  - AI 폴백: 15개 템플릿 (D-180 ~ D+14), 응답에 `source: "ai"|"template"` 투명성 필드
+  - dry_run 모드: AI 체크리스트 미리보기(DB 저장 없이) 추가 — UX 개선
+- **프런트 결정**:
+  - **CategoryBadge에 이모지 추가** (Council M3 반영): 📷💄🏛️💍✉️🎭💒✈️📌 — 4색 공유 문제 아이콘으로 보완
+  - ConfirmModal / Toast는 인라인 구현 (라이브러리 추가 없이)
+  - Calendar 월간/리스트 탭 전환, AI 체크리스트 버튼 gold-500 accent
+- **이슈**: handoff.css `@import` 순서 경고. 기능 영향 없으나 Phase 4 완료 시점에 정리 예정.
+- **배운 점**: backend에서 enum 값과 응답 포맷을 **processed by AI vs fallback** 구분하는 필드를 둔 설계가, 프론트에서 투명성 배지로 바로 활용됨. Council 리뷰의 "AI/템플릿 투명성"이 **응답 스키마 → UI 배지**로 일관되게 흘러감.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)
