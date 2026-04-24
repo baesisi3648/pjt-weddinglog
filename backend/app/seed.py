@@ -487,6 +487,54 @@ SEED_EVENTS: list[tuple[int, str, str, str, list[str], list[str]]] = [
             "산토리니 — 언젠가 꼭 다시",
         ],
     ),
+    # ── 결혼 후: 양가 인사 · 앨범 수령 · 기념일 ───────────────────
+    (
+        20,
+        "양가 부모님 첫 방문",
+        "ETC",
+        "신혼여행 다녀왔다고 인사드리기",
+        ["94_couple_anniversary.jpg", "89_couple_hands.jpg"],
+        [
+            "부모님께 직접 인사드리는 첫날",
+            "우리 둘, 이제 한 가족으로",
+        ],
+    ),
+    (
+        35,
+        "앨범 초안 확인",
+        "ETC",
+        "레이아웃 검토 — 챕터 순서 재확인",
+        ["65_wed_stationery.jpg"],
+        ["한 장 한 장 넘기며 다시 떠오르는 순간들"],
+    ),
+    (
+        45,
+        "앨범 실물 수령",
+        "ETC",
+        "하드커버 3권 — 본인 + 양가 부모님",
+        ["61_wed_gift_box.jpg"],
+        ["마침내 손에 쥔 한 권의 기록"],
+    ),
+    (
+        50,
+        "양가 부모님께 앨범 선물",
+        "ETC",
+        "앨범 들고 양가 방문 — 가장 기뻐하셨다",
+        ["69_gift_jewelry.jpg"],
+        ["부모님의 눈빛이 말한다: 고맙다, 행복해라"],
+    ),
+    (
+        60,
+        "한 달 기념 외식",
+        "ETC",
+        "첫 결혼기념일의 프리뷰",
+        ["21_date_restaurant.jpg", "88_honey_cocktail.jpg", "94_couple_anniversary.jpg"],
+        [
+            "한 달 전과 달라진 건 없는데 모든 게 다르다",
+            "건배 — 우리의 다음 한 달에",
+            "함께하는 시간이 곧 기념일",
+        ],
+    ),
 ]
 
 
@@ -539,6 +587,7 @@ def seed_events_and_photos(db: Session, couple: Couple) -> None:
     photos_created = 0
     photos_missing = 0
 
+    today = date.today()
     for offset_days, title, category, memo, photo_files, captions in SEED_EVENTS:
         event_date = couple.wedding_date + timedelta(days=offset_days)
         event = Event(
@@ -547,10 +596,12 @@ def seed_events_and_photos(db: Session, couple: Couple) -> None:
             date=event_date,
             category=category,
             memo=memo,
-            # D-day 이전(~ 당일)은 완료 처리, 이후는 미완료.
-            is_completed=(offset_days <= 0),
-            # 시드 데이터임을 표시 (AI 가이드/통계에서 필터링 가능).
-            is_ai_generated=True,
+            # 실제 오늘 기준 과거면 완료, 미래면 미완료.
+            # (wedding_date 변경에 자동으로 따라가는 논리)
+            is_completed=(event_date <= today),
+            # 시드 데이터는 AI 생성이 아닌 샘플 — False 로 두어 AI 체크리스트
+            # 중복 방지 가드(is_ai_generated=True 필터)에 걸리지 않게 한다.
+            is_ai_generated=False,
         )
         db.add(event)
         db.flush()  # event.id 확보
@@ -628,8 +679,8 @@ def seed_initial_data(db: Session) -> None:
             id=SAMPLE_COUPLE_ID,
             groom_name="철수",
             bride_name="영희",
-            wedding_date=date(2026, 10, 25),
-            tagline="철수 ♥ 영희, 2026.10.25",
+            wedding_date=date(2026, 3, 14),
+            tagline="철수 ♥ 영희, 2026.03.14",
             profile_photo_path=None,
         )
         db.add(couple)
