@@ -1,6 +1,7 @@
-# @TASK P5-R1-T3 - Order REST API 라우터
+# @TASK P5-R1-T3, P6-LV3 - Order REST API 라우터
 # @SPEC docs/planning/05-architecture.md#api-엔드포인트
-# @TEST tests/routers/test_orders.py
+# @SPEC docs/planning/05-architecture.md#sequence-4-데이터-익스포트-lv3
+# @TEST tests/routers/test_orders.py, tests/routers/test_export.py
 """
 Order 엔드포인트.
 
@@ -8,14 +9,18 @@ Order 엔드포인트.
 - GET   /api/couples/{couple_id}/orders?status=?  → list[OrderResponse]
 - GET   /api/orders/{order_id}                    → OrderResponse (404)
 - PATCH /api/orders/{order_id}/status             → OrderResponse (400 invalid)
+- GET   /api/orders/{order_id}/export             → StreamingResponse (ZIP)
 
-라우터는 얇게 — 실제 비즈니스 로직은 OrderService, 상태 전이는 OrderStateMachine.
+라우터는 얇게 — 실제 비즈니스 로직은 OrderService, 상태 전이는 OrderStateMachine,
+ZIP 빌드는 ExportService.
 """
 from __future__ import annotations
 
+import io
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -25,6 +30,7 @@ from app.schemas.order import (
     OrderStatusUpdate,
 )
 from app.services import couple_service, order_service
+from app.services.export_service import ExportService
 
 logger = logging.getLogger(__name__)
 
@@ -133,3 +139,43 @@ def update_order_status(
     )
     order = order_service.update_status(db, order_id, target)
     return OrderResponse.model_validate(order)
+
+
+# -----------------------------------------------------------------------------
+# ZIP 익스포트 (Lv3 — 파트너 인계)
+# -----------------------------------------------------------------------------
+@orders_router.get(
+    "/{order_id}/export",
+    summary="주문 ZIP 익스포트",
+    description=(
+        "주문 1건의 콘텐츠(사진 파일)와 메타데이터(order.json, captions.json)를 "
+        "ZIP 바이너리로 다운로드한다. 파트너(가상 스위트북)가 수신 후 즉시 "
+        "인쇄 큐에 투입할 수 있는 셀프 완결 구조."
+    ),
+    responses={
+        200: {
+            "description": "ZIP 바이너리 (application/zip)",
+            "content": {"application/zip": {}},
+        },
+        400: {"description": "주문에 사진이 0장 (exportable 아님)"},
+        404: {"description": "주문 없음"},
+    },
+)
+def export_order(
+    order_id: str,
+    db: Session = Depends(get_db),
+) -> StreamingResponse:
+    """주문 데이터를 ZIP 바이너리로 반환한다.
+
+    404: 주문 없음 (ExportService → order_service.get_or_404).
+    400: chapters_selected 의 총 photo_id 가 0 (빈 주문은 인계 불가).
+    """
+    zip_bytes, filename = ExportService.build_order_zip(db, order_id)
+    return StreamingResponse(
+        io.BytesIO(zip_bytes),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(zip_bytes)),
+        },
+    )

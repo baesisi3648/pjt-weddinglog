@@ -1,9 +1,10 @@
-// @TASK P5-FRONTEND - Orders 페이지 실 API 연동 + 상태 전이
+// @TASK P5-FRONTEND, P6-LV3 - Orders 페이지 실 API 연동 + 상태 전이 + ZIP 다운로드
 // @SPEC docs/planning/06-tasks.md#Phase5
+// @SPEC docs/planning/05-architecture.md#sequence-4-데이터-익스포트-lv3
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listOrders, updateOrderStatus } from '../services/order_api';
+import { listOrders, updateOrderStatus, getExportUrl } from '../services/order_api';
 import Toast from '../components/Toast';
 import type { Order, OrderStatus } from '../types/order';
 
@@ -221,15 +222,17 @@ export default function Orders() {
 
                   {/* 액션 */}
                   <div className="flex justify-between items-center pt-2">
-                    {/* 데이터 다운로드 (Phase 6 placeholder) */}
-                    <button
-                      className="font-body-sm text-body-sm text-outline flex items-center gap-1 opacity-50 cursor-not-allowed"
-                      disabled
-                      title="Phase 6에서 연결됩니다"
+                    {/* 데이터 다운로드 (Lv3 — 파트너 인계용 ZIP) */}
+                    <a
+                      href={getExportUrl(order.id)}
+                      download={`${order.id}.zip`}
+                      className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 hover:text-on-surface hover:underline transition-colors"
+                      title="주문 콘텐츠·메타데이터 ZIP 다운로드 (파트너 인계용)"
+                      data-testid={`download-${order.id}`}
                     >
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
                       데이터 다운로드
-                    </button>
+                    </a>
 
                     {/* 상태 전이 버튼 */}
                     <div className="flex items-center gap-3">

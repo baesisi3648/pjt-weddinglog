@@ -1,18 +1,20 @@
-// @TASK P5-FRONTEND - Orders 실 API 연동 테스트
+// @TASK P5-FRONTEND, P6-LV3 - Orders 실 API 연동 + ZIP 다운로드 테스트
 // @SPEC docs/planning/06-tasks.md#Phase5
+// @SPEC docs/planning/05-architecture.md#sequence-4-데이터-익스포트-lv3
 
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
 import Orders from './Orders';
 
-// order_api mock
+// order_api mock — getExportUrl 은 실 함수 대신 테스트용 경로 리턴.
 vi.mock('../services/order_api', () => ({
   listOrders: vi.fn(),
   updateOrderStatus: vi.fn(),
+  getExportUrl: vi.fn((orderId: string) => `/api/orders/${orderId}/export`),
 }));
 
-import { listOrders, updateOrderStatus } from '../services/order_api';
+import { listOrders, updateOrderStatus, getExportUrl } from '../services/order_api';
 import type { Order } from '../types/order';
 
 const MOCK_ORDERS: Order[] = [
@@ -177,5 +179,37 @@ describe('Orders', () => {
     await waitFor(() => {
       expect(screen.getByText(/340,000원/)).toBeInTheDocument();
     });
+  });
+
+  // ---- Lv3 ZIP 다운로드 ----------------------------------------------------
+  it('각 주문에 "데이터 다운로드" 앵커 href 가 export URL 을 포함한다', async () => {
+    renderOrders();
+    await waitFor(() =>
+      expect(screen.getByText(/WL-2024-001/)).toBeInTheDocument()
+    );
+
+    // 1 번 주문의 다운로드 링크 — data-testid 로 특정.
+    const link = screen.getByTestId('download-WL-2024-001') as HTMLAnchorElement;
+    expect(link).toBeInTheDocument();
+    expect(link.tagName).toBe('A');
+    expect(link.getAttribute('href')).toBe('/api/orders/WL-2024-001/export');
+    // download 속성은 suggested filename 제공 (브라우저가 이를 사용).
+    expect(link.getAttribute('download')).toBe('WL-2024-001.zip');
+
+    // 헬퍼가 각 주문에 대해 호출되었음.
+    expect(getExportUrl).toHaveBeenCalledWith('WL-2024-001');
+    expect(getExportUrl).toHaveBeenCalledWith('WL-2024-002');
+    expect(getExportUrl).toHaveBeenCalledWith('WL-2024-003');
+  });
+
+  it('완료 상태 주문도 다운로드 링크가 활성화된다 (파트너 재인계 대비)', async () => {
+    renderOrders();
+    await waitFor(() =>
+      expect(screen.getByText(/WL-2024-003/)).toBeInTheDocument()
+    );
+    const link = screen.getByTestId('download-WL-2024-003') as HTMLAnchorElement;
+    // disabled 속성 없음 + href 정상.
+    expect(link).not.toHaveAttribute('disabled');
+    expect(link.getAttribute('href')).toBe('/api/orders/WL-2024-003/export');
   });
 });
