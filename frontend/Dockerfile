@@ -1,6 +1,11 @@
 # Stage 1: builder (Vite build)
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# 빌드 시점 API URL 주입 (docker-compose args 로 전달)
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+
 COPY package*.json ./
 RUN npm ci
 COPY . .

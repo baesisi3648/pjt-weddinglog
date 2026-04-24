@@ -38,7 +38,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: /api
+        # 브라우저가 백엔드 포트로 직접 호출 (프로덕션 프로파일은 proxy 없음)
+        # .env 의 API_PORT 와 자동 매칭. 기본 8000.
+        VITE_API_URL: http://localhost:${API_PORT:-8000}/api
     container_name: weddinglog-frontend
     ports:
       - "${WEB_PORT:-3000}:3000"

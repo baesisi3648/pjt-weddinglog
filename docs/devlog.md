@@ -188,6 +188,22 @@
 - **배운 점 3 (보안)**: 사용자가 env 파일 내용을 공유하기 전에 **"키 부분은 가려서"** 안내했어야 한다. 앞으로 "환경변수 확인" 같은 요청 시 `head -n 5 .env` 또는 `grep -v API_KEY` 식으로 키 제외하고 공유 유도.
 - **모바일 프레임 제거의 추가 통찰**: 디자인 핸드오프가 1440px 목업 안에 "모바일 폰 프레임"을 그려놓았을 경우(wl-phone 래퍼), **포팅 단계에서 "래퍼만 unwrap" 태스크**가 필요. P1.5 스모크 포팅 시에는 이걸 놓쳐서 지금 와서 드러남.
 
+### 2026-04-24 13:00 — 프로덕션 빌드의 API baseURL 문제
+- **도구**: Claude Code (메인)
+- **문제**: 두 번째 시연에서 헤더 중복·"9:41" 이슈는 해결됐으나, **"커플 정보를 불러올 수 없습니다"** 에러 UI가 계속 표시. 백엔드 컨테이너는 Healthy, `curl http://localhost:8100/api/couples/cpl_sample_001`는 JSON 정상 응답 + `d_day: -184`. 그런데 프론트만 실패.
+- **진단**: `curl http://localhost:3100/api/couples/cpl_sample_001` 했더니 **`<!DOCTYPE html>` 반환**. 즉 브라우저가 **자기 포트(3100)에게 `/api` 요청을 보냈고, `serve -s dist` SPA fallback이 index.html을 반환**해서 Axios가 JSON 파싱 실패.
+- **원인**: `api.ts`의 `baseURL: '/api'` (상대 경로). 개발 모드에선 Vite `server.proxy`가 `/api` → `http://localhost:8000`으로 전달해주지만, **프로덕션 빌드(`serve -s dist`)에는 proxy 없음**. 정적 파일 서버는 `/api/*`를 모르니까 SPA fallback으로 index.html만 준다.
+- **해결**: 빌드 시점에 `VITE_API_URL`을 절대 URL로 주입해 브라우저가 백엔드 포트를 직접 호출.
+  1. `frontend/src/services/api.ts`: `baseURL = import.meta.env.VITE_API_URL || '/api'`
+  2. `frontend/Dockerfile`: `ARG VITE_API_URL=/api` + `ENV VITE_API_URL=$VITE_API_URL` (ENV 필수 — Vite가 빌드 시 읽으려면)
+  3. `docker-compose.yml`: `frontend.build.args.VITE_API_URL: http://localhost:${API_PORT:-8000}/api`
+  - dev는 여전히 `/api` 상대 경로로 Vite proxy 사용 (기존 동작 유지)
+  - prod는 docker가 `.env`의 API_PORT를 읽어 자동 치환 → 심사자가 포트 바꿔도 자동 매칭
+- **배운 점 1**: **Vite `server.proxy`는 dev 전용**. 프로덕션 빌드는 HTML+JS+CSS 정적 파일만 남음. `serve -s`는 SPA 라우팅 fallback이라 **모든 unknown path → index.html**. 이건 React Router에는 필수지만 API 호출에는 함정.
+- **배운 점 2**: `VITE_*` 환경변수는 **빌드 시점**에 인라인됨. 런타임 변경 불가. Docker 재빌드 필요. 반면 backend의 `OPENAI_API_KEY` 등은 런타임 환경변수라 컨테이너 재시작만으로 반영. **프런트/백엔드 환경변수 타이밍 차이 숙지 필요**.
+- **배운 점 3**: 프로덕션에서 `/api` 상대 호출을 계속 쓰려면 **nginx reverse proxy**(frontend 컨테이너를 nginx로) 또는 **backend가 frontend dist 서빙**(FastAPI StaticFiles) 구조가 필요. 이번에는 단순성 위해 브라우저 직접 호출 선택 + CORS로 조율.
+- **P8 제출 준비 시 반영**: README의 "실행 방법"에 "포트 바꾸려면 `.env`의 `WEB_PORT`, `API_PORT` + `CORS_ORIGINS` 3개를 맞춰주세요" 안내 필요. 이번 사건이 정확히 그 시나리오.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

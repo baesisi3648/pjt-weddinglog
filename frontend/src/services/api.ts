@@ -1,8 +1,14 @@
 // @TASK P0-T3 - Axios 인스턴스 (API 클라이언트)
 import axios from 'axios';
 
+// 빌드 시점 주입 (Vite VITE_* 환경변수):
+//   dev  → undefined → '/api' (Vite proxy가 /api → backend:8000 전달)
+//   prod → docker-compose build args 로 'http://localhost:${API_PORT}/api' 주입
+//           (브라우저가 백엔드 포트로 직접 호출, CORS_ORIGINS 에 프론트 origin 허용 필요)
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
