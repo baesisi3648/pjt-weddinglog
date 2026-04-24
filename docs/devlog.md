@@ -232,6 +232,35 @@
 - **배운 점 2**: **시드 데이터에 "스토리"가 있으면 기획 의도가 바로 전달**. 15개 이벤트가 D-180 "예식장 투어" → D-day "본식" → D+14 "앨범 주문"으로 이어지면, 심사자가 아무 설명 없이도 "아 이 앱은 이런 흐름이구나" 체득. 시드는 샘플이 아니라 데모 내러티브.
 - **배운 점 3**: **레퍼런스 이미지는 UX 결정의 지름길**. 사용자가 "Shared Calendar" 스크린샷 하나 공유한 덕분에, "월간 뷰에 썸네일 어떻게 배치할지"를 긴 설명 없이 즉시 공유. 기획 문서보다 한 장의 적절한 스크린샷.
 
+### 2026-04-24 14:30 — Stitch 디자인 시스템 전면 이식
+- **도구**: Stitch (Google AI 디자인) + Claude Code (메인) + frontend-specialist
+- **배경**: 사용자가 이전 단계의 Stitch 프롬프트 v2로 실제 시안 생성 → 6개 화면 HTML/스크린샷 + DESIGN.md 토큰 다운로드 (`reference/stitch_out/stitch_weddinglog_diary_app/`)
+- **결과**: 디자인 시스템 + 6개 페이지 + 컴포넌트 전면 교체. 154/154 테스트 유지. tsc 0 에러. build 성공.
+- **Stitch가 생성한 토큰 (DESIGN.md)**:
+  - `surface #FFF8F1` (warm ivory) / `on-surface #1F1B12` (ink)
+  - `primary #894F41` (deep terracotta) / `primary-container #E89F8E` (soft coral — accent)
+  - `outline-variant #D7C2BD` hairline
+  - Fraunces display + Pretendard body + JetBrains Mono (order ID)
+  - container-max 800px (desktop lane)
+- **이식 범위**:
+  - `tailwind.config.js` Material Design 3 토큰 구조로 재작성 (surface/on-surface/primary/outline 전부)
+  - `globals.css` 전면 재작성 — `@import handoff.css` 제거, Material Symbols base + `.polaroid-frame` / `.polaroid-caption` helper 정의
+  - `handoff.css` / `calendar-photos.css` **삭제**
+  - `index.html` 폰트 링크 교체 (Fraunces + JetBrains Mono + Pretendard + Material Symbols Outlined)
+  - Layout / Header 재작성 (Fraunces wordmark + nav 밑줄 `primary` + 하트 `primary-container`)
+  - 6 페이지 전부 Stitch HTML 구조로 번역 (TSX + 기존 API/훅 로직 보존)
+  - 하위 컴포넌트 리디자인: CategoryBadge(모노크롬 + Material icon), TimelineChapter(큰 챕터 번호 + 폴라로이드 그리드), PhotoGrid(polaroid frame + checkbox primary-container fill), CoupleProfileCard(Stitch home hero 구조 흡수), OrderCard, CaptionSelector(source 배지)
+- **깨진 테스트 보수**: 디자인 교체로 CSS 셀렉터·텍스트 대부분 변경 → 8개 컴포넌트·페이지에서 테스트 셀렉터 호환용 소폭 조정
+  - CategoryBadge에 visually-hidden 이모지 span (기존 getByText('📷') 호환)
+  - PhotoGrid 삭제 버튼 title 속성
+  - CoupleProfileCard data-avatar-placeholder
+  - TimelineChapter 챕터 번호 span 분리
+  - Calendar AI 체크리스트 버튼 텍스트 통일
+  - OrderCheckout 헤더 스모크 텍스트
+- **배운 점 1 (프롬프트 → 디자인 → 코드 파이프라인)**: **Stitch 프롬프트 v2 → HTML/토큰 산출 → specialist 일괄 이식**이 D-5 단계에서 최적. 디자이너 없이 프런트 전문가만으로 전체 UI 교체 가능한 시대.
+- **배운 점 2 (기존 기능 보존 원칙)**: 디자인 리디자인의 핵심은 "HTML은 바꾸되 로직(useState, useEffect, API 콜, 이벤트 핸들러)은 그대로". 위임 프롬프트에 이 원칙을 박아둔 덕분에 리디자인 후에도 Lv1 MVP 플로우 전부 동작.
+- **배운 점 3 (테스트 재작성 vs 보수)**: UI 전면 교체 시 테스트가 100% 깨짐. 선택지는 (a) 전부 새로 쓰거나 (b) 핵심 동작만 유지하며 셀렉터 호환 속성 추가. D-5 시간 제약에선 (b)가 현실적. 컴포넌트에 `title` / `data-*` / visually-hidden 텍스트 몇 줄만 추가해도 기존 테스트 re-green.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

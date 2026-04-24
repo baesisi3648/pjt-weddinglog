@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WeddingLog - Timeline Draft Photo Book</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&amp;family=JetBrains+Mono:wght@400..800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#e2d9ca",
+                        "surface": "#fff8f1",
+                        "on-secondary-fixed-variant": "#474647",
+                        "outline-variant": "#d7c2bd",
+                        "on-secondary-fixed": "#1c1b1c",
+                        "tertiary-fixed": "#ffdad3",
+                        "primary": "#894f41",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#ed9d8c",
+                        "inverse-on-surface": "#f9f0e0",
+                        "primary-fixed": "#ffdad2",
+                        "surface-tint": "#894f41",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#e89f8e",
+                        "primary-fixed-dim": "#ffb4a3",
+                        "on-secondary-container": "#636263",
+                        "on-surface-variant": "#524340",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#353026",
+                        "on-background": "#1f1b12",
+                        "inverse-primary": "#ffb4a3",
+                        "surface-bright": "#fff8f1",
+                        "on-primary-fixed-variant": "#6d382b",
+                        "on-surface": "#1f1b12",
+                        "on-tertiary-fixed-variant": "#70362a",
+                        "secondary-container": "#e2dfe0",
+                        "surface-container-low": "#fcf2e3",
+                        "tertiary-fixed-dim": "#ffb4a4",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c8c6c7",
+                        "surface-container": "#f6eddd",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#8c4d3f",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#693529",
+                        "background": "#fff8f1",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e5e2e3",
+                        "on-tertiary-container": "#6c3327",
+                        "secondary": "#5f5e5f",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#ebe1d2",
+                        "surface-container-highest": "#ebe1d2",
+                        "on-primary-fixed": "#370e05",
+                        "on-tertiary-fixed": "#390c04",
+                        "surface-container-high": "#f0e7d8",
+                        "outline": "#85736f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "880px",
+                        "base": "4px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "sm": "16px",
+                        "xl": "64px",
+                        "gutter": "20px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["PretendardVariable", "Pretendard", "sans-serif"],
+                        "body-sm": ["PretendardVariable", "Pretendard", "sans-serif"],
+                        "display-md": ["Fraunces", "serif"],
+                        "label-caps": ["PretendardVariable", "Pretendard", "sans-serif"],
+                        "body-lg": ["PretendardVariable", "Pretendard", "sans-serif"],
+                        "headline-sm": ["Fraunces", "serif"],
+                        "display-lg": ["Fraunces", "serif"],
+                        "mono-id": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "300" }],
+                        "mono-id": ["13px", { "lineHeight": "1", "fontWeight": "400" }],
+                        "chapter-num": ["80px", { "lineHeight": "1", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "chapter-title": ["28px", { "lineHeight": "1.2", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#F5F0E6] text-on-surface font-body-md min-h-screen flex flex-col pt-16 pb-[120px]">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#F5F0E6] bg-opacity-90 backdrop-blur-sm border-b border-[#E3DBC8]">
+<div class="flex justify-between items-center max-w-[800px] mx-auto px-4 h-16">
+<div class="flex items-center gap-6">
+<a class="text-2xl font-display-md font-bold text-on-surface tracking-tight" href="#">WeddingLog</a>
+<nav class="hidden md:flex gap-6 items-center pt-1">
+<a class="text-[#B5AEA0] hover:text-on-surface transition-colors font-body-sm" href="#">Home</a>
+<a class="text-[#B5AEA0] hover:text-on-surface transition-colors font-body-sm" href="#">Calendar</a>
+<a class="text-on-surface border-b-2 border-primary-container pb-1 font-body-sm" href="#">Timeline</a>
+<a class="text-[#B5AEA0] hover:text-on-surface transition-colors font-body-sm" href="#">Orders</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-primary">
+<button class="hover:opacity-80 transition-opacity duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow w-full max-w-[880px] mx-auto px-6 lg:px-8 mt-12">
+<!-- Header Info -->
+<div class="flex justify-between items-end mb-16 border-b border-[#E3DBC8] pb-4">
+<h1 class="text-display-md text-on-surface">Timeline Draft</h1>
+<p class="font-body-lg text-on-surface-variant">총 30장 · 12페이지 예상</p>
+</div>
+<!-- Chapter 01 -->
+<section class="mb-24">
+<div class="flex items-baseline gap-6 mb-12">
+<span class="font-display-lg text-[80px] text-primary-container tracking-[-0.02em] leading-none">01.</span>
+<h2 class="font-display-md text-[28px] text-on-surface">웨딩촬영 · 10장</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+<!-- Polaroid Included -->
+<div class="relative bg-white p-2 pb-8 shadow-[0_1px_3px_rgba(0,0,0,0.1),_0_8px_24px_rgba(0,0,0,0.05)] transform rotate-1 transition-transform hover:z-10 hover:scale-105 duration-300">
+<div class="absolute top-4 right-4 z-10">
+<input checked="" class="w-5 h-5 rounded-sm border-[#E3DBC8] text-primary-container focus:ring-primary-container cursor-pointer" type="checkbox"/>
+</div>
+<img alt="Couple laughing in a sunlit field, warm golden hour light, soft focus background" class="w-full aspect-square object-cover mb-4" data-alt="Couple laughing in a sunlit field, warm golden hour light, soft focus background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAswzD3sc_6kbXp-XDSV03mdWxQQZZey7fY8JBqFE1sGXPRpZFWddnjYGtaLdG3_pdOEWhHw5EVgG_dxblCnxf9IA8JRJrIPVWDAgBL6qUgsnwAGtJ7v8gvB1G8_J2Pp8dk766ea7E5JDjPM0C6WX-kYkWs7TMhevq8ykGaC0rW366Dz2Y7QJKNEVraKOiiFD-wSa5acNcfqUpy-FDVYzkQcAJSchS0Ej7L6MA8YFQZasrtk7SiF93k6jgr_ADFsAqN4u0byGxLlw"/>
+<p class="font-display-md italic text-[14px] text-center text-on-surface-variant">Sunlit Laughter</p>
+</div>
+<!-- Polaroid Included -->
+<div class="relative bg-white p-2 pb-8 shadow-[0_1px_3px_rgba(0,0,0,0.1),_0_8px_24px_rgba(0,0,0,0.05)] transform -rotate-2 transition-transform hover:z-10 hover:scale-105 duration-300">
+<div class="absolute top-4 right-4 z-10">
+<input checked="" class="w-5 h-5 rounded-sm border-[#E3DBC8] text-primary-container focus:ring-primary-container cursor-pointer" type="checkbox"/>
+</div>
+<img alt="Close up of hands holding a bouquet of wild flowers, soft natural lighting" class="w-full aspect-square object-cover mb-4" data-alt="Close up of hands holding a bouquet of wild flowers, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC36yQJtEf7s0S7Kxl07LFq71GT51zUZNSLc0qKA1MU6zqruuRONhugv3E_OT3VWYob_H6dZ_Oegqr-s7uEE0uaQccFn-JAsNdrMMsaJUHlrLzylb-soNytaCNlMqQpUKQcw-9c-6B4wGySG0ueO8NdJUWHhH8lzT1mYLmM8CGpciXgiajKUXEfTrM91DUzjWBoV08ttI8JaPyY3KLN15ruNTivQFdsxMG5A9349--lcg7crGCALgFjGfKNavrec2XjQlqgwEDlww"/>
+<p class="font-display-md italic text-[14px] text-center text-on-surface-variant">The Details</p>
+</div>
+<!-- Polaroid Excluded -->
+<div class="relative bg-white p-2 pb-8 shadow-[0_1px_3px_rgba(0,0,0,0.1),_0_8px_24px_rgba(0,0,0,0.05)] transform rotate-2 transition-transform hover:z-10 hover:scale-105 duration-300 opacity-40">
+<div class="absolute top-4 right-4 z-10">
+<input class="w-5 h-5 rounded-sm border-[#E3DBC8] text-primary-container focus:ring-primary-container cursor-pointer" type="checkbox"/>
+</div>
+<img alt="Bride walking away down a dusty path, vintage feel, soft warm tones" class="w-full aspect-square object-cover mb-4" data-alt="Bride walking away down a dusty path, vintage feel, soft warm tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAse8CKyJjbA6fZ_AP4PWIXZL59S9Gbsqddtt4GXjYpYLlOfHHS3KlJFu9KW0_jT7J1cOmqo2hg3sjy3y5BHjwxyFedzYfSODdP6rcnqB1rxArl_c9o8IaYRq98VvRd_jN618ClnkLUHhA7vtZ-QXPu8kxKXWtCXQXNac7BVnf5QWYsBRTIVed9B3h55nL90hcUEp8_3_p_70GF_Xm02ycEsC3KYBgt5CKu2850Qc6mvubPGaP4gEVgAmAihVK37Nns19K-W_sfvQ"/>
+<p class="font-display-md italic text-[14px] text-center text-[#B5AEA0] line-through">Dusty Path</p>
+</div>
+</div>
+</section>
+<!-- Chapter 02 -->
+<section class="mb-24">
+<div class="flex items-baseline gap-6 mb-12">
+<span class="font-display-lg text-[80px] text-primary-container tracking-[-0.02em] leading-none">02.</span>
+<h2 class="font-display-md text-[28px] text-on-surface">본식 · 20장</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+<!-- Polaroid Included -->
+<div class="relative bg-white p-2 pb-8 shadow-[0_1px_3px_rgba(0,0,0,0.1),_0_8px_24px_rgba(0,0,0,0.05)] transform -rotate-1 transition-transform hover:z-10 hover:scale-105 duration-300">
+<div class="absolute top-4 right-4 z-10">
+<input checked="" class="w-5 h-5 rounded-sm border-[#E3DBC8] text-primary-container focus:ring-primary-container cursor-pointer" type="checkbox"/>
+</div>
+<img alt="Groom waiting at the altar, nervous but happy, soft indoor lighting" class="w-full aspect-square object-cover mb-4" data-alt="Groom waiting at the altar, nervous but happy, soft indoor lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC15zawD8sGN_YGIaVUuXphnqx4JKQse-ah_39m_016q8Olf7qZ0OmsCd6NnQFNMhyMFJ0uUSmMnlyi5pgvaofc4pumgtvSbBeBxQ9_RkKtkr-K8Lx2Ey3bYZGAMM_qb4x08u3lDTmtmXxE9BBtoJ6-XFYPKeVOdlvIZCHn-GFd00Ayi89iKO3EMK_hakAYQPfJ6BtOvLSEuM1oACnA-11faiOpodle-OW4MRSYfvEPuZ54Sji3DRBbwrirUaIf5AtG3le0MRYDcA"/>
+<p class="font-display-md italic text-[14px] text-center text-on-surface-variant">Waiting</p>
+</div>
+<!-- Polaroid Excluded -->
+<div class="relative bg-white p-2 pb-8 shadow-[0_1px_3px_rgba(0,0,0,0.1),_0_8px_24px_rgba(0,0,0,0.05)] transform rotate-1 transition-transform hover:z-10 hover:scale-105 duration-300 opacity-40">
+<div class="absolute top-4 right-4 z-10">
+<input class="w-5 h-5 rounded-sm border-[#E3DBC8] text-primary-container focus:ring-primary-container cursor-pointer" type="checkbox"/>
+</div>
+<img alt="Guests throwing confetti, joyful moment, candid motion, bright lighting" class="w-full aspect-square object-cover mb-4" data-alt="Guests throwing confetti, joyful moment, candid motion, bright lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrPYLYseAEFX0EYwCOLW0UWfjsDVn6NX4cGNDfQMsd82Umi3RppetSINgEjoW443jLhOV0yUUOBO5YXBd3IRgAyzaptiQBpHlrb6u0VX63YsYeYhY1h0KUQqz2AeIF4HfYtwXV-cTvdzLLYpQW7y3-5Z9DEU2TVKAW61FHibR1szIwPRqvj08HN0-Qf2P_1Fr9s5ZGt0sRRgMO7XcMM4kc4YeqsObeTFCL8yXMOuMm89YrxKmk5VGUX4aoQ_0ofvDsJ-2_csD3ug"/>
+<p class="font-display-md italic text-[14px] text-center text-[#B5AEA0] line-through">Celebration</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Anchor -->
+<div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#F5F0E6] via-[#F5F0E6] to-transparent z-40">
+<div class="max-w-[880px] mx-auto">
+<button class="w-full h-[56px] bg-primary-container text-on-primary font-body-md font-medium text-[16px] rounded flex items-center justify-center shadow-[0_4px_12px_rgba(232,159,142,0.3)] hover:opacity-90 transition-opacity">
+                앨범으로 만들기 (N장 선택됨)
+            </button>
+</div>
+</div>
+</body></html>

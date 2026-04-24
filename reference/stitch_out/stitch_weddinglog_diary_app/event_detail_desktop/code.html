@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WeddingLog - Event Diary</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#e2d9ca",
+                        "surface": "#F5F0E6", /* Adjusted to requested Ivory #F5F0E6 */
+                        "on-secondary-fixed-variant": "#474647",
+                        "outline-variant": "#d7c2bd",
+                        "on-secondary-fixed": "#1c1b1c",
+                        "tertiary-fixed": "#ffdad3",
+                        "primary": "#894f41",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#ed9d8c",
+                        "inverse-on-surface": "#f9f0e0",
+                        "primary-fixed": "#ffdad2",
+                        "surface-tint": "#894f41",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#e89f8e",
+                        "primary-fixed-dim": "#ffb4a3",
+                        "on-secondary-container": "#636263",
+                        "on-surface-variant": "#524340",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#353026",
+                        "on-background": "#1f1b12",
+                        "inverse-primary": "#ffb4a3",
+                        "surface-bright": "#fff8f1",
+                        "on-primary-fixed-variant": "#6d382b",
+                        "on-surface": "#1f1b12",
+                        "on-tertiary-fixed-variant": "#70362a",
+                        "secondary-container": "#e2dfe0",
+                        "surface-container-low": "#fcf2e3",
+                        "tertiary-fixed-dim": "#ffb4a4",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c8c6c7",
+                        "surface-container": "#f6eddd",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#8c4d3f",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#693529",
+                        "background": "#F5F0E6", /* Adjusted to requested Ivory #F5F0E6 */
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e5e2e3",
+                        "on-tertiary-container": "#6c3327",
+                        "secondary": "#5f5e5f",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#ebe1d2",
+                        "surface-container-highest": "#ebe1d2",
+                        "on-primary-fixed": "#370e05",
+                        "on-tertiary-fixed": "#390c04",
+                        "surface-container-high": "#f0e7d8",
+                        "outline": "#E3DBC8" /* Hairline border */
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "800px",
+                        "base": "4px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "sm": "16px",
+                        "xl": "64px",
+                        "gutter": "20px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Pretendard", "sans-serif"],
+                        "body-sm": ["Pretendard", "sans-serif"],
+                        "display-md": ["Fraunces", "serif"],
+                        "label-caps": ["Pretendard", "sans-serif"],
+                        "body-lg": ["Pretendard", "sans-serif"],
+                        "headline-sm": ["Fraunces", "serif"],
+                        "display-lg": ["Fraunces", "serif"],
+                        "mono-id": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "300" }],
+                        "mono-id": ["13px", { "lineHeight": "1", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F5F0E6; }
+        .polaroid-frame {
+            background-color: #ffffff;
+            padding: 6px;
+            padding-bottom: 30px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 16px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .polaroid-frame:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 12px 24px rgba(0,0,0,0.1);
+        }
+        .polaroid-caption {
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-size: 13px;
+            color: #1f1b12;
+            text-align: center;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col relative pb-32">
+<!-- Main Navigation TopAppBar (Generated from JSON) -->
+<nav class="bg-[#FAF9F6] dark:bg-[#121212] docked full-width top-0 z-50 border-b border-[#E3DBC8] dark:border-gray-800 flat no shadows flex justify-between items-center max-w-[800px] mx-auto px-4 h-16 w-full hidden md:flex">
+<div class="text-2xl font-serif font-bold text-[#0F0F10] dark:text-[#FAF9F6]">
+            WeddingLog
+        </div>
+<div class="flex gap-8">
+<a class="text-[#B5AEA0] dark:text-[#6D6659] hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] transition-colors font-serif font-light text-[#0F0F10] dark:text-[#FAF9F6] text-sm" href="#">Home</a>
+<a class="text-[#0F0F10] dark:text-[#FAF9F6] border-b-2 border-[#E89F8E] pb-1 font-serif font-light text-sm" href="#">Calendar</a>
+<a class="text-[#B5AEA0] dark:text-[#6D6659] hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] transition-colors font-serif font-light text-[#0F0F10] dark:text-[#FAF9F6] text-sm" href="#">Timeline</a>
+<a class="text-[#B5AEA0] dark:text-[#6D6659] hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] transition-colors font-serif font-light text-[#0F0F10] dark:text-[#FAF9F6] text-sm" href="#">Orders</a>
+</div>
+<div class="flex items-center gap-4 text-[#E89F8E] dark:text-[#E89F8E]">
+<button class="hover:opacity-80 transition-opacity duration-200 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+</nav>
+<!-- SideNavBar (Mobile/Tablet) -->
+<div class="bg-[#FAF9F6] dark:bg-[#121212] h-full border-r w-64 border-r border-[#E3DBC8] dark:border-gray-800 flat no shadows fixed left-0 top-0 bottom-0 flex flex-col py-8 z-40 md:hidden">
+<div class="px-6 mb-10">
+<h1 class="font-serif italic text-xl text-[#0F0F10] dark:text-[#FAF9F6] mb-1">WeddingLog</h1>
+<p class="font-sans text-sm tracking-wide text-[#B5AEA0]">Digital Archive</p>
+</div>
+<nav class="flex flex-col gap-2 font-sans text-sm tracking-wide">
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] py-3 flex items-center gap-3 hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[#E89F8E] dark:text-[#E89F8E]">home</span>
+                Home
+            </a>
+<a class="text-[#E89F8E] font-semibold border-l-4 border-[#E89F8E] pl-4 py-3 flex items-center gap-3 hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300 bg-[#E3DBC8]/10" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+                Calendar
+            </a>
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] py-3 flex items-center gap-3 hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[#E89F8E] dark:text-[#E89F8E]">auto_stories</span>
+                Timeline
+            </a>
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] py-3 flex items-center gap-3 hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[#E89F8E] dark:text-[#E89F8E]">receipt_long</span>
+                Orders
+            </a>
+</nav>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-6 pt-12 pb-24 md:pl-6">
+<!-- Breadcrumb & Back -->
+<div class="flex items-center gap-2 mb-10 text-on-surface-variant font-body-sm">
+<button class="hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-dim">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 300;">arrow_back</span>
+</button>
+<span class="text-[#B5AEA0]">2026년 4월 · 캘린더</span>
+</div>
+<!-- Event Header -->
+<header class="mb-12 border-b border-outline pb-8">
+<div class="flex items-start justify-between">
+<div>
+<h1 class="font-display-md text-display-md text-on-surface mb-4">웨딩홀 투어 - 라움 아트센터</h1>
+<div class="flex items-center gap-4">
+<span class="font-mono-id text-mono-id text-on-surface-variant">2026. 04. 15 (토)</span>
+<span class="px-2 py-1 border border-outline text-on-surface-variant rounded font-label-caps text-label-caps tracking-wider">VENUE</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Memo Area -->
+<section class="mb-16">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase">Memoir</label>
+<textarea class="w-full bg-transparent border-0 border-b border-outline focus:border-primary focus:ring-0 resize-none font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant/50 leading-relaxed py-2 min-h-[160px]" placeholder="오늘의 감상을 기록해보세요...">햇살이 가득 들어오는 폰드 가든이 너무 아름다웠다. 동시 예식이라 하객들이 이동하지 않아도 되는 점이 좋았고, 식사 퀄리티는 보장되어 있으니 안심. 다만 보증 인원이 우리 예상보다 조금 많아서 고민이 필요하다. 신부대기실이 자연 채광이라 사진이 정말 잘 나올 것 같다.</textarea>
+</section>
+<!-- Photo Section -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Moments</label>
+</div>
+<!-- Upload Zone -->
+<div class="border-2 border-dashed border-primary-container rounded-lg h-[160px] flex flex-col items-center justify-center bg-surface-dim/30 hover:bg-surface-dim/50 transition-colors cursor-pointer mb-10 group">
+<span class="material-symbols-outlined text-primary-container text-3xl mb-2 group-hover:scale-110 transition-transform">add_photo_alternate</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">사진 추가하기</span>
+</div>
+<!-- Polaroid Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="relative group">
+<div class="polaroid-frame rotate-[-2deg]">
+<img alt="라움 폰드가든 야외 전경" class="w-full aspect-square object-cover bg-surface-dim" data-alt="luxurious outdoor wedding venue courtyard with manicured gardens, classic european architecture, bathed in warm afternoon sunlight, romantic elegant atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwsLwR9tEPX5df-DPGLlx_YwifxnUCGtevwA4i_6L6P8TNsmPWkbg_tA_USWaZ4nFM8wUkyG4U5ec1XbyruIDkAALBLRMODnF4xTAMqi_KHW7h4Nf6WEKHby6pW4ILwlgQgcSdh-XRNO_emzhkvXAm4dGfiqv_H0mVw8rdowUcH1zRlkHsETQnduut1t6At8VhVWS7BEP68DHUwQfQExBSedoDL-JXxgp0rRU5JFz8fEYbNL6Iaz4a4VHogfykhPcfQ02pOABM2w"/>
+<div class="polaroid-caption">Pond Garden, 2PM</div>
+<!-- Hover Delete -->
+<button class="absolute -top-3 -right-3 bg-surface border border-outline w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity hover:text-error hover:border-error shadow-sm z-10">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- AI Caption Actions -->
+<div class="mt-4 flex items-center justify-between px-2">
+<button class="text-primary font-body-sm text-body-sm hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                            AI 캡션 추천
+                        </button>
+<div class="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                            AI 생성
+                        </div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="relative group">
+<div class="polaroid-frame rotate-[1deg] translate-y-2">
+<img alt="신부대기실 채광" class="w-full aspect-square object-cover bg-surface-dim" data-alt="elegant bridal room interior with large windows, sheer white curtains, vintage sofa, abundant natural sunlight, soft delicate romantic mood" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHBsP1BvUVEozUGXVVByj1rkVxxfSkiBtFXIMNqtfPCc_dlBJHr-eUI7kbtuSL6wMX3D-_u5mwaJ8-hJ_0mVcR_SlJvfJtUw6UKVP4RP-33A305h1Dz64F9QKSnNeIeqrpZLwL5OwpYtJvBQJKn-eYWVXaT1cGD2OtpdwyrT5_hc_WZE5cXinfJkRRQVBmQglKiAmkJmY0m99S_KQvOlCv-8ogBDwuXSusCLHAx2olHW26_mm7FSVTaj9FpG1Obd-jlhS_l9NY0A"/>
+<div class="polaroid-caption">Bridal Room Light</div>
+<!-- Hover Delete -->
+<button class="absolute -top-3 -right-3 bg-surface border border-outline w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity hover:text-error hover:border-error shadow-sm z-10">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- AI Caption Actions -->
+<div class="mt-4 flex items-center justify-between px-2">
+<button class="text-primary font-body-sm text-body-sm hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                            AI 캡션 추천
+                        </button>
+<div class="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                            기본 템플릿
+                        </div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="relative group">
+<div class="polaroid-frame rotate-[2deg]">
+<img alt="메인홀 테이블 세팅" class="w-full aspect-square object-cover bg-surface-dim" data-alt="close up of fine dining wedding table setting with crystal glasses, white floral centerpieces, gold cutlery, romantic candlelight, moody elegant atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_Paf1JmH4AMfspbmcYMfZ-PL_QI34NRjchAnCgyCzWu2N3OLhLXkstHWMzxBJFsAJUhlZrCd0dixOoArDVOuWjDIKqCqhAS6oAvS4Caj9X5aZZF6pgSE1VfzovvUxR5lgVp78zq-eYsqjRApR2Vg4_BpPbY1ZKNrG62f959rk6ZRrVp0PFYIUCgr2yOo0bUc7mzkvpwW8DX4n79Wue7OLXtMcZwORF4HP9BwK5f424rML49yQDGQHImxF9mU3A7e_xqEv95rWow"/>
+<div class="polaroid-caption">Table Setting Details</div>
+<!-- Hover Delete -->
+<button class="absolute -top-3 -right-3 bg-surface border border-outline w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity hover:text-error hover:border-error shadow-sm z-10">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- AI Caption Actions -->
+<div class="mt-4 flex items-center justify-between px-2">
+<button class="text-primary font-body-sm text-body-sm hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+                            AI 캡션 추천
+                        </button>
+<div class="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                            기본 템플릿
+                        </div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Bottom Actions -->
+<div class="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-sm border-t border-outline py-4 px-6 z-40 md:pl-72">
+<div class="max-w-container-max mx-auto flex justify-end gap-4">
+<button class="px-6 py-2.5 font-body-sm text-body-sm text-on-surface border border-outline rounded hover:bg-surface-dim transition-colors">
+                취소
+            </button>
+<button class="px-8 py-2.5 font-body-sm text-body-sm text-white bg-on-surface rounded shadow-md shadow-on-surface/10 hover:bg-on-surface-variant transition-colors">
+                저장
+            </button>
+</div>
+</div>
+</body></html>

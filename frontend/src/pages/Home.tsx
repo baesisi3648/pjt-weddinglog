@@ -1,4 +1,4 @@
-// @TASK P4-S2-T1~T3 - Home 페이지 실 API 연동
+// @TASK STITCH-DESIGN - Home 페이지 이식 (Stitch home_desktop/code.html 기반)
 // @SPEC specs/screens/01_home.yaml
 // @TEST src/pages/Home.test.tsx
 
@@ -8,12 +8,11 @@ import { useCouple } from '../context/CoupleContext';
 import { getHomeSummary } from '../services/home_api';
 import CoupleProfileCard from '../components/CoupleProfileCard';
 import CoupleProfileEditModal from '../components/CoupleProfileEditModal';
-import CategoryBadge from '../components/CategoryBadge';
 import type { Couple, Event, Photo, AlbumOrderDeadline, HomeSummary } from '../types';
 
 const COUPLE_ID = 'cpl_sample_001';
 
-// D+N 계산용 헬퍼
+// D-N 계산용 헬퍼
 function calcDaysFromToday(dateStr: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -22,91 +21,132 @@ function calcDaysFromToday(dateStr: string): number {
   return Math.round((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-interface UpcomingTasksWidgetProps {
-  events: Event[];
+// 날짜 포맷: MM.DD
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/**
- * UpcomingTasksWidget — 최대 3개 upcoming_events 표시
- */
-function UpcomingTasksWidget({ events }: UpcomingTasksWidgetProps) {
+// D-N 레이블
+function dLabel(dateStr: string): string {
+  const diff = calcDaysFromToday(dateStr);
+  if (diff === 0) return 'D-Day';
+  if (diff < 0) return `D${diff}`; // D-N (미래)
+  return `D+${diff}`; // D+N (과거)
+}
+
+// ─── 이번 주 할 일 (체크리스트 스타일) ─────────────────────────────────────
+interface UpcomingTasksWidgetProps {
+  events: Event[];
+  onToggle?: (eventId: string) => void;
+}
+
+function UpcomingTasksWidget({ events, onToggle }: UpcomingTasksWidgetProps) {
   if (!events || events.length === 0) {
     return (
-      <div className="wl-card" style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
+      <div className="text-center py-8 text-on-surface-variant font-body-sm text-body-sm">
         진행 중인 일정이 없습니다
       </div>
     );
   }
 
   return (
-    <div className="wl-card wl-tasks">
-      {events.slice(0, 3).map((ev) => {
-        const diff = calcDaysFromToday(ev.date);
-        const dLabel = diff === 0 ? 'D-Day' : diff < 0 ? `D${diff}` : `D+${diff}`;
-        return (
-          <div key={ev.id} className={`wl-task ${ev.is_completed ? 'is-done' : ''}`}>
-            <div className="wl-task-body">
-              <div className="wl-task-label">{ev.title}</div>
-              <div className="wl-task-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <CategoryBadge category={ev.category} size="sm" />
-                <span className="wl-task-date" style={{ fontSize: '12px', color: '#9CA3AF' }}>{dLabel}</span>
-              </div>
+    <div className="flex flex-col gap-4">
+      {events.slice(0, 3).map((ev) => (
+        <label
+          key={ev.id}
+          className="flex items-center justify-between group cursor-pointer border-b border-[#E3DBC8] pb-3 border-dashed"
+          style={{ opacity: ev.is_completed ? 0.6 : 1 }}
+        >
+          <div className="flex items-center gap-4">
+            {/* 체크 원 */}
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                ev.is_completed
+                  ? 'bg-primary-container'
+                  : 'border border-outline group-hover:border-primary-container'
+              }`}
+              onClick={() => onToggle?.(ev.id)}
+            >
+              {ev.is_completed && (
+                <span
+                  className="material-symbols-outlined text-white"
+                  style={{ fontSize: '14px', fontVariationSettings: "'wght' 600" }}
+                >
+                  check
+                </span>
+              )}
             </div>
+            <span
+              className={`font-body-md text-body-md transition-colors ${
+                ev.is_completed
+                  ? 'text-[#B5AEA0] line-through'
+                  : 'text-on-surface group-hover:text-primary-container'
+              }`}
+            >
+              {ev.title}
+            </span>
           </div>
+          <span className="font-mono-id text-mono-id text-outline">
+            {dLabel(ev.date)}
+          </span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+// ─── 최근 사진 (Polaroid 그리드) ────────────────────────────────────────────
+interface RecentPhotosWidgetProps {
+  photos: Photo[];
+}
+
+function RecentPhotosWidget({ photos }: RecentPhotosWidgetProps) {
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="text-center py-8 text-on-surface-variant font-body-sm text-body-sm">
+        첫 사진을 올려보세요
+      </div>
+    );
+  }
+
+  const rotations = ['-rotate-2', 'rotate-1', '-rotate-1'];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {photos.slice(0, 6).map((photo, idx) => {
+        const rot = rotations[idx % rotations.length] ?? '';
+        // 3번째 카드(idx=2)는 sm에서 col-span-2
+        const spanClass = idx === 2 ? 'sm:col-span-2 lg:col-span-1' : '';
+
+        return (
+          <Link
+            key={photo.id}
+            to={`/events/${photo.event_id}`}
+            className={`bg-white p-3 pb-8 rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_8px_16px_rgba(0,0,0,0.03)] transform ${rot} hover:rotate-0 transition-transform duration-300 no-underline ${spanClass}`}
+            style={{ textDecoration: 'none' }}
+          >
+            <img
+              src={photo.file_url}
+              alt={photo.caption || '사진'}
+              className={`w-full aspect-square object-cover bg-surface-dim ${idx === 2 ? 'lg:aspect-square sm:aspect-[2/1]' : ''}`}
+            />
+            <div className="mt-4 flex justify-between items-center px-1">
+              <span className="font-body-sm text-body-sm text-on-surface">
+                {photo.caption || '기록'}
+              </span>
+              <span className="font-mono-id text-mono-id text-outline">
+                {formatDateShort(photo.created_at ?? '')}
+              </span>
+            </div>
+          </Link>
         );
       })}
     </div>
   );
 }
 
-interface RecentPhotosWidgetProps {
-  photos: Photo[];
-}
-
-/**
- * RecentPhotosWidget — 최근 6장 썸네일 3x2 그리드
- */
-function RecentPhotosWidget({ photos }: RecentPhotosWidgetProps) {
-  if (!photos || photos.length === 0) {
-    return (
-      <div className="wl-logs" style={{ padding: '20px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
-        첫 사진을 올려보세요
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="wl-logs"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '8px',
-      }}
-    >
-      {photos.slice(0, 6).map((photo) => (
-        <Link key={photo.id} to={`/event/${photo.event_id}`} style={{ textDecoration: 'none' }}>
-          <div className="wl-log-card" style={{ textDecoration: 'none' }}>
-            <div className="wl-log-img" style={{ position: 'relative', aspectRatio: '1/1' }}>
-              <img
-                src={photo.file_url}
-                alt={photo.caption || '사진'}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', display: 'block' }}
-              />
-            </div>
-            {photo.caption && (
-              <div className="wl-log-caption" style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {photo.caption}
-              </div>
-            )}
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-
+// ─── Home ────────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
   const { refetch: refetchCouple } = useCouple();
@@ -129,12 +169,9 @@ export default function Home() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchHome();
-  }, [fetchHome]);
+  useEffect(() => { fetchHome(); }, [fetchHome]);
 
   function handleProfileSaved(updated: Couple) {
-    // homeData 내 couple 즉시 갱신 + CoupleContext도 리프레시
     setHomeData((prev) => prev ? { ...prev, couple: updated } : prev);
     refetchCouple();
   }
@@ -144,184 +181,127 @@ export default function Home() {
   const recentPhotos = homeData?.recent_photos ?? [];
   const photoCounts = homeData?.photo_counts ?? { total: 0, selected: 0 };
   const albumDeadline: AlbumOrderDeadline | null = homeData?.album_order_deadline ?? null;
-
-  // D+ 상태 감지
-  const isPast = couple?.wedding_date
-    ? calcDaysFromToday(couple.wedding_date) > 0
-    : false;
-
-  // 앨범 주문 CTA 활성화 조건: selected >= 1
   const isAlbumEnabled = photoCounts.selected >= 1;
+  const isPast = couple?.wedding_date ? calcDaysFromToday(couple.wedding_date) > 0 : false;
+
+  // ── 로딩 ──
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-xl py-lg">
+        <div className="flex flex-col items-center gap-md border-b border-surface-dim pb-lg animate-pulse">
+          <div className="h-12 w-48 bg-surface-container rounded" />
+          <div className="h-20 w-32 bg-surface-container rounded" />
+        </div>
+        <div className="text-center font-body-sm text-on-surface-variant">불러오는 중…</div>
+      </div>
+    );
+  }
+
+  // ── 에러 ──
+  if (error) {
+    return (
+      <div className="my-md p-md bg-error-container border border-error rounded text-on-error-container text-center font-body-sm text-body-sm">
+        <div className="font-medium mb-1">홈을 불러오지 못했습니다.</div>
+        <div className="text-sm opacity-70">{error}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="wl-screen wl-home">
-      <div className="wl-scroll">
-        {/* 에러 상태 */}
-        {!loading && error && (
-          <div
-            style={{
-              margin: '16px',
-              padding: '16px',
-              background: '#FEF2F2',
-              borderRadius: '12px',
-              color: '#EF4444',
-              textAlign: 'center',
-            }}
+    <div className="flex flex-col gap-xl">
+      {/* ── Hero: 커플 이름 + D-day ── */}
+      {couple ? (
+        <div className="relative">
+          <CoupleProfileCard couple={couple} album_order_deadline={albumDeadline} />
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            aria-label="프로필 편집"
+            className="absolute top-0 right-0 border border-outline-variant rounded px-3 py-1.5 font-label-caps text-label-caps text-on-surface-variant bg-surface-container-lowest hover:bg-surface-container transition-colors"
           >
-            <div style={{ fontWeight: 600, marginBottom: '4px' }}>홈을 불러오지 못했습니다.</div>
-            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>{error}</div>
-          </div>
-        )}
+            편집
+          </button>
+        </div>
+      ) : (
+        <section className="flex flex-col items-center text-center gap-md border-b border-surface-dim pb-lg">
+          <p className="font-body-sm text-body-sm text-on-surface-variant">커플 정보를 불러올 수 없습니다</p>
+        </section>
+      )}
 
-        {/* 커플 프로필 카드 */}
-        {!loading && !error && couple ? (
-          <div style={{ position: 'relative' }}>
-            <CoupleProfileCard couple={couple} album_order_deadline={albumDeadline} />
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              aria-label="프로필 편집"
-              style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                background: 'rgba(255,255,255,0.85)',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                padding: '5px 10px',
-                fontSize: '12px',
-                color: '#6B7280',
-                cursor: 'pointer',
-                fontWeight: 500,
-                backdropFilter: 'blur(4px)',
-              }}
-            >
-              편집
-            </button>
-          </div>
-        ) : !loading && !error && !couple ? (
-          <div className="wl-hero">
-            <div className="wl-hero-inner" style={{ textAlign: 'center', padding: '32px 16px' }}>
-              <div style={{ fontSize: '14px', color: '#9CA3AF', marginBottom: '8px' }}>커플 정보를 불러올 수 없습니다</div>
-              <div style={{ fontSize: '12px', color: '#D1D5DB' }}>백엔드 API 상태를 확인해주세요</div>
-            </div>
-          </div>
-        ) : null}
+      {/* ── D+ 결혼 후 메시지 ── */}
+      {isPast && (
+        <div className="bg-surface-container-low border border-outline-variant rounded-lg p-md text-center">
+          <p className="font-body-sm text-body-sm text-on-surface-variant mb-2">
+            결혼을 축하합니다! 타임라인 정리를 마무리하세요.
+          </p>
+          <Link to="/timeline" className="font-body-sm text-body-sm text-primary hover:underline">
+            타임라인 보기 →
+          </Link>
+        </div>
+      )}
 
-        {/* 로딩 */}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#9CA3AF' }}>불러오는 중…</div>
-        )}
+      {/* ── 이번 주 할 일 ── */}
+      <section className="flex flex-col gap-md">
+        <div className="flex items-end justify-between border-b border-[#E3DBC8] pb-2">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">이번 주 할 일</h2>
+          <button
+            className="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+            onClick={() => navigate('/calendar')}
+          >
+            모두 보기 →
+          </button>
+        </div>
+        <UpcomingTasksWidget events={upcomingEvents} />
+      </section>
 
-        {/* D+ 상태 메시지 */}
-        {!loading && isPast && (
-          <section className="wl-section" style={{ padding: '0 16px 16px' }}>
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #FFF7ED, #FEF3C7)',
-                borderRadius: '12px',
-                padding: '16px',
-                textAlign: 'center',
-                fontSize: '14px',
-                color: '#92400E',
-              }}
-            >
-              결혼 후 타임라인 정리를 마무리하세요 🎊
-              <div style={{ marginTop: '8px' }}>
-                <Link to="/timeline" style={{ color: '#D97706', fontWeight: 600, textDecoration: 'none' }}>
-                  타임라인 보기 →
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
+      {/* ── 최근 기록 (Polaroid 그리드) ── */}
+      <section className="flex flex-col gap-md">
+        <div className="flex items-end justify-between border-b border-[#E3DBC8] pb-2">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">최근 기록</h2>
+          <button
+            className="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors"
+            onClick={() => navigate('/timeline')}
+          >
+            전체 →
+          </button>
+        </div>
+        <RecentPhotosWidget photos={recentPhotos} />
+      </section>
 
-        {/* 이번 주 할 일 (UpcomingTasksWidget) */}
-        {!loading && (
-          <section className="wl-section">
-            <header className="wl-section-head">
-              <div>
-                <div className="wl-section-eyebrow">This week</div>
-                <h2 className="wl-section-title">이번 주 할 일</h2>
-              </div>
-              <button className="wl-link" onClick={() => navigate('/calendar')}>모두 보기 →</button>
-            </header>
-            <UpcomingTasksWidget events={upcomingEvents} />
-          </section>
-        )}
+      {/* ── CTA 버튼 ── */}
+      <section className="flex flex-col sm:flex-row gap-4 border-t border-surface-dim pt-lg pb-xl">
+        <button
+          className="flex-1 bg-on-surface text-inverse-on-surface font-body-md text-body-md py-3 px-6 rounded hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          onClick={() => navigate('/calendar')}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_month</span>
+          캘린더로 이동
+        </button>
+        <button
+          className="flex-1 border font-body-md text-body-md py-3 px-6 rounded flex items-center justify-center gap-2 transition-colors"
+          style={{
+            borderColor: isAlbumEnabled ? '#e89f8e' : '#d7c2bd',
+            color: isAlbumEnabled ? '#693529' : '#85736f',
+            background: isAlbumEnabled ? 'transparent' : 'transparent',
+            cursor: isAlbumEnabled ? 'pointer' : 'default',
+          }}
+          disabled={!isAlbumEnabled}
+          onClick={() => isAlbumEnabled && navigate('/timeline')}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>photo_album</span>
+          앨범 주문하기
+        </button>
+      </section>
 
-        {/* 최근 사진 (RecentPhotosWidget) */}
-        {!loading && (
-          <section className="wl-section">
-            <header className="wl-section-head">
-              <div>
-                <div className="wl-section-eyebrow">Recent</div>
-                <h2 className="wl-section-title">최근 기록</h2>
-              </div>
-              <button className="wl-link" onClick={() => navigate('/timeline')}>전체 →</button>
-            </header>
-            <RecentPhotosWidget photos={recentPhotos} />
-          </section>
-        )}
+      {/* FAB */}
+      <button
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-14 h-14 bg-primary-container text-on-primary rounded-full flex items-center justify-center shadow-[0_4px_12px_rgba(232,159,142,0.4)] hover:scale-105 transition-transform z-50"
+        aria-label="새 일정 추가"
+        onClick={() => navigate('/calendar')}
+      >
+        <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>edit</span>
+      </button>
 
-        {/* CTA 버튼 그룹 */}
-        {!loading && (
-          <section className="wl-section">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 0 8px' }}>
-              {/* 캘린더로 이동 (primary) */}
-              <button
-                className="wl-btn wl-btn-primary"
-                onClick={() => navigate('/calendar')}
-                style={{ width: '100%' }}
-              >
-                캘린더로 이동
-                <svg width="14" height="14" viewBox="0 0 14 14">
-                  <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-
-              {/* 앨범 주문하기 (gold accent, photo_counts.selected >= 1일 때만 활성화) */}
-              <button
-                className="wl-btn"
-                disabled={!isAlbumEnabled}
-                onClick={() => isAlbumEnabled && navigate('/timeline')}
-                style={{
-                  width: '100%',
-                  background: isAlbumEnabled ? '#D4A017' : '#E5E7EB',
-                  color: isAlbumEnabled ? '#fff' : '#9CA3AF',
-                  cursor: isAlbumEnabled ? 'pointer' : 'not-allowed',
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s',
-                }}
-              >
-                앨범 주문하기
-                {isAlbumEnabled && (
-                  <svg width="14" height="14" viewBox="0 0 14 14">
-                    <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-
-              {!isAlbumEnabled && (
-                <div style={{ fontSize: '12px', color: '#9CA3AF', textAlign: 'center' }}>
-                  사진을 선택하면 앨범 주문이 가능합니다
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        <div className="wl-bottom-spacer" />
-      </div>
-
-      {/* 커플 프로필 편집 모달 */}
+      {/* 커플 편집 모달 */}
       {couple && (
         <CoupleProfileEditModal
           couple={couple}
@@ -333,4 +313,3 @@ export default function Home() {
     </div>
   );
 }
-

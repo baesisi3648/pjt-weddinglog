@@ -1,6 +1,5 @@
-// @TASK P3-S1-T3 - PhotoGrid 컴포넌트
+// @TASK STITCH-DESIGN - PhotoGrid Polaroid 스타일 (event_detail_desktop 기반)
 // @SPEC specs/screens/03_event_detail.yaml#photo_grid
-// @TEST src/pages/EventDetail.test.tsx
 
 import { useState } from 'react';
 import CaptionSelector from './CaptionSelector';
@@ -15,6 +14,8 @@ interface PhotoGridProps {
   onCaptionChange: (photoId: string, caption: string, source: CaptionSource) => void;
 }
 
+const POLAROID_ROTATIONS = ['-rotate-2', 'rotate-1', 'rotate-2', '-rotate-1', 'rotate-1', '-rotate-2'];
+
 export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChange }: PhotoGridProps) {
   const [captionOpenId, setCaptionOpenId] = useState<string | null>(null);
 
@@ -25,91 +26,82 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
 
   return (
     <div>
-      {/* 사진 개수 카운터 */}
-      <div
-        style={{
-          fontSize: 13, color: 'var(--wl-ink-3)',
-          marginBottom: 12, fontWeight: 500,
-        }}
-      >
-        <span style={{ color: 'var(--wl-ink)', fontWeight: 700 }}>{photos.length}</span>
-        {' / '}{MAX_PHOTOS}
+      {/* 사진 개수 */}
+      <div className="font-label-caps text-label-caps text-on-surface-variant mb-6 uppercase">
+        {photos.length} / {MAX_PHOTOS}장
       </div>
 
-      <div className="wl-photo-grid">
-        {photos.map((photo) => (
-          <div key={photo.id} className="wl-photo-item">
-            {/* 썸네일 */}
-            <div className="wl-photo-thumb" style={{ position: 'relative', overflow: 'hidden', borderRadius: 8 }}>
-              <img
-                src={`/api/photos/${photo.id}/file`}
-                alt={photo.caption || '사진'}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  // 이미지 로드 실패 시 플레이스홀더
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent) parent.classList.add('wl-photo-thumb-fallback');
-                }}
-              />
-              {/* 호버 오버레이 액션 */}
-              <div className="wl-photo-actions">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {photos.map((photo, idx) => {
+          const rotClass = POLAROID_ROTATIONS[idx % POLAROID_ROTATIONS.length] ?? '';
+          const isAI = (photo as unknown as { source?: string }).source === 'AI';
+
+          return (
+            <div key={photo.id} className="relative group">
+              {/* Polaroid 프레임 */}
+              <div className={`polaroid-frame ${rotClass}`}>
+                <img
+                  src={`/api/photos/${photo.id}/file`}
+                  alt={photo.caption || '사진'}
+                  className="w-full aspect-square object-cover bg-surface-dim"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.style.background = '#f0e7d8';
+                      parent.style.minHeight = '120px';
+                    }
+                  }}
+                />
+                {photo.caption && (
+                  <div className="polaroid-caption">{photo.caption}</div>
+                )}
+
+                {/* 호버 삭제 버튼 */}
                 <button
-                  className="wl-photo-action"
-                  title="삭제"
+                  className="absolute -top-3 -right-3 bg-surface border border-outline-variant w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity hover:text-error hover:border-error shadow-sm z-10"
                   type="button"
                   aria-label="사진 삭제"
+                  title="삭제"
                   onClick={() => onDelete?.(photo.id)}
                 >
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path d="M3 3.5h8M5.5 3.5V2.5h3v1M4 3.5l.5 7.5h5l.5-7.5" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
                 </button>
               </div>
-            </div>
 
-            {/* 캡션 영역 */}
-            <div style={{ marginTop: 6 }}>
-              {/* 캡션 미리보기 (2줄 잘림) */}
-              <div
-                style={{
-                  fontSize: 12, color: 'var(--wl-ink-2)',
-                  overflow: 'hidden', display: '-webkit-box',
-                  WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  lineHeight: 1.5, minHeight: '2.2em',
-                  marginBottom: 4,
-                }}
-              >
-                {photo.caption || (
-                  <span style={{ color: 'var(--wl-ink-4)' }}>캡션 없음</span>
-                )}
+              {/* AI 캡션 액션 */}
+              <div className="mt-4 flex items-center justify-between px-2">
+                <button
+                  className="text-primary font-body-sm text-body-sm hover:underline flex items-center gap-1"
+                  type="button"
+                  onClick={() => setCaptionOpenId(captionOpenId === photo.id ? null : photo.id)}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>auto_awesome</span>
+                  AI 캡션 추천
+                </button>
+                <div className="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: isAI ? '#e89f8e' : '#d7c2bd' }}
+                  />
+                  {isAI ? 'AI 생성' : '기본 템플릿'}
+                </div>
               </div>
 
-              {/* AI 캡션 추천 버튼 */}
-              <button
-                className={`wl-ai-btn${captionOpenId === photo.id ? ' is-on' : ''}`}
-                type="button"
-                onClick={() => setCaptionOpenId(captionOpenId === photo.id ? null : photo.id)}
-                style={{ fontSize: 11 }}
-              >
-                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M7 2l1 2.5L10.5 5.5 8 6.5 7 9 6 6.5 3.5 5.5 6 4.5 7 2z" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-                </svg>
-                AI 캡션 추천
-              </button>
-
-              {/* CaptionSelector (인라인 확장) */}
+              {/* CaptionSelector */}
               {captionOpenId === photo.id && event && (
-                <CaptionSelector
-                  photo={photo}
-                  event={event}
-                  onApply={(caption, source) => handleCaptionApply(photo.id, caption, source)}
-                  onClose={() => setCaptionOpenId(null)}
-                />
+                <div className="mt-2 px-2">
+                  <CaptionSelector
+                    photo={photo}
+                    event={event}
+                    onApply={(caption, source) => handleCaptionApply(photo.id, caption, source)}
+                    onClose={() => setCaptionOpenId(null)}
+                  />
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

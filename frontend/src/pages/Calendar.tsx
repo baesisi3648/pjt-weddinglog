@@ -1,8 +1,5 @@
+// @TASK STITCH-DESIGN - Calendar 페이지 이식 (Stitch calendar_desktop/code.html 기반)
 // @TASK P2-S1-T1 - Calendar 페이지 API 연동
-// @TASK P2-S1-T2 - 리스트 뷰 탭
-// @TASK P2-S1-T5 - AI 체크리스트 생성 UI
-// @TASK P2-S1-T6 - 월간 뷰 사진 썸네일
-// @SPEC docs/planning/06-tasks.md#P2-S1-T1
 // @SPEC specs/screens/02_calendar.yaml
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,41 +9,22 @@ import { listEvents, createEvent, updateEvent, deleteEvent, toggleCompleteEvent 
 import { listEventPhotos } from '../services/photo_api';
 import { requestChecklist } from '../services/ai_api';
 import EventForm from '../components/EventForm';
-import CategoryBadge, { CATEGORY_EMOJIS } from '../components/CategoryBadge';
+import CategoryBadge from '../components/CategoryBadge';
 import { CATEGORY_LABELS } from '../constants/enums';
 import type { Event, Category, EventCreate, EventUpdate } from '../types';
 import type { Photo } from '../types';
-
-// ─── 카테고리별 색상 (핸드오프 CSS 변수 기반) ───────────────────────────────
-const CATEGORY_RAIL_COLORS: Record<Category, string> = {
-  WEDDING_PHOTO:       '#E8967C',
-  STUDIO_DRESS_MAKEUP: '#B7ABD4',
-  VENUE:               '#9BC2AB',
-  GIFT:                '#D8B370',
-  INVITATION:          '#B7ABD4',
-  REHEARSAL:           '#9BC2AB',
-  CEREMONY:            '#D2795E',
-  HONEYMOON:           '#9BB8D4',
-  ETC:                 '#BFB5AC',
-};
 
 // ─── 날짜 유틸 ──────────────────────────────────────────────────────────────
 function getMonthKey(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}`;
 }
 
-function getMonthLabel(year: number, month: number): { year: number; name: string } {
-  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  return { year, name: names[month] ?? '' };
-}
-
 function buildCalendarCells(year: number, month: number): (number | null)[] {
   const firstDay = new Date(year, month, 1);
   const rawDow = firstDay.getDay(); // 0=Sun
-  const firstWeekday = rawDow === 0 ? 6 : rawDow - 1;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells: (number | null)[] = [];
-  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let i = 0; i < rawDow; i++) cells.push(null);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
@@ -59,96 +37,41 @@ function dateToDayNum(dateStr: string | undefined, year: number, month: number):
   return null;
 }
 
-// ─── Toast 컴포넌트 ─────────────────────────────────────────────────────────
-interface ToastProps {
-  message: string;
-  type?: 'info' | 'success' | 'error';
-  onDismiss: () => void;
-}
+const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-function Toast({ message, type = 'info', onDismiss }: ToastProps) {
-  useEffect(() => {
-    const t = setTimeout(onDismiss, 3000);
-    return () => clearTimeout(t);
-  }, [onDismiss]);
+// ─── Toast ─────────────────────────────────────────────────────────────────
+interface ToastState { message: string; type: 'info' | 'success' | 'error'; }
 
-  const bg = type === 'error' ? '#EF4444' : type === 'success' ? '#33FFBB' : '#2B2420';
-  const color = type === 'success' ? '#2B2420' : '#fff';
-
+function ToastMsg({ message, type, onDismiss }: ToastState & { onDismiss: () => void }) {
+  useEffect(() => { const t = setTimeout(onDismiss, 3000); return () => clearTimeout(t); }, [onDismiss]);
+  const styles = {
+    error: { bg: '#ffdad6', color: '#93000a', border: '#ba1a1a' },
+    success: { bg: '#f6eddd', color: '#1f1b12', border: '#d7c2bd' },
+    info: { bg: '#ffffff', color: '#1f1b12', border: '#d7c2bd' },
+  };
+  const s = styles[type];
   return (
-    <div
-      role="alert"
-      aria-live="polite"
-      style={{
-        position: 'fixed', bottom: 80, right: 16, zIndex: 2000,
-        background: bg, color,
-        padding: '10px 16px', borderRadius: 10,
-        fontSize: 13, fontWeight: 500,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-        maxWidth: 280,
-      }}
-    >
+    <div role="alert" aria-live="polite" className="fixed bottom-20 right-4 z-[2000] font-body-sm text-body-sm rounded shadow-md px-4 py-2.5"
+      style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, maxWidth: 280 }}>
       {message}
     </div>
   );
 }
 
 // ─── 확인 모달 ──────────────────────────────────────────────────────────────
-interface ConfirmModalProps {
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function ConfirmModal({ message, onConfirm, onCancel }: ConfirmModalProps) {
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
   return (
-    <div
+    <div className="fixed inset-0 z-[1500] bg-on-surface/40 flex items-center justify-center"
       onClick={(e) => e.target === e.currentTarget && onCancel()}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1500,
-        background: 'rgba(43,36,32,0.45)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      role="dialog" aria-modal="true"
-    >
-      <div style={{
-        background: 'var(--wl-surface, #FDFAF5)',
-        borderRadius: 16, padding: '24px 20px',
-        width: 280, boxShadow: '0 8px 32px rgba(58,38,24,0.16)',
-      }}>
-        <p style={{ fontSize: 15, color: 'var(--wl-ink, #2B2420)', marginBottom: 20, lineHeight: 1.5 }}>
-          {message}
-        </p>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={onCancel}
-            style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--wl-line)', background: 'white', cursor: 'pointer', fontSize: 14 }}
-          >취소</button>
-          <button
-            onClick={onConfirm}
-            style={{ flex: 1, padding: '10px', borderRadius: 10, border: 'none', background: '#E8967C', color: 'white', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
-          >추가</button>
+      role="dialog" aria-modal="true">
+      <div className="bg-surface-container-lowest rounded-lg p-6 w-72 shadow-xl">
+        <p className="font-body-md text-body-md text-on-surface mb-5">{message}</p>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded border border-outline-variant font-body-sm text-body-sm text-on-surface hover:bg-surface-container transition-colors">취소</button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 rounded bg-primary-container font-body-sm text-body-sm text-on-primary-container hover:opacity-90 transition-opacity">추가</button>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ─── 스피너 ─────────────────────────────────────────────────────────────────
-function Spinner() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-      <div
-        role="status"
-        aria-label="로딩 중"
-        style={{
-          width: 28, height: 28, borderRadius: '50%',
-          border: '3px solid var(--wl-line, #EDE4D8)',
-          borderTopColor: '#E8967C',
-          animation: 'wl-spin 0.7s linear infinite',
-        }}
-      />
-      <style>{`@keyframes wl-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -159,33 +82,21 @@ interface EventFormState {
   date?: string;
 }
 
-interface ToastState {
-  message: string;
-  type: 'info' | 'success' | 'error';
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 export default function Calendar() {
   const navigate = useNavigate();
   const { couple } = useCouple();
 
-  // ── 날짜 상태 ──
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
-
-  // ── 뷰 모드 ──
   const [viewMode, setViewMode] = useState<'month' | 'list'>('month');
 
-  // ── 이벤트 데이터 ──
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-
-  // ── 사진 맵: eventId → Photo[] ─────────────────────────────────────────────
   const [eventPhotosMap, setEventPhotosMap] = useState<Record<string, Photo[]>>({});
 
-  // ── UI 상태 ──
   const [selectedDay, setSelectedDay] = useState(now.getDate());
   const [toast, setToast] = useState<ToastState | null>(null);
   const [eventForm, setEventForm] = useState<EventFormState | null>(null);
@@ -193,7 +104,6 @@ export default function Calendar() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSource, setAiSource] = useState<string | null>(null);
 
-  // ── API: 이벤트 로드 ──────────────────────────────────────────────────────
   const coupleId = couple?.id;
   const monthKey = getMonthKey(viewYear, viewMonth);
 
@@ -205,21 +115,15 @@ export default function Calendar() {
       const data = await listEvents(coupleId, monthKey);
       const evList = Array.isArray(data) ? data : [];
       setEvents(evList);
-
-      // 이벤트별 사진 일괄 fetch (방법 C: Promise.all)
       if (evList.length > 0) {
         const results = await Promise.all(
           evList.map(async (ev) => {
-            try {
-              const photos = await listEventPhotos(ev.id);
-              return { eventId: ev.id, photos: Array.isArray(photos) ? photos : [] };
-            } catch {
-              return { eventId: ev.id, photos: [] };
-            }
+            try { return { eventId: ev.id, photos: await listEventPhotos(ev.id) }; }
+            catch { return { eventId: ev.id, photos: [] }; }
           })
         );
         const map: Record<string, Photo[]> = {};
-        results.forEach(({ eventId, photos }) => { map[eventId] = photos; });
+        results.forEach(({ eventId, photos }) => { map[eventId] = Array.isArray(photos) ? photos : []; });
         setEventPhotosMap(map);
       } else {
         setEventPhotosMap({});
@@ -234,7 +138,6 @@ export default function Calendar() {
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  // ── 월 네비게이션 ─────────────────────────────────────────────────────────
   const goToPrevMonth = () => {
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
     else setViewMonth(m => m - 1);
@@ -243,14 +146,7 @@ export default function Calendar() {
     if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
     else setViewMonth(m => m + 1);
   };
-  const goToToday = () => {
-    const t = new Date();
-    setViewYear(t.getFullYear());
-    setViewMonth(t.getMonth());
-    setSelectedDay(t.getDate());
-  };
 
-  // ── 이벤트를 day별 map으로 변환 ──────────────────────────────────────────
   const eventsByDay: Record<number, Event[]> = {};
   events.forEach((ev) => {
     const day = dateToDayNum(ev.date, viewYear, viewMonth);
@@ -262,7 +158,6 @@ export default function Calendar() {
 
   const selDayEvents = eventsByDay[selectedDay] ?? [];
 
-  // ── 완료 토글 ─────────────────────────────────────────────────────────────
   const handleToggleComplete = async (eventId: string) => {
     if (!coupleId) return;
     try {
@@ -273,7 +168,6 @@ export default function Calendar() {
     }
   };
 
-  // ── EventForm 제출 ────────────────────────────────────────────────────────
   const handleEventSubmit = async (formData: EventCreate | EventUpdate) => {
     if (!coupleId) return;
     try {
@@ -293,7 +187,6 @@ export default function Calendar() {
     }
   };
 
-  // ── 일정 삭제 ─────────────────────────────────────────────────────────────
   const handleDelete = async (eventId: string) => {
     if (!coupleId) return;
     if (!window.confirm('이 일정을 삭제할까요?')) return;
@@ -306,13 +199,9 @@ export default function Calendar() {
     }
   };
 
-  // ── AI 체크리스트 ─────────────────────────────────────────────────────────
   const handleAIChecklist = () => {
-    if (events.length > 0) {
-      setConfirmAI(true);
-    } else {
-      doRequestChecklist();
-    }
+    if (events.length > 0) setConfirmAI(true);
+    else doRequestChecklist();
   };
 
   const doRequestChecklist = async () => {
@@ -332,398 +221,376 @@ export default function Calendar() {
     }
   };
 
-  // ── Toast ─────────────────────────────────────────────────────────────────
   const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') =>
     setToast({ message, type });
-  const dismissToast = () => setToast(null);
 
-  // ── 캘린더 셀 ─────────────────────────────────────────────────────────────
   const cells = buildCalendarCells(viewYear, viewMonth);
-  const weekHeaders = ['월', '화', '수', '목', '금', '토', '일'];
-  const { name: monthName } = getMonthLabel(viewYear, viewMonth);
-
   const todayDate = new Date();
   const isCurrentMonth = todayDate.getFullYear() === viewYear && todayDate.getMonth() === viewMonth;
   const todayNum = isCurrentMonth ? todayDate.getDate() : -1;
 
-  // 결혼 D-Day
   let weddingDay = -1;
   if (couple?.wedding_date) {
     const wd = new Date(couple.wedding_date);
-    if (wd.getFullYear() === viewYear && wd.getMonth() === viewMonth) {
-      weddingDay = wd.getDate();
-    }
+    if (wd.getFullYear() === viewYear && wd.getMonth() === viewMonth) weddingDay = wd.getDate();
   }
 
-  // ── 리스트 뷰 포맷 ────────────────────────────────────────────────────────
   const sortedEvents = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-  const formatDate = (dateStr: string): string => {
-    if (!dateStr) return '';
+  const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   };
 
-  // ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="wl-screen wl-cal">
-      <div className="wl-scroll">
-
-        {/* ── 뷰 토글 탭 ─────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', margin: '0 16px 12px', gap: 0, background: 'var(--wl-line-2, #F4EDE2)', borderRadius: 10, padding: 3 }}>
-          {([['month', '월간'], ['list', '리스트']] as [string, string][]).map(([mode, label]) => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode as 'month' | 'list')}
-              aria-pressed={viewMode === mode}
-              style={{
-                flex: 1, padding: '7px', fontSize: 13, fontWeight: viewMode === mode ? 600 : 400,
-                border: 'none', borderRadius: 8,
-                background: viewMode === mode ? 'white' : 'transparent',
-                color: viewMode === mode ? 'var(--wl-ink, #2B2420)' : 'var(--wl-ink-3, #8B8079)',
-                cursor: 'pointer',
-                boxShadow: viewMode === mode ? '0 1px 4px rgba(58,38,24,0.08)' : 'none',
-                transition: 'all 0.15s',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── 월 헤더 ─────────────────────────────────────────────────── */}
-        <div className="wl-month-head">
-          <button className="wl-month-arrow" onClick={goToPrevMonth} aria-label="이전 달">
-            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M9 3L5 7l4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <div className="flex flex-col gap-md">
+      {/* ── 헤더 ── */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={goToPrevMonth}
+            aria-label="이전 달"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_left</span>
           </button>
-          <div className="wl-month-title">
-            <div className="wl-month-year">{viewYear}</div>
-            <div className="wl-month-name">{monthName}</div>
-          </div>
-          <button className="wl-month-arrow" onClick={goToNextMonth} aria-label="다음 달">
-            <svg width="14" height="14" viewBox="0 0 14 14"><path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <h2 className="font-display-md text-display-md text-on-surface">
+            {viewYear}년 {MONTH_NAMES[viewMonth]}
+          </h2>
+          <button
+            onClick={goToNextMonth}
+            aria-label="다음 달"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_right</span>
           </button>
         </div>
 
-        {/* ── 로딩 / 에러 ────────────────────────────────────────────── */}
-        {loading && <Spinner />}
-        {apiError && !loading && (
-          <div style={{ margin: '0 16px 12px', padding: '12px 14px', background: '#FFF5F2', border: '1px solid #FFCCBB', borderRadius: 10, fontSize: 13, color: '#D2795E' }}>
-            {apiError}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* AI 체크리스트 */}
+          <button
+            onClick={handleAIChecklist}
+            disabled={aiLoading || !coupleId}
+            className="flex items-center gap-2 px-4 py-2 rounded-full text-primary hover:bg-surface-variant transition-colors border border-transparent font-body-sm text-body-sm disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>auto_awesome</span>
+            {aiLoading ? '생성 중...' : 'AI로 체크리스트 자동 생성'}
+          </button>
+
+          {/* 뷰 토글 */}
+          <div className="flex p-1 bg-surface-container rounded-lg border border-outline-variant">
+            {(['month', 'list'] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                aria-pressed={viewMode === mode}
+                className={`px-4 py-1.5 rounded font-label-caps text-label-caps transition-colors ${
+                  viewMode === mode
+                    ? 'bg-surface shadow-sm text-on-surface'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                {mode === 'month' ? '월간' : '리스트'}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
+      </header>
 
-        {/* ════ 월간 뷰 ════════════════════════════════════════════════ */}
-        {viewMode === 'month' && !loading && (
-          <>
-            {/* 카테고리 범례 */}
-            <div className="wl-legend" style={{ flexWrap: 'wrap' }}>
-              {Object.entries(CATEGORY_LABELS).map(([cat, label]) => (
-                <div key={cat} className="wl-legend-item">
-                  <span className="wl-legend-dot" style={{ background: CATEGORY_RAIL_COLORS[cat as Category] }} />
-                  <span>{label}</span>
-                </div>
-              ))}
-            </div>
+      {/* AI 소스 배지 */}
+      {aiSource && (
+        <div className="flex justify-center">
+          <span
+            className="font-label-caps text-label-caps px-3 py-1 rounded-full"
+            style={{
+              background: aiSource === 'ai' ? '#e89f8e' : '#f6eddd',
+              color: aiSource === 'ai' ? '#693529' : '#524340',
+            }}
+          >
+            {aiSource === 'ai' ? 'AI 생성' : '기본 템플릿'}
+          </span>
+        </div>
+      )}
 
-            {/* 캘린더 그리드 */}
-            <div className="wl-card wl-cal-card">
-              <div className="wl-weekdays">
-                {weekHeaders.map((w, i) => (
-                  <div key={w} className={`wl-weekday ${i === 5 ? 'is-sat' : ''} ${i === 6 ? 'is-sun' : ''}`}>{w}</div>
-                ))}
+      {/* 로딩 / 에러 */}
+      {loading && (
+        <div className="text-center py-8 font-body-sm text-on-surface-variant">불러오는 중…</div>
+      )}
+      {apiError && !loading && (
+        <div className="my-2 p-3 bg-error-container text-on-error-container rounded font-body-sm text-body-sm">
+          {apiError}
+        </div>
+      )}
+
+      {/* ════ 월간 뷰 ════ */}
+      {viewMode === 'month' && !loading && (
+        <>
+          {/* 요일 헤더 */}
+          <div className="bg-surface border-t border-l border-outline-variant w-full grid grid-cols-7 text-center">
+            {WEEKDAYS.map((w, i) => (
+              <div
+                key={w}
+                className={`py-3 border-r border-b border-outline-variant font-label-caps text-label-caps ${
+                  i === 0 ? 'text-error opacity-80' : 'text-on-surface-variant'
+                }`}
+              >
+                {w}
               </div>
-              <div className="wl-days">
-                {cells.map((d, i) => {
-                  if (d === null) return <div key={i} className="wl-day wl-day-empty" />;
-                  const ev = eventsByDay[d] ?? [];
-                  const dayOfWeek = i % 7;
-                  const isToday = d === todayNum;
-                  const isWedding = d === weddingDay;
+            ))}
+          </div>
 
-                  // 사진 있는 이벤트 / 없는 이벤트 분류
-                  const evWithPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
-                  const evWithoutPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
-                  const hasPhotos = evWithPhotos.length > 0;
+          {/* 날짜 그리드 */}
+          <div className="w-full grid grid-cols-7 border-l border-outline-variant bg-surface">
+            {cells.map((d, i) => {
+              if (d === null) {
+                return (
+                  <div
+                    key={i}
+                    className="min-h-[96px] border-r border-b border-outline-variant p-2 opacity-40 bg-surface-container-low"
+                  />
+                );
+              }
 
-                  // 셀에 최대 표시: 사진 2장 + 라벨 1개 = 3슬롯
-                  const shownPhotoEvents = evWithPhotos.slice(0, 2);
-                  const shownLabelEvents = evWithoutPhotos.slice(0, Math.max(0, 3 - shownPhotoEvents.length));
-                  const totalShown = shownPhotoEvents.length + shownLabelEvents.length;
-                  const moreCount = ev.length - totalShown;
+              const ev = eventsByDay[d] ?? [];
+              const dayOfWeek = i % 7;
+              const isToday = d === todayNum;
+              const isWedding = d === weddingDay;
+              const isSelected = selectedDay === d;
+              const isSunday = dayOfWeek === 0;
 
-                  const handleCellClick = () => {
+              const evWithPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
+              const evWithoutPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
+              const shownPhotoEvents = evWithPhotos.slice(0, 2);
+              const shownLabelEvents = evWithoutPhotos.slice(0, Math.max(0, 3 - shownPhotoEvents.length));
+              const totalShown = shownPhotoEvents.length + shownLabelEvents.length;
+              const moreCount = ev.length - totalShown;
+
+              return (
+                <button
+                  key={i}
+                  className={`min-h-[96px] border-r border-b border-outline-variant p-2 flex flex-col gap-1 relative hover:bg-surface-container-low transition-colors text-left ${
+                    isSelected ? 'bg-surface-container-lowest' : ''
+                  }`}
+                  onClick={() => {
                     setSelectedDay(d);
                     const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     setEventForm({ mode: 'create', date: dateStr });
-                  };
+                  }}
+                  aria-label={`${d}일${ev.length > 0 ? `, 일정 ${ev.length}개` : ''}`}
+                >
+                  {/* 날짜 숫자 */}
+                  {isToday ? (
+                    <span className="w-6 h-6 flex items-center justify-center rounded-full border border-primary text-primary font-body-sm text-body-sm font-semibold">
+                      {d}
+                    </span>
+                  ) : (
+                    <span className={`font-body-sm text-body-sm ${isSunday ? 'text-error' : 'text-on-surface-variant'} ${isWedding ? 'text-primary font-semibold' : ''}`}>
+                      {d}
+                    </span>
+                  )}
 
-                  return (
-                    <button
-                      key={i}
-                      className={[
-                        'wl-day',
-                        selectedDay === d ? 'is-selected' : '',
-                        isToday ? 'is-today' : '',
-                        isWedding ? 'is-wedding' : '',
-                        dayOfWeek === 5 ? 'is-sat' : '',
-                        dayOfWeek === 6 ? 'is-sun' : '',
-                        hasPhotos ? 'has-photos' : '',
-                      ].filter(Boolean).join(' ')}
-                      onClick={handleCellClick}
-                      aria-label={`${d}일${ev.length > 0 ? `, 일정 ${ev.length}개` : ''}`}
-                    >
-                      {/* 날짜 숫자 */}
-                      <div className={hasPhotos ? 'wl-day-num-row' : undefined}>
-                        <span className="wl-day-num">{d}</span>
-                      </div>
-                      {isWedding && <span className="wl-day-ring">♥</span>}
-
-                      {/* 사진 썸네일 (사진 있는 이벤트) */}
-                      {shownPhotoEvents.map((e) => {
+                  {/* 폴라로이드 썸네일 (사진 있는 이벤트) */}
+                  {shownPhotoEvents.length > 0 && (
+                    <div className="relative w-full h-12 mt-1 pl-1">
+                      {shownPhotoEvents.map((e, pi) => {
                         const photos = eventPhotosMap[e.id] ?? [];
                         const coverPhoto = photos[0];
                         const extraCount = photos.length - 1;
                         return (
                           <div
                             key={e.id}
-                            className="wl-cal-photo-thumb"
+                            className={`absolute top-0 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm transition-transform hover:scale-110 z-${pi + 10}`}
+                            style={{ left: `${pi * 12}px`, transform: `rotate(${pi % 2 === 0 ? '-3deg' : '4deg'})` }}
                             onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
                             role="img"
                             aria-label={`${e.title} 사진`}
                           >
-                            {coverPhoto && (
-                              <img src={coverPhoto.file_url} alt={e.title} loading="lazy" />
+                            {coverPhoto ? (
+                              <img src={coverPhoto.file_url} alt={e.title} className="w-full h-full object-cover grayscale opacity-80" loading="lazy" />
+                            ) : (
+                              <div className="w-full h-full bg-surface-container flex items-center justify-center">
+                                <span className="font-label-caps text-[10px] font-bold text-on-surface">
+                                  {extraCount > 0 ? `+${extraCount + 1}` : '1'}
+                                </span>
+                              </div>
                             )}
                             {extraCount > 0 && (
-                              <span className="wl-cal-photo-count">+{extraCount}</span>
+                              <div className="absolute top-1 left-3 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm rotate-[4deg] z-20 flex items-center justify-center bg-surface-container">
+                                <span className="text-[11px] font-bold text-on-surface">+{extraCount}</span>
+                              </div>
                             )}
                           </div>
                         );
                       })}
+                    </div>
+                  )}
 
-                      {/* 카테고리 라벨 (사진 없는 이벤트) */}
+                  {/* 이벤트 라벨 (사진 없는 이벤트) */}
+                  {shownLabelEvents.length > 0 && (
+                    <div className="mt-1 flex flex-col gap-1 w-full px-1">
                       {shownLabelEvents.map((e) => (
                         <div
                           key={e.id}
-                          className="wl-cal-label"
-                          style={{ background: CATEGORY_RAIL_COLORS[e.category] ?? '#BFB5AC' }}
+                          className="flex items-center gap-1 text-[11px] leading-none text-on-surface truncate"
                           onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
                         >
-                          {e.title}
+                          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+                            {e.category === 'CEREMONY' ? 'favorite' :
+                             e.category === 'WEDDING_PHOTO' ? 'photo_camera' :
+                             e.category === 'VENUE' ? 'location_on' :
+                             e.category === 'GIFT' ? 'card_giftcard' :
+                             'calendar_today'}
+                          </span>
+                          <span className="truncate">{e.title}</span>
                         </div>
                       ))}
-
-                      {/* 기존 점 (사진도 없고 분류되지 않은 경우: 로딩 전 fallback) */}
-                      {!hasPhotos && ev.length > 0 && evWithPhotos.length === 0 && evWithoutPhotos.length === 0 && (
-                        <div className="wl-day-dots">
-                          {ev.slice(0, 3).map((e) => (
-                            <span key={e.id} className="wl-day-dot" style={{ background: CATEGORY_RAIL_COLORS[e.category] ?? '#BFB5AC' }} />
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 초과 개수 */}
-                      {moreCount > 0 && (
-                        <span className="wl-cal-more">+{moreCount}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 선택된 날의 일정 */}
-            <div className="wl-day-events">
-              <div className="wl-day-events-head">
-                <div>
-                  <div className="wl-day-events-eyebrow">{monthName} {selectedDay}</div>
-                  <div className="wl-day-events-title">
-                    {selDayEvents.length > 0 ? `${selDayEvents.length}개의 일정` : '일정이 없어요'}
-                  </div>
-                </div>
-                <button
-                  className="wl-link"
-                  onClick={() => {
-                    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(selectedDay).padStart(2,'0')}`;
-                    setEventForm({ mode: 'create', date: dateStr });
-                  }}
-                >
-                  + 추가
-                </button>
-              </div>
-
-              <div className="wl-events-list">
-                {selDayEvents.map((e) => (
-                  <div
-                    key={e.id}
-                    className={`wl-event ${e.is_completed ? 'is-done' : ''}`}
-                    onClick={() => navigate(`/events/${e.id}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="wl-event-rail" style={{ background: CATEGORY_RAIL_COLORS[e.category] ?? '#BFB5AC' }} />
-                    <div className="wl-event-body">
-                      <div className="wl-event-meta">
-                        <CategoryBadge category={e.category} size="sm" />
-                        <span className="wl-event-time">{e.date}</span>
-                      </div>
-                      <div className="wl-event-title">{e.title}</div>
                     </div>
-                    <button
-                      className={`wl-check wl-check-lg ${e.is_completed ? 'is-checked' : ''}`}
-                      onClick={(ev) => { ev.stopPropagation(); handleToggleComplete(e.id); }}
-                      aria-label={e.is_completed ? '완료 해제' : '완료'}
-                    >
-                      {e.is_completed && (
-                        <svg viewBox="0 0 14 14" width="11" height="11">
-                          <path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                ))}
-                {selDayEvents.length === 0 && (
-                  <div className="wl-empty">
-                    <div className="wl-empty-icon">＋</div>
-                    <div>이 날의 첫 기록을 남겨보세요</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        )}
+                  )}
 
-        {/* ════ 리스트 뷰 ══════════════════════════════════════════════ */}
-        {viewMode === 'list' && !loading && (
-          <div style={{ padding: '0 16px' }}>
-            {sortedEvents.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--wl-ink-3, #8B8079)', fontSize: 14 }}>
-                이 달에 일정이 없습니다
-              </div>
-            )}
-            {sortedEvents.map((e) => (
-              <div
-                key={e.id}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 14px', marginBottom: 8,
-                  background: 'white', borderRadius: 12,
-                  boxShadow: '0 1px 4px rgba(58,38,24,0.06)',
-                  opacity: e.is_completed ? 0.55 : 1,
-                }}
-              >
-                {/* 완료 체크박스 */}
-                <button
-                  onClick={() => handleToggleComplete(e.id)}
-                  aria-label={e.is_completed ? '완료 해제' : '완료 처리'}
-                  style={{
-                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                    border: `2px solid ${e.is_completed ? '#E8967C' : 'var(--wl-line-2, #EDE4D8)'}`,
-                    background: e.is_completed ? '#E8967C' : 'transparent',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >
-                  {e.is_completed && (
-                    <svg viewBox="0 0 14 14" width="10" height="10">
-                      <path d="M2 7.5L5.5 11L12 3.5" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
-                    </svg>
+                  {moreCount > 0 && (
+                    <span className="font-label-caps text-[10px] text-on-surface-variant">+{moreCount}</span>
                   )}
                 </button>
+              );
+            })}
+          </div>
 
-                {/* 본문 */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 14, fontWeight: 500,
-                    color: 'var(--wl-ink, #2B2420)',
-                    textDecoration: e.is_completed ? 'line-through' : 'none',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {e.title}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <CategoryBadge category={e.category} size="sm" />
-                    <span style={{ fontSize: 12, color: 'var(--wl-ink-3, #8B8079)' }}>{formatDate(e.date)}</span>
-                    {e.memo && <span style={{ fontSize: 12, color: 'var(--wl-ink-4, #BFB5AC)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 80 }}>{e.memo}</span>}
-                  </div>
+          {/* 선택된 날의 일정 */}
+          <div className="mt-6 border-t border-outline-variant pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="font-label-caps text-label-caps text-on-surface-variant uppercase">
+                  {MONTH_NAMES[viewMonth]} {selectedDay}
                 </div>
-
-                {/* 편집/삭제 버튼 */}
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setEventForm({ mode: 'edit', initialData: e })}
-                    aria-label="편집"
-                    style={{ padding: '4px 10px', fontSize: 12, borderRadius: 8, border: '1px solid var(--wl-line)', background: 'white', cursor: 'pointer', color: 'var(--wl-ink-2)' }}
-                  >
-                    편집
-                  </button>
-                  <button
-                    onClick={() => handleDelete(e.id)}
-                    aria-label="삭제"
-                    style={{ padding: '4px 10px', fontSize: 12, borderRadius: 8, border: '1px solid #FFCCBB', background: '#FFF5F2', cursor: 'pointer', color: '#D2795E' }}
-                  >
-                    삭제
-                  </button>
+                <div className="font-headline-sm text-headline-sm text-on-surface">
+                  {selDayEvents.length > 0 ? `${selDayEvents.length}개의 일정` : '일정이 없어요'}
                 </div>
               </div>
-            ))}
+              <button
+                className="font-body-sm text-body-sm text-primary hover:underline"
+                onClick={() => {
+                  const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(selectedDay).padStart(2,'0')}`;
+                  setEventForm({ mode: 'create', date: dateStr });
+                }}
+              >
+                + 추가
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {selDayEvents.map((e) => (
+                <div
+                  key={e.id}
+                  className={`flex items-center gap-3 p-3 border-b border-[#E3DBC8] border-dashed cursor-pointer ${e.is_completed ? 'opacity-60' : ''}`}
+                  onClick={() => navigate(`/events/${e.id}`)}
+                >
+                  <button
+                    className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-colors ${
+                      e.is_completed
+                        ? 'bg-primary-container'
+                        : 'border border-outline hover:border-primary-container'
+                    }`}
+                    onClick={(evt) => { evt.stopPropagation(); handleToggleComplete(e.id); }}
+                    aria-label={e.is_completed ? '완료 해제' : '완료'}
+                  >
+                    {e.is_completed && (
+                      <span className="material-symbols-outlined text-white" style={{ fontSize: '12px', fontVariationSettings: "'wght' 600" }}>check</span>
+                    )}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-body-md text-body-md ${e.is_completed ? 'line-through text-[#B5AEA0]' : 'text-on-surface'}`}>
+                      {e.title}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <CategoryBadge category={e.category} size="sm" />
+                      <span className="font-mono-id text-mono-id text-outline">{e.date}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={(evt) => { evt.stopPropagation(); setEventForm({ mode: 'edit', initialData: e }); }}
+                      aria-label="편집"
+                      className="px-3 py-1 font-label-caps text-label-caps border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container transition-colors"
+                    >
+                      편집
+                    </button>
+                    <button
+                      onClick={(evt) => { evt.stopPropagation(); handleDelete(e.id); }}
+                      aria-label="삭제"
+                      className="px-3 py-1 font-label-caps text-label-caps border border-[#ffdad6] rounded text-error hover:bg-error-container transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {selDayEvents.length === 0 && (
+                <div className="text-center py-8 text-on-surface-variant font-body-sm text-body-sm">
+                  이 날의 첫 기록을 남겨보세요
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </>
+      )}
 
-        {/* ── AI 체크리스트 버튼 ─────────────────────────────────────── */}
-        <div style={{ padding: '16px 16px 4px', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' }}>
-          <button
-            onClick={handleAIChecklist}
-            disabled={aiLoading || !coupleId}
-            aria-label="AI로 체크리스트 자동 생성"
-            style={{
-              padding: '13px 16px', borderRadius: 12,
-              border: 'none',
-              background: aiLoading ? '#BFB5AC' : '#FFD700',
-              color: '#2B2420', fontWeight: 600, fontSize: 14,
-              cursor: aiLoading || !coupleId ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
-          >
-            {aiLoading ? (
-              <>
-                <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(43,36,32,0.3)', borderTopColor: '#2B2420', borderRadius: '50%', animation: 'wl-spin 0.7s linear infinite' }} />
-                생성 중...
-              </>
-            ) : (
-              <>✨ AI로 체크리스트 자동 생성</>
-            )}
-          </button>
-
-          {aiSource && (
-            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--wl-ink-3)' }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '3px 10px', borderRadius: 9999,
-                background: aiSource === 'ai' ? '#F0E6FF' : 'var(--wl-line-2)',
-                color: aiSource === 'ai' ? '#BB88FF' : 'var(--wl-ink-3)',
-                fontWeight: 500,
-              }}>
-                {aiSource === 'ai' ? '🤖 AI 생성' : '📋 기본 템플릿'}
-              </span>
+      {/* ════ 리스트 뷰 ════ */}
+      {viewMode === 'list' && !loading && (
+        <div className="flex flex-col gap-3">
+          {sortedEvents.length === 0 && (
+            <div className="text-center py-12 font-body-sm text-on-surface-variant">
+              이 달에 일정이 없습니다
             </div>
           )}
+          {sortedEvents.map((e) => (
+            <div
+              key={e.id}
+              className={`flex items-center gap-3 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant cursor-pointer hover:bg-surface-container transition-colors ${e.is_completed ? 'opacity-55' : ''}`}
+            >
+              <button
+                onClick={() => handleToggleComplete(e.id)}
+                aria-label={e.is_completed ? '완료 해제' : '완료 처리'}
+                className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-colors ${
+                  e.is_completed ? 'bg-primary-container' : 'border-2 border-outline-variant hover:border-primary-container'
+                }`}
+              >
+                {e.is_completed && (
+                  <span className="material-symbols-outlined text-white" style={{ fontSize: '12px', fontVariationSettings: "'wght' 600" }}>check</span>
+                )}
+              </button>
+              <div className="flex-1 min-w-0" onClick={() => navigate(`/events/${e.id}`)}>
+                <div className={`font-body-md text-body-md ${e.is_completed ? 'line-through text-[#B5AEA0]' : 'text-on-surface'} truncate`}>
+                  {e.title}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <CategoryBadge category={e.category} size="sm" />
+                  <span className="font-mono-id text-mono-id text-outline">{formatDate(e.date)}</span>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setEventForm({ mode: 'edit', initialData: e })}
+                  className="px-3 py-1 font-label-caps text-label-caps border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container transition-colors"
+                >편집</button>
+                <button
+                  onClick={() => handleDelete(e.id)}
+                  className="px-3 py-1 font-label-caps text-label-caps border border-[#ffdad6] rounded text-error hover:bg-error-container transition-colors"
+                >삭제</button>
+              </div>
+            </div>
+          ))}
         </div>
-
-        <div className="wl-bottom-spacer" />
-      </div>
+      )}
 
       {/* FAB */}
       <button
-        className="wl-fab"
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-14 h-14 bg-on-surface text-inverse-on-surface rounded-full shadow-[0_8px_16px_rgba(31,27,18,0.15)] flex items-center justify-center hover:scale-105 transition-transform z-50"
         aria-label="일정 추가"
         onClick={() => {
           const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(selectedDay).padStart(2,'0')}`;
           setEventForm({ mode: 'create', date: dateStr });
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <path d="M9 3.5v11M3.5 9h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
+        <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>add</span>
       </button>
 
       {/* EventForm 모달 */}
@@ -747,7 +614,7 @@ export default function Calendar() {
       )}
 
       {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismissToast} />}
+      {toast && <ToastMsg {...toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }

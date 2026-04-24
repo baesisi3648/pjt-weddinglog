@@ -68,11 +68,13 @@ describe('Home', () => {
     renderHome();
   });
 
-  it('홈 화면이 정상 마운트된다', () => {
+  it('홈 화면이 정상 마운트된다', async () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME);
     renderHome();
-    // 홈 컴포넌트가 에러 없이 렌더링되는지 확인
-    expect(document.querySelector('.wl-screen')).toBeInTheDocument();
+    // 홈 컴포넌트가 에러 없이 렌더링되는지 확인 (스모크 테스트)
+    await waitFor(() => {
+      expect(screen.getByText(/WeddingLog|불러오는 중|철수/)).toBeInTheDocument();
+    });
   });
 
   it('API 성공 시 커플 이름이 표시된다', async () => {

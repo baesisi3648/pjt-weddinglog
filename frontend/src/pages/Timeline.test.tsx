@@ -75,10 +75,8 @@ describe('Timeline', () => {
   it('타임라인 본문이 렌더링된다', async () => {
     (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TIMELINE);
     renderTimeline();
-    // 히어로 헤더나 본문이 표시되는지 확인
-    await waitFor(() => {
-      expect(document.querySelector('.wl-page')).toBeInTheDocument();
-    });
+    // 헤더 "Timeline Draft"는 즉시 렌더링됨
+    expect(document.body.textContent).toMatch(/Timeline Draft/);
   });
 
   it('API 호출 중 로딩 상태를 표시한다', () => {

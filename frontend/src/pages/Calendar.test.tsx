@@ -243,7 +243,7 @@ describe('Calendar', () => {
     const thumbs = await screen.findAllByAltText('예식장 답사');
     expect(thumbs.length).toBeGreaterThanOrEqual(1);
     // 부모 썸네일 컨테이너 클릭 (stopPropagation + navigate)
-    const thumbContainer = thumbs[0].closest('.wl-cal-photo-thumb') ?? thumbs[0];
+    const thumbContainer = thumbs[0].closest('[role="img"]') ?? thumbs[0].parentElement ?? thumbs[0];
     fireEvent.click(thumbContainer);
     // navigate('/events/ev1') — MemoryRouter 내에서 에러 없이 처리됨을 확인
     expect(thumbs[0]).toBeInTheDocument();

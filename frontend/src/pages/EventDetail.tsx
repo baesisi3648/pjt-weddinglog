@@ -1,6 +1,5 @@
-// @TASK P3-S1-T1 - EventDetail 페이지 API 연동
+// @TASK STITCH-DESIGN - EventDetail 페이지 이식 (Stitch event_detail_desktop/code.html 기반)
 // @SPEC specs/screens/03_event_detail.yaml
-// @TEST src/pages/EventDetail.test.tsx
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -13,88 +12,42 @@ import PhotoGrid from '../components/PhotoGrid';
 import Toast from '../components/Toast';
 import type { Event, Photo, CaptionSource } from '../types';
 
-// ─── 스피너 ────────────────────────────────────────────────
-function Spinner() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 64 }}>
-      <div
-        role="status"
-        aria-label="로딩 중"
-        style={{
-          width: 32, height: 32,
-          border: '3px solid var(--wl-line)',
-          borderTopColor: 'var(--wl-coral)',
-          borderRadius: '50%',
-          animation: 'wl-spin 0.8s linear infinite',
-        }}
-      />
-      <style>{`@keyframes wl-spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
-// ─── 날짜 포맷 유틸 ─────────────────────────────────────────────
 function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}. ${m}. ${day}`;
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')} (${days[d.getDay()]})`;
 }
 
-function formatDateLong(dateStr: string | undefined): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
-}
+interface ToastState { message: string; type: 'info' | 'success' | 'error'; }
 
-interface ToastState {
-  message: string;
-  type: 'info' | 'success' | 'error';
-}
-
-// ─── EventDetail ───────────────────────────────────────────────
 export default function EventDetail() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { couple } = useCouple();
   const coupleId = couple?.id ?? '';
 
-  // Event state
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Editable fields
   const [memo, setMemo] = useState('');
   const [saving, setSaving] = useState(false);
-
-  // Photos state
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photosLoading, setPhotosLoading] = useState(true);
-
-  // Toast
   const [toast, setToast] = useState<ToastState | null>(null);
+
   const showToast = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') =>
     setToast({ message, type }), []);
   const dismissToast = useCallback(() => setToast(null), []);
 
-  // ─── 데이터 로드 ──────────────────────────────────────────────
   useEffect(() => {
     if (!coupleId || !eventId) return;
     let cancelled = false;
-
     setLoading(true);
     setPhotosLoading(true);
     setError(null);
 
-    Promise.all([
-      getEvent(coupleId, eventId),
-      listPhotos(eventId),
-    ])
+    Promise.all([getEvent(coupleId, eventId), listPhotos(eventId)])
       .then(([evtData, photoData]) => {
         if (cancelled) return;
         setEvent(evtData);
@@ -106,25 +59,18 @@ export default function EventDetail() {
         setError(err.response?.data?.detail ?? err.message ?? '일정을 불러올 수 없습니다.');
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-          setPhotosLoading(false);
-        }
+        if (!cancelled) { setLoading(false); setPhotosLoading(false); }
       });
 
     return () => { cancelled = true; };
   }, [coupleId, eventId]);
 
-  // ─── 저장 ─────────────────────────────────────────────────────
   async function handleSave() {
     if (!event || !eventId) return;
     setSaving(true);
     try {
       const updated = await updateEvent(coupleId, eventId, {
-        title: event.title,
-        date: event.date,
-        category: event.category,
-        memo,
+        title: event.title, date: event.date, category: event.category, memo,
       });
       setEvent(updated);
       setMemo(updated.memo ?? '');
@@ -137,12 +83,10 @@ export default function EventDetail() {
     }
   }
 
-  // ─── 사진 업로드 성공 ─────────────────────────────────────────
   function handleUploadSuccess(photo: Photo) {
     setPhotos((prev) => [...prev, photo]);
   }
 
-  // ─── 사진 삭제 ────────────────────────────────────────────────
   async function handleDeletePhoto(photoId: string) {
     try {
       await deletePhoto(photoId);
@@ -154,33 +98,34 @@ export default function EventDetail() {
     }
   }
 
-  // ─── 캡션 변경 ────────────────────────────────────────────────
   function handleCaptionChange(photoId: string, caption: string, _source: CaptionSource) {
-    setPhotos((prev) =>
-      prev.map((p) => (p.id === photoId ? { ...p, caption } : p))
-    );
+    setPhotos((prev) => prev.map((p) => (p.id === photoId ? { ...p, caption } : p)));
   }
 
-  // ─── 완료 토글 ────────────────────────────────────────────────
-  function handleToggleDone() {
-    if (!event) return;
-    setEvent((prev) => prev ? { ...prev, is_completed: !prev.is_completed } : prev);
-  }
-
-  // ─── 렌더링 ───────────────────────────────────────────────────
+  // ── 로딩 ──
   if (loading) {
     return (
-      <div className="wl-page">
-        <Spinner />
+      <div className="flex items-center justify-center py-16">
+        <div
+          className="w-8 h-8 rounded-full border-[3px] border-outline-variant wl-spinner"
+          style={{ borderTopColor: '#894f41' }}
+          role="status"
+          aria-label="로딩 중"
+        />
+        <style>{`@keyframes wl-spin { to { transform: rotate(360deg); } } .wl-spinner { animation: wl-spin 0.8s linear infinite; }`}</style>
       </div>
     );
   }
 
+  // ── 에러 ──
   if (error) {
     return (
-      <div className="wl-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 48 }}>
-        <p style={{ color: '#EF4444', fontSize: 15 }}>{error}</p>
-        <button className="wl-btn wl-btn-ghost" onClick={() => navigate('/calendar')}>
+      <div className="flex flex-col items-center justify-center gap-4 py-16">
+        <p className="text-error font-body-md text-body-md">{error}</p>
+        <button
+          className="px-6 py-2.5 font-body-sm text-body-sm text-on-surface border border-outline rounded hover:bg-surface-dim transition-colors"
+          onClick={() => navigate('/calendar')}
+        >
           캘린더로 돌아가기
         </button>
       </div>
@@ -189,132 +134,108 @@ export default function EventDetail() {
 
   const categoryLabel = event ? (CATEGORY_LABELS[event.category] ?? event.category) : '';
   const dateLabel = event ? formatDate(event.date) : '';
-  const dateLongLabel = event ? formatDateLong(event.date) : '';
 
   return (
-    <div className="wl-page">
-      {/* Top bar */}
-      <div className="wl-page-topbar">
-        <button className="wl-icon-btn wl-back-btn" onClick={() => navigate('/calendar')}>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M11 4L6 9l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span>캘린더</span>
+    <div className="flex flex-col pb-32">
+      {/* 브레드크럼 + 뒤로가기 */}
+      <div className="flex items-center gap-2 mb-10 text-on-surface-variant font-body-sm text-body-sm">
+        <button
+          className="hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-dim"
+          onClick={() => navigate('/calendar')}
+          aria-label="캘린더로 돌아가기"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'wght' 300" }}>arrow_back</span>
         </button>
-        <div className="wl-page-crumbs">
-          <span>{dateLabel.slice(0, 7)}</span>
-          <span className="wl-crumb-sep">·</span>
-          <span>{dateLongLabel}</span>
-        </div>
-        <div className="wl-page-actions">
-          <button className="wl-btn wl-btn-ghost">공유</button>
-          <button
-            className="wl-btn wl-btn-primary wl-btn-sm"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? '저장 중…' : '저장'}
-          </button>
-        </div>
+        <span className="text-[#B5AEA0]">캘린더</span>
       </div>
 
-      <div className="wl-page-body">
-        {/* LEFT — Event info */}
-        <aside className="wl-detail-left">
-          <div className="wl-detail-card">
-            <div className="wl-detail-head">
-              <span className="wl-cat-pill wl-cat-photo">{categoryLabel}</span>
-              <button
-                className={`wl-toggle-done ${event?.is_completed ? 'is-on' : ''}`}
-                onClick={handleToggleDone}
-              >
-                <span className={`wl-check wl-check-lg ${event?.is_completed ? 'is-checked' : ''}`}>
-                  {event?.is_completed && (
-                    <svg viewBox="0 0 14 14" width="11" height="11" aria-hidden="true">
-                      <path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </span>
-                <span>{event?.is_completed ? '완료됨' : '완료 표시'}</span>
-              </button>
-            </div>
-
-            <h1 className="wl-detail-title serif">{event?.title}</h1>
-
-            <div className="wl-detail-meta">
-              <div className="wl-meta-row">
-                <div className="wl-meta-label">날짜</div>
-                <div className="wl-meta-value">
-                  <span className="wl-meta-strong">{dateLabel}</span>
-                  <span className="wl-meta-dim">{dateLongLabel}</span>
-                </div>
-              </div>
-              <div className="wl-meta-row">
-                <div className="wl-meta-label">카테고리</div>
-                <div className="wl-meta-value">
-                  <span>{categoryLabel}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="wl-detail-memo">
-              <label className="wl-field-label" htmlFor="event-memo">메모</label>
-              <textarea
-                id="event-memo"
-                className="wl-textarea"
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                rows={5}
-                maxLength={500}
-                placeholder="메모를 입력하세요..."
-              />
-              <div className="wl-textarea-meta">
-                <span>{memo.length} / 500</span>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* RIGHT — Photos */}
-        <main className="wl-detail-right">
-          <div className="wl-section-head wl-section-head-plain">
-            <div>
-              <div className="wl-section-eyebrow">Photos</div>
-              <h2 className="wl-section-title">사진 기록</h2>
-            </div>
-            <div className="wl-photos-summary">
-              <span className="wl-photos-count">{photos.length}장</span>
+      {/* 이벤트 헤더 */}
+      <header className="mb-12 border-b border-outline-variant pb-8">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-display-md text-display-md text-on-surface mb-4">
+              {event?.title}
+            </h1>
+            <div className="flex items-center gap-4">
+              <span className="font-mono-id text-mono-id text-on-surface-variant">{dateLabel}</span>
+              <span className="px-2 py-1 border border-outline text-on-surface-variant rounded font-label-caps text-label-caps tracking-wider uppercase">
+                {categoryLabel}
+              </span>
             </div>
           </div>
 
-          {/* 업로드 영역 */}
+          {/* 저장 버튼 */}
+          <div className="flex gap-3">
+            <button
+              className="px-6 py-2.5 font-body-sm text-body-sm text-on-surface border border-outline rounded hover:bg-surface-dim transition-colors"
+              onClick={() => navigate('/calendar')}
+            >
+              취소
+            </button>
+            <button
+              className="px-8 py-2.5 font-body-sm text-body-sm text-white bg-on-surface rounded shadow-md hover:bg-on-surface-variant transition-colors disabled:opacity-60"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? '저장 중…' : '저장'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* 메모 영역 */}
+      <section className="mb-16">
+        <label
+          className="block font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase"
+          htmlFor="event-memo"
+        >
+          Memoir
+        </label>
+        <textarea
+          id="event-memo"
+          className="w-full bg-transparent border-0 border-b border-outline focus:border-on-surface focus:ring-0 resize-none font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant/50 leading-relaxed py-2 min-h-[160px] outline-none"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          rows={6}
+          maxLength={500}
+          placeholder="오늘의 감상을 기록해보세요..."
+        />
+        <div className="text-right mt-1 font-label-caps text-label-caps text-on-surface-variant">
+          {memo.length} / 500
+        </div>
+      </section>
+
+      {/* 사진 섹션 */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <label className="font-label-caps text-label-caps text-on-surface-variant uppercase">
+            Moments
+          </label>
+        </div>
+
+        {/* 업로드 영역 */}
+        <div className="mb-10">
           <PhotoUpload
             eventId={eventId ?? ''}
             onUploadSuccess={handleUploadSuccess}
             currentCount={photos.length}
           />
+        </div>
 
-          {/* 사진 그리드 */}
-          {photosLoading ? (
-            <Spinner />
-          ) : (
-            <PhotoGrid
-              photos={photos}
-              event={event ?? undefined}
-              onDelete={handleDeletePhoto}
-              onCaptionChange={handleCaptionChange}
-            />
-          )}
-        </main>
-      </div>
+        {/* 폴라로이드 그리드 */}
+        {photosLoading ? (
+          <div className="text-center py-8 font-body-sm text-on-surface-variant">사진 불러오는 중…</div>
+        ) : (
+          <PhotoGrid
+            photos={photos}
+            event={event ?? undefined}
+            onDelete={handleDeletePhoto}
+            onCaptionChange={handleCaptionChange}
+          />
+        )}
+      </section>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={dismissToast}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismissToast} />}
     </div>
   );
 }

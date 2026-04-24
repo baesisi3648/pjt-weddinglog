@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>주문 관리 - WeddingLog</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Note: Pretendard is typically loaded via webfont link or import. Using standard sans-serif fallback if not available, but configuring as requested. -->
+<style>
+        @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#e2d9ca",
+                        "surface": "#fff8f1",
+                        "on-secondary-fixed-variant": "#474647",
+                        "outline-variant": "#d7c2bd",
+                        "on-secondary-fixed": "#1c1b1c",
+                        "tertiary-fixed": "#ffdad3",
+                        "primary": "#894f41",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#ed9d8c",
+                        "inverse-on-surface": "#f9f0e0",
+                        "primary-fixed": "#ffdad2",
+                        "surface-tint": "#894f41",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#e89f8e",
+                        "primary-fixed-dim": "#ffb4a3",
+                        "on-secondary-container": "#636263",
+                        "on-surface-variant": "#524340",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#353026",
+                        "on-background": "#1f1b12",
+                        "inverse-primary": "#ffb4a3",
+                        "surface-bright": "#fff8f1",
+                        "on-primary-fixed-variant": "#6d382b",
+                        "on-surface": "#1f1b12",
+                        "on-tertiary-fixed-variant": "#70362a",
+                        "secondary-container": "#e2dfe0",
+                        "surface-container-low": "#fcf2e3",
+                        "tertiary-fixed-dim": "#ffb4a4",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c8c6c7",
+                        "surface-container": "#f6eddd",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#8c4d3f",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#693529",
+                        "background": "#fff8f1",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e5e2e3",
+                        "on-tertiary-container": "#6c3327",
+                        "secondary": "#5f5e5f",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#ebe1d2",
+                        "surface-container-highest": "#ebe1d2",
+                        "on-primary-fixed": "#370e05",
+                        "on-tertiary-fixed": "#390c04",
+                        "surface-container-high": "#f0e7d8",
+                        "outline": "#85736f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "800px",
+                        "base": "4px",
+                        "md": "24px",
+                        "lg": "40px",
+                        "xs": "8px",
+                        "sm": "16px",
+                        "xl": "64px",
+                        "gutter": "20px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Pretendard", "sans-serif"],
+                        "body-sm": ["Pretendard", "sans-serif"],
+                        "display-md": ["Fraunces", "serif"],
+                        "label-caps": ["Pretendard", "sans-serif"],
+                        "body-lg": ["Pretendard", "sans-serif"],
+                        "headline-sm": ["Fraunces", "serif"],
+                        "display-lg": ["Fraunces", "serif"],
+                        "mono-id": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "0.02em", "fontWeight": "300" }],
+                        "mono-id": ["13px", { "lineHeight": "1", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#F5F0E6] text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar (Web Only) -->
+<nav class="hidden md:flex bg-[#FAF9F6] dark:bg-[#121212] h-full border-r border-[#E3DBC8] dark:border-gray-800 w-64 fixed left-0 top-0 bottom-0 flex-col py-8 z-40">
+<div class="px-6 mb-12">
+<h1 class="font-serif italic text-xl text-[#0F0F10] dark:text-[#FAF9F6]">WeddingLog</h1>
+<p class="font-sans text-sm tracking-wide text-[#B5AEA0]">Digital Archive</p>
+</div>
+<ul class="flex flex-col gap-2 w-full font-sans text-sm tracking-wide">
+<li>
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300 flex items-center h-10 w-full" href="#">
+<span class="material-symbols-outlined mr-3 text-lg" style="font-variation-settings: 'FILL' 0;">home</span>
+                    Home
+                </a>
+</li>
+<li>
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300 flex items-center h-10 w-full" href="#">
+<span class="material-symbols-outlined mr-3 text-lg" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+                    Calendar
+                </a>
+</li>
+<li>
+<a class="text-[#B5AEA0] pl-5 hover:text-[#0F0F10] dark:hover:text-[#FAF9F6] hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300 flex items-center h-10 w-full" href="#">
+<span class="material-symbols-outlined mr-3 text-lg" style="font-variation-settings: 'FILL' 0;">auto_stories</span>
+                    Timeline
+                </a>
+</li>
+<li>
+<a class="text-[#E89F8E] font-semibold border-l-4 border-[#E89F8E] pl-4 bg-[#E3DBC8]/10 hover:bg-[#E3DBC8]/20 dark:hover:bg-gray-800 cursor-pointer transition-all duration-300 flex items-center h-10 w-full" href="#">
+<span class="material-symbols-outlined mr-3 text-lg" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+                    Orders
+                </a>
+</li>
+</ul>
+</nav>
+<!-- TopAppBar (Mobile Only - Though spec says desktop 1440px, keeping consistent with design system rules for responsive) -->
+<header class="md:hidden bg-[#FAF9F6] dark:bg-[#121212] border-b border-[#E3DBC8] dark:border-gray-800 docked full-width top-0 z-50 flex justify-between items-center px-4 h-16 w-full">
+<span class="text-2xl font-serif font-bold text-[#0F0F10] dark:text-[#FAF9F6]">WeddingLog</span>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#E89F8E] dark:text-[#E89F8E]">favorite</span>
+</div>
+</header>
+<!-- Main Content Container -->
+<main class="flex-1 md:ml-64 w-full max-w-container-max mx-auto px-6 py-12 md:py-24">
+<!-- Header Section -->
+<header class="mb-12 border-b border-outline-variant pb-6">
+<h1 class="font-display-md text-display-md text-on-surface mb-2" style="font-size: 28px;">주문 관리</h1>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-80">2개의 주문</p>
+</header>
+<!-- Orders List -->
+<div class="flex flex-col gap-4">
+<!-- Order Card 1: Processing -->
+<article class="bg-surface border border-[#E3DBC8] rounded-[8px] p-6 flex flex-col gap-4">
+<!-- Top Row: ID, Date, Status -->
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1">
+<span class="font-mono-id text-mono-id text-on-surface-variant tracking-wider" style="font-size: 14px;">#WL-2023-089A</span>
+<span class="font-body-sm text-body-sm text-outline">2023. 10. 12</span>
+</div>
+<div class="flex items-center gap-2 border border-outline rounded-full px-3 py-1 bg-surface-container-lowest">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container"></div>
+<span class="font-label-caps text-label-caps text-on-surface">제작 대기</span>
+</div>
+</div>
+<!-- Middle Row: Specs & Price -->
+<div class="flex justify-between items-end border-b border-surface-variant pb-4 pt-2">
+<div class="flex flex-col gap-1 w-2/3">
+<h3 class="font-body-md text-body-md font-medium">프리미엄 레더 포토북 세트 (Ivory)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">40 pages · 각인 포함 · 추가 인화 10장</p>
+</div>
+<div class="w-1/3 text-right">
+<span class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 20px;">₩ 145,000</span>
+</div>
+</div>
+<!-- Bottom Row: Actions -->
+<div class="flex justify-between items-center pt-2">
+<button class="font-body-sm text-body-sm text-primary flex items-center gap-1 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-sm">download</span>
+                        데이터 다운로드
+                    </button>
+<button class="font-body-sm text-body-sm border border-primary-container text-on-surface px-4 py-2 rounded hover:bg-primary-container/10 transition-colors">
+                        제작 시작
+                    </button>
+</div>
+</article>
+<!-- Order Card 2: Completed -->
+<article class="bg-surface border border-[#E3DBC8] rounded-[8px] p-6 flex flex-col gap-4 opacity-90">
+<!-- Top Row: ID, Date, Status -->
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1">
+<span class="font-mono-id text-mono-id text-on-surface-variant tracking-wider" style="font-size: 14px;">#WL-2023-042C</span>
+<span class="font-body-sm text-body-sm text-outline">2023. 09. 05</span>
+</div>
+<div class="flex items-center gap-2 border border-outline rounded-full px-3 py-1 bg-surface-container-highest">
+<div class="w-1.5 h-1.5 rounded-full bg-outline"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant">배송 완료</span>
+</div>
+</div>
+<!-- Middle Row: Specs & Price -->
+<div class="flex justify-between items-end border-b border-surface-variant pb-4 pt-2">
+<div class="flex flex-col gap-1 w-2/3">
+<h3 class="font-body-md text-body-md font-medium text-on-surface-variant">웰컴 보드 (A2 아크릴)</h3>
+<p class="font-body-sm text-body-sm text-outline">우드 스탠드 포함 · 무광 코팅</p>
+</div>
+<div class="w-1/3 text-right">
+<span class="font-headline-sm text-headline-sm text-on-surface-variant" style="font-size: 20px;">₩ 85,000</span>
+</div>
+</div>
+<!-- Bottom Row: Actions -->
+<div class="flex justify-between items-center pt-2">
+<button class="font-body-sm text-body-sm text-primary flex items-center gap-1 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-sm">download</span>
+                        데이터 다운로드
+                    </button>
+<button class="font-body-sm text-body-sm border border-outline-variant text-outline px-4 py-2 rounded cursor-not-allowed bg-surface-container-low" disabled="">
+                        완료됨
+                    </button>
+</div>
+</article>
+</div>
+<!-- Empty State Example (Commented out logically, but present in DOM to show capability based on prompt) -->
+<!-- 
+        <div class="flex flex-col items-center justify-center py-24 text-center mt-8 border border-dashed border-outline-variant rounded-lg bg-surface/50">
+            <span class="material-symbols-outlined text-4xl text-outline-variant mb-4" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+            <h2 class="font-headline-sm text-headline-sm text-on-surface mb-2" style="font-size: 24px;">아직 주문이 없습니다</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant mb-6">진행 중인 프로젝트에서 첫 주문을 생성해보세요.</p>
+            <button class="font-body-sm text-body-sm border border-[#1f1b12] text-[#1f1b12] px-6 py-2.5 rounded hover:bg-[#1f1b12]/5 transition-colors">
+                타임라인 보기
+            </button>
+        </div>
+        -->
+</main>
+</body></html>
