@@ -67,9 +67,32 @@ async def generate_checklist(
     request: Request,
     db: Session = Depends(get_db),
 ) -> ChecklistResponse:
-    """AI 체크리스트 생성 → 선택적 DB 저장."""
+    """AI 체크리스트 생성 → 선택적 DB 저장.
+
+    중복 방지: dry_run=False 이고 이미 해당 커플에 is_ai_generated=True 이벤트가
+    있으면 409 Conflict 로 차단한다. (dry_run 은 미리보기라 허용.)
+    """
     couple = couple_service.get_or_404(db, payload.couple_id)
     wedding_date = payload.wedding_date or couple.wedding_date
+
+    # 중복 방지 — 이미 AI 체크리스트가 있으면 저장 거부.
+    if not payload.dry_run:
+        existing = (
+            db.query(Event)
+            .filter(
+                Event.couple_id == couple.id,
+                Event.is_ai_generated.is_(True),
+            )
+            .count()
+        )
+        if existing > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f"AI 체크리스트가 이미 생성되어 있습니다 ({existing}개). "
+                    "기존 이벤트를 삭제한 뒤 다시 시도해주세요."
+                ),
+            )
 
     ai_service = AIService(request.app.state)
     result = await ai_service.generate_checklist(

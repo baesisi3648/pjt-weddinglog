@@ -215,8 +215,18 @@ export default function Calendar() {
       setAiSource(result.source ?? 'template');
       showToast('체크리스트가 생성되었습니다!', 'success');
       await fetchEvents();
-    } catch {
-      showToast('AI 체크리스트 생성에 실패했습니다.', 'error');
+    } catch (err: unknown) {
+      // 409 Conflict: 이미 AI 체크리스트 생성됨 (중복 방지)
+      const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
+      if (axiosErr?.response?.status === 409) {
+        showToast(
+          axiosErr.response.data?.detail ??
+            'AI 체크리스트가 이미 생성되어 있습니다. 기존 일정을 삭제한 뒤 다시 시도해주세요.',
+          'error',
+        );
+      } else {
+        showToast('AI 체크리스트 생성에 실패했습니다.', 'error');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -368,7 +378,7 @@ export default function Calendar() {
               return (
                 <button
                   key={i}
-                  className={`min-h-[96px] border-r border-b border-outline-variant p-2 flex flex-col gap-1 relative hover:bg-surface-container-low transition-colors text-left ${
+                  className={`min-h-[120px] md:min-h-[140px] border-r border-b border-outline-variant p-2 flex flex-col gap-1 relative hover:bg-surface-container-low transition-colors text-left ${
                     isSelected ? 'bg-surface-container-lowest' : ''
                   }`}
                   onClick={() => {
@@ -389,46 +399,51 @@ export default function Calendar() {
                     </span>
                   )}
 
-                  {/* 폴라로이드 썸네일 — 해당 날짜의 모든 사진을 5장까지 겹침 표시 */}
+                  {/* 사진 모자이크 — 셀을 꽉 채우는 그리드 (1~4장 + "+N") */}
                   {shownPhotoEvents.length > 0 && (() => {
                     const allPhotos = shownPhotoEvents.flatMap((e) =>
                       (eventPhotosMap[e.id] ?? []).map((p) => ({ ...p, _eventId: e.id, _eventTitle: e.title }))
                     );
-                    const displayed = allPhotos.slice(0, 5);
+                    const displayed = allPhotos.slice(0, 4);
                     const moreCount = allPhotos.length - displayed.length;
                     const navigateTarget = displayed[0]?._eventId ?? shownPhotoEvents[0]?.id;
+                    const count = displayed.length;
+
+                    // 1장: 1x1 / 2장: 2x1 / 3장: 왼쪽 큰 1 + 오른쪽 세로 2 / 4장+: 2x2
+                    let gridClass = 'grid gap-[2px]';
+                    if (count === 1) gridClass += ' grid-cols-1 grid-rows-1';
+                    else if (count === 2) gridClass += ' grid-cols-2 grid-rows-1';
+                    else gridClass += ' grid-cols-2 grid-rows-2';
+
                     return (
                       <div
-                        className="relative w-full h-12 mt-1 pl-1 cursor-pointer"
+                        className={`${gridClass} flex-1 w-full mt-1 cursor-pointer rounded overflow-hidden bg-surface-container`}
+                        style={{ minHeight: 0 }}
                         onClick={(evt) => { evt.stopPropagation(); if (navigateTarget) navigate(`/events/${navigateTarget}`); }}
                         role="img"
                         aria-label={`사진 ${allPhotos.length}장`}
                       >
                         {displayed.map((p, i) => {
-                          const rot = i % 2 === 0 ? -3 - i : 3 + i;
+                          const isFirstIn3 = count === 3 && i === 0;
                           return (
                             <div
                               key={p.id}
-                              className="absolute top-0 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm transition-transform hover:scale-110"
-                              style={{ left: `${i * 7}px`, transform: `rotate(${rot}deg)`, zIndex: 10 + i }}
+                              className={`relative bg-surface-dim overflow-hidden ${isFirstIn3 ? 'row-span-2' : ''}`}
                             >
                               <img
                                 src={photoUrl(p.file_url)}
                                 alt={p._eventTitle}
-                                className="w-full h-full object-cover grayscale opacity-80"
+                                className="w-full h-full object-cover"
                                 loading="lazy"
                               />
+                              {i === displayed.length - 1 && moreCount > 0 && (
+                                <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                                  <span className="text-white font-semibold text-sm">+{moreCount}</span>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
-                        {moreCount > 0 && (
-                          <div
-                            className="absolute top-0 w-10 h-10 bg-surface-container border border-outline-variant shadow-sm flex items-center justify-center"
-                            style={{ left: `${displayed.length * 7}px`, transform: 'rotate(4deg)', zIndex: 10 + displayed.length }}
-                          >
-                            <span className="font-label-caps text-[10px] font-semibold text-on-surface">+{moreCount}</span>
-                          </div>
-                        )}
                       </div>
                     );
                   })()}
