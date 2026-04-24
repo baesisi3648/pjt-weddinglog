@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import CaptionSelector from './CaptionSelector';
 import type { Photo, Event, CaptionSource } from '../types';
+import { photoUrl } from '../utils/photo';
 
 const MAX_PHOTOS = 10;
 
@@ -41,17 +42,9 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
               {/* Polaroid 프레임 */}
               <div className={`polaroid-frame ${rotClass}`}>
                 <img
-                  src={`/api/photos/${photo.id}/file`}
+                  src={photoUrl(photo.file_url ?? `/api/photos/${photo.id}/file`)}
                   alt={photo.caption || '사진'}
                   className="w-full aspect-square object-cover bg-surface-dim"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const parent = e.currentTarget.parentElement;
-                    if (parent) {
-                      parent.style.background = '#f0e7d8';
-                      parent.style.minHeight = '120px';
-                    }
-                  }}
                 />
                 {photo.caption && (
                   <div className="polaroid-caption">{photo.caption}</div>

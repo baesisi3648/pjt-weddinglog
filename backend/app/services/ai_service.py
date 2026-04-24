@@ -101,38 +101,69 @@ logger = logging.getLogger(__name__)
 
 
 # -----------------------------------------------------------------------------
-# 15개 사전정의 템플릿 (D-180 ~ D+14)
+# 사전정의 템플릿 (D-360 ~ D+14)
+# 레퍼런스: 예식준비 START 타임라인 + 삼성 결혼준비 가이드북 통합
 # -----------------------------------------------------------------------------
-# (offset_days, title, category)
-_TEMPLATES: list[tuple[int, str, Category]] = [
-    (-180, "예식장 투어 시작", Category.VENUE),
-    (-150, "스드메 업체 미팅", Category.STUDIO_DRESS_MAKEUP),
-    (-120, "스드메 계약 / 웨딩촬영 날짜 확정", Category.STUDIO_DRESS_MAKEUP),
-    (-100, "예물·예단 쇼핑", Category.GIFT),
-    (-90, "웨딩촬영", Category.WEDDING_PHOTO),
-    (-60, "청첩장 시안 확인", Category.INVITATION),
-    (-45, "청첩장 발송", Category.INVITATION),
-    (-30, "예식장 최종 미팅", Category.VENUE),
-    (-14, "혼수 최종 점검", Category.ETC),
-    (-7, "리허설", Category.REHEARSAL),
-    (0, "본식", Category.CEREMONY),
-    (1, "아이폰 스냅 수령", Category.WEDDING_PHOTO),
-    (3, "신혼여행 출발", Category.HONEYMOON),
-    (10, "신혼여행 귀국", Category.HONEYMOON),
-    (14, "앨범 주문 추천", Category.ETC),
+# (offset_days, title, category, memo)
+_TEMPLATES: list[tuple[int, str, Category, str | None]] = [
+    # ── 초기 기획 (D-360 ~ D-200) ───────────────────────────────
+    (-360, "상견례 택일, 웨딩홀 섭외", Category.VENUE, "양가 일정 조율 시작"),
+    (-340, "결혼 예산 세우기, 웨딩홀 확정 예약", Category.VENUE, "예산 기준 홀 확정"),
+    (-320, "분가 여부 결정", Category.ETC, "신혼집 방향 합의"),
+    (-300, "스드메 상담 (스튜디오 촬영일·드레스 투어·메이크업 업체)", Category.STUDIO_DRESS_MAKEUP, "3곳 이상 비교"),
+    (-270, "예복·예물 상의 상담, 본식촬영·DVD업체 섭외", Category.GIFT, None),
+    (-250, "예복·예물 계약, 신혼집 알아보기, 인테리어 업체", Category.ETC, "3-4곳 견적 비교"),
+    (-200, "피부 관리 시작, 건강 검진", Category.ETC, "피부과·치과 점검"),
+    # ── 중기 준비 (D-180 ~ D-100) ───────────────────────────────
+    (-180, "촬영드레스 셀렉, 신랑 예복 가봉, 예물 사이즈 체크", Category.STUDIO_DRESS_MAKEUP, None),
+    (-150, "리허설 촬영, 한복 가봉(본식용), 가전가구 구입, 허니문 결정", Category.REHEARSAL, "여행지 예약 성수기"),
+    (-100, "예단 준비", Category.GIFT, "양가 상의 후 결정"),
+    # ── 후기 준비 (D-80 ~ D-20) ─────────────────────────────────
+    (-80, "하객 리스트 작성, 주례·사회자 부탁", Category.ETC, "200명 기준 점검"),
+    (-50, "사전 셀렉, 부케·청첩장 제작, 혼주 예복·한복 맞춤", Category.INVITATION, "모바일+실물 병행"),
+    (-40, "봉투 주소록 작성, 축의금 받는 분 선정", Category.ETC, "양가 각 2명"),
+    (-30, "본식 드레스 가봉, 신혼집 이사, 답례품 업체 선정", Category.STUDIO_DRESS_MAKEUP, None),
+    (-20, "주례 선생님 찾아뵙기, DP용 사진 찾기, 혼수 들이기, 여행일정 확인", Category.ETC, None),
+    # ── 본식 직전 (D-10 ~ D-DAY) ────────────────────────────────
+    (-10, "축가·축하 연주 확정, 웨딩카 섭외, 여행경비 환전, 여행가방 꾸리기", Category.HONEYMOON, None),
+    (-8, "신혼집 정리, 휴가 신청, 혼인신고 서류 준비", Category.ETC, None),
+    (-2, "차량·지갑·사진·비디오·부케·의상·폐백음식 최종 점검", Category.ETC, "체크리스트 마지막 확인"),
+    (-1, "한복 챙기기, 함 들이기, 준비물 최종 점검", Category.REHEARSAL, "숙면 권장"),
+    (0, "본식 (메이크업 샵 → 예식장 3시간 전 도착)", Category.CEREMONY, "오늘 우리 결혼합니다"),
+    # ── 본식 이후 (D+1 ~ D+14) ──────────────────────────────────
+    (1, "아이폰 스냅 수령", Category.WEDDING_PHOTO, "다음날 바로 확인 가능"),
+    (3, "신혼여행 출발", Category.HONEYMOON, None),
+    (10, "신혼여행 귀국", Category.HONEYMOON, None),
+    (14, "앨범 주문 — 쌓인 기록을 한 권으로", Category.ETC, "양가 부모님 선물용 수량 고려"),
 ]
 
 
 _SYSTEM_PROMPT = (
     "당신은 한국의 결혼 준비 전문가입니다. "
     "사용자의 결혼 예정일(wedding_date)과 선택적 budget_level(low|mid|high)을 받아 "
-    "15개의 결혼 준비 일정을 JSON 배열로 생성합니다. "
+    "20~24개의 결혼 준비 일정을 JSON 배열로 생성합니다.\n"
+    "\n"
+    "타임라인 가이드 (한국 결혼 준비 표준, D-360 ~ D+14):\n"
+    "- D-360~D-340: 상견례, 웨딩홀 섭외·예약, 예산 세우기\n"
+    "- D-320~D-300: 분가 여부, 스드메 상담(스튜디오·드레스·메이크업)\n"
+    "- D-270~D-250: 예복·예물 상담/계약, 본식촬영 업체, 신혼집 알아보기\n"
+    "- D-200~D-180: 피부관리·건강검진, 촬영드레스·예복 가봉\n"
+    "- D-150: 리허설 촬영, 한복 가봉, 가전·가구, 허니문 결정\n"
+    "- D-100~D-80: 예단 준비, 하객 리스트, 주례·사회자 부탁\n"
+    "- D-50~D-30: 사전 셀렉, 부케·청첩장 제작, 봉투 주소록, 본식 드레스 가봉, 답례품\n"
+    "- D-20~D-10: 주례 찾아뵙기, 웨딩카·환전·가방, 축가 확정\n"
+    "- D-8~D-1: 혼인신고 서류, 차량·지갑·사진·부케 최종 점검, 한복 챙기기\n"
+    "- D-DAY: 본식\n"
+    "- D+1~D+14: 아이폰 스냅 수령, 신혼여행, 앨범 주문\n"
+    "\n"
     "각 항목은 아래 스키마를 따라야 합니다:\n"
     '{"title": str, "offset_days": int, "category": str, "memo": str|null}\n'
     "category 는 다음 중 하나여야 합니다: "
     "WEDDING_PHOTO, STUDIO_DRESS_MAKEUP, VENUE, GIFT, INVITATION, "
     "REHEARSAL, CEREMONY, HONEYMOON, ETC.\n"
     "offset_days 는 결혼일 기준 정수(음수=준비기, 0=본식, 양수=사후).\n"
+    'title 은 한 문장, 여러 할 일이 묶이면 쉼표로 나열. '
+    'memo 에는 실무 팁(예: "예산 기준 홀 확정", "성수기 예약 어려움") 간결히.\n'
     '응답은 반드시 `{"events": [...]}` 형태의 JSON 객체여야 합니다.'
 )
 
@@ -266,16 +297,16 @@ class AIService:
     # Fallback
     # -----------------------------------------------------------------------
     def _fallback_checklist(self, wedding_date: date) -> list[dict[str, Any]]:
-        """15개 사전정의 템플릿을 wedding_date 기준으로 전개."""
+        """사전정의 템플릿을 wedding_date 기준으로 전개 (D-360 ~ D+14)."""
         return [
             {
                 "title": title,
                 "date": (wedding_date + timedelta(days=offset)).isoformat(),
                 "category": cat.value,
-                "memo": None,
+                "memo": memo,
                 "is_ai_generated": True,
             }
-            for offset, title, cat in _TEMPLATES
+            for offset, title, cat, memo in _TEMPLATES
         ]
 
     # -----------------------------------------------------------------------

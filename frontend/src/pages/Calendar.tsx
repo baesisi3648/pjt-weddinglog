@@ -389,41 +389,49 @@ export default function Calendar() {
                     </span>
                   )}
 
-                  {/* 폴라로이드 썸네일 (사진 있는 이벤트) */}
-                  {shownPhotoEvents.length > 0 && (
-                    <div className="relative w-full h-12 mt-1 pl-1">
-                      {shownPhotoEvents.map((e, pi) => {
-                        const photos = eventPhotosMap[e.id] ?? [];
-                        const coverPhoto = photos[0];
-                        const extraCount = photos.length - 1;
-                        return (
+                  {/* 폴라로이드 썸네일 — 해당 날짜의 모든 사진을 5장까지 겹침 표시 */}
+                  {shownPhotoEvents.length > 0 && (() => {
+                    const allPhotos = shownPhotoEvents.flatMap((e) =>
+                      (eventPhotosMap[e.id] ?? []).map((p) => ({ ...p, _eventId: e.id, _eventTitle: e.title }))
+                    );
+                    const displayed = allPhotos.slice(0, 5);
+                    const moreCount = allPhotos.length - displayed.length;
+                    const navigateTarget = displayed[0]?._eventId ?? shownPhotoEvents[0]?.id;
+                    return (
+                      <div
+                        className="relative w-full h-12 mt-1 pl-1 cursor-pointer"
+                        onClick={(evt) => { evt.stopPropagation(); if (navigateTarget) navigate(`/events/${navigateTarget}`); }}
+                        role="img"
+                        aria-label={`사진 ${allPhotos.length}장`}
+                      >
+                        {displayed.map((p, i) => {
+                          const rot = i % 2 === 0 ? -3 - i : 3 + i;
+                          return (
+                            <div
+                              key={p.id}
+                              className="absolute top-0 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm transition-transform hover:scale-110"
+                              style={{ left: `${i * 7}px`, transform: `rotate(${rot}deg)`, zIndex: 10 + i }}
+                            >
+                              <img
+                                src={photoUrl(p.file_url)}
+                                alt={p._eventTitle}
+                                className="w-full h-full object-cover grayscale opacity-80"
+                                loading="lazy"
+                              />
+                            </div>
+                          );
+                        })}
+                        {moreCount > 0 && (
                           <div
-                            key={e.id}
-                            className={`absolute top-0 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm transition-transform hover:scale-110 z-${pi + 10}`}
-                            style={{ left: `${pi * 12}px`, transform: `rotate(${pi % 2 === 0 ? '-3deg' : '4deg'})` }}
-                            onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
-                            role="img"
-                            aria-label={`${e.title} 사진`}
+                            className="absolute top-0 w-10 h-10 bg-surface-container border border-outline-variant shadow-sm flex items-center justify-center"
+                            style={{ left: `${displayed.length * 7}px`, transform: 'rotate(4deg)', zIndex: 10 + displayed.length }}
                           >
-                            {coverPhoto ? (
-                              <img src={photoUrl(coverPhoto.file_url)} alt={e.title} className="w-full h-full object-cover grayscale opacity-80" loading="lazy" />
-                            ) : (
-                              <div className="w-full h-full bg-surface-container flex items-center justify-center">
-                                <span className="font-label-caps text-[10px] font-bold text-on-surface">
-                                  {extraCount > 0 ? `+${extraCount + 1}` : '1'}
-                                </span>
-                              </div>
-                            )}
-                            {extraCount > 0 && (
-                              <div className="absolute top-1 left-3 w-10 h-10 bg-white p-[2px] border border-outline-variant shadow-sm rotate-[4deg] z-20 flex items-center justify-center bg-surface-container">
-                                <span className="text-[11px] font-bold text-on-surface">+{extraCount}</span>
-                              </div>
-                            )}
+                            <span className="font-label-caps text-[10px] font-semibold text-on-surface">+{moreCount}</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* 이벤트 라벨 (사진 없는 이벤트) */}
                   {shownLabelEvents.length > 0 && (
