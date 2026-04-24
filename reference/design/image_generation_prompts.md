@@ -105,7 +105,108 @@ Height difference is natural (14cm). Shoulders relaxed.
 Kodak Portra 400 simulation. Aspect ratio 4:3.
 ```
 
-**체크포인트**: 이 3장에서 얼굴·체형·옷 톤이 마음에 들 때까지 re-roll. 이후 모든 이미지 생성 시 **1-A, 1-B, 1-C 세 장을 레퍼런스로 업로드**.
+**체크포인트**: 이 3장에서 얼굴·체형이 마음에 들 때까지 re-roll. 이후 모든 이미지 생성 시 **1-A, 1-B, 1-C 세 장을 레퍼런스로 업로드**.
+
+---
+
+## 🎭 Step 1.5 — 의상 변주 (레퍼런스 옷 복제 방지) ⭐ 중요
+
+> **문제**: 레퍼런스 시트의 옷(철수 크림 옥스퍼드 + 베이지 치노 / 영희 아이보리 니트 + 와이드 진)이 **1년 120장 내내 반복**됨. 계절·장소가 바뀌어도 옷만 똑같아 부자연스러움.
+>
+> **해결**: ① 레퍼런스는 **얼굴·체형만 참고**하도록 프롬프트에 명시 + ② 각 씬에 **옷을 새로 지정**.
+
+### 필수 오버라이드 지시문 (모든 이벤트 프롬프트 **머리에 항상 첨부**)
+
+```
+Use the uploaded reference images ONLY for facial features,
+hairstyle, and body proportions of Cheolsu and Younghee.
+Do NOT copy the clothing from the references — dress them
+according to the outfit description in this specific prompt.
+```
+
+### 이벤트별 의상 표 (36 이벤트)
+
+각 이벤트마다 **Cheolsu wears / Younghee wears** 라인을 프롬프트 본문 앞에 붙여 복사. 한국 2030 세련된 커플 감성 기준.
+
+| # | 파일 | 계절 | 철수 복장 | 영희 복장 |
+|---|---|---|---|---|
+| 01 | picnic_hangang | 봄(4월) · 벚꽃 | light beige cardigan, white short-sleeve tee, faded blue denim, white sneakers | pastel floral midi dress, beige cropped cardigan, flat leather sandals |
+| 02 | cafe_seongsu | 봄(5월) · 실내 | pale-blue oxford shirt, beige chinos, brown penny loafers | cream ruffle blouse, A-line light-wash denim midi skirt, tan loafers |
+| 03 | movie_night | 초여름(6월) · 저녁 | navy short-sleeve tee, black slim jeans, white sneakers | black satin slip dress, ivory light cardigan, black strappy flats |
+| 04 | bookstore | 여름(7월) · 실내 | white linen short-sleeve shirt, beige chino shorts, canvas sneakers | ivory french-sleeve mini dress, beige ballet flats |
+| 05 | venue_tour | 늦여름(8월) · 격식 | light-gray dress pants, cream button-down shirt, brown oxford shoes | oatmeal midi dress with subtle belt, low nude heels, beige shoulder bag |
+| 06 | flower_market | 초가을(9월) · 야외 | beige linen short-sleeve shirt, black tailored slacks, loafers | ivory linen long dress, hair tied low, flat sandals, small woven bag |
+| 07 | sdm_meeting | 가을(9월말) · 정돈 | navy fine-knit pullover, beige wool slacks, brown loafers | ivory silk blouse, cream A-line midi skirt, nude flats |
+| 08 | autumn_park | 가을(9월말) · 산책 | beige trench coat, white tee, straight denim, white sneakers | cream cable-knit sweater, brown pleated maxi skirt, tan ankle boots |
+| 09 | aquarium | 가을(10월) · 실내 | navy hoodie, dark washed jeans, white sneakers | light-gray crewneck knit, wide-leg beige trousers, white sneakers |
+| 10 | theme_park | 가을(10월) · 저녁 외출 | camel corduroy jacket, plaid flannel shirt, dark jeans, sneakers | beige corduroy jacket, cream knit, checked midi skirt, brown ankle boots |
+| 11 | museum | 늦가을(11월) · 실내 | charcoal wool coat, black turtleneck, gray dress pants, chelsea boots | black turtleneck, long beige wool coat, dark wide pants, loafers |
+| 12 | namsan_night | 늦가을(11월) · 야간 | navy wool coat, white fine-knit, black dress pants, charcoal check scarf | camel long wool coat, ivory ribbed knit, black trousers, cream knit scarf |
+| 13 | rings_gift | 겨울(12월) · 외출 | camel double-breasted wool coat, white dress shirt, charcoal slacks, brown leather boots | long ivory wool coat, cream knit midi dress, black leather knee boots, small clutch |
+| 14 | wedding_studio | 겨울(12월) · **웨딩 촬영** | black tuxedo, white dress shirt, satin black bowtie, black oxford shoes | classic A-line ivory silk wedding gown with lace bodice, soft veil, low ivory heels |
+| 15 | christmas_market | 겨울(12월) · 야외 | navy wool duffle coat, ivory turtleneck, dark jeans, plaid scarf, beanie | ivory long padded coat, red tartan scarf, black tights, cream winter boots, mittens |
+| 16 | jeju_prewedding | 겨울(12월말) · 여행 | thick cream cable-knit sweater, beige relaxed slacks, brown leather boots | long cream knit dress, ivory long coat, tan ankle boots, crossbody bag |
+| 17 | invitation | 겨울(1월 중) · 실내 | gray henley knit top, black lounge pants | oatmeal oversized knit sweater, soft off-white lounge pants |
+| 18 | shopping_date | 겨울(1월말) · 외출 | black long wool coat, gray knit, dark jeans, chelsea boots | camel double-breasted coat, ivory fine-knit, black cropped trousers, ankle boots |
+| 19 | hanbok_prep | 늦겨울(2월 중) · **한복** | P1~P3: traditional hanbok — navy-blue jeogori (top) with white goreum ribbon, light-gray baji (bottom pants), black beoseon socks, traditional black shoes; P4~P5: casual (cream knit + beige skirt, no hanbok) | P1~P3: traditional hanbok — pale mint-green jeogori with white collar and long goreum ribbon, soft peach-colored chima (long wrap skirt), hair simply pinned with a small ornament; P4~P5: modern ivory knit + beige midi skirt |
+| 20 | prewed_late | 초봄(2월말) · 홈 | charcoal oversized sweatshirt, gray sweatpants, white socks | ivory loose-fit t-shirt, cream knit cardigan, soft beige jogger pants |
+| 21 | final_packing | 초봄(3월초) · 준비 | P1~P2 실내 casual (gray henley + lounge pants); P3 드라이브 beige light jacket + white tee + dark jeans | P1 실내 cream knit + black slim pants, P2 navy cardigan + jeans, P3 cream coat + beige scarf |
+| 22 | rehearsal | 초봄(3월초) · 리허설 | light-gray linen suit, crisp white shirt, no tie, brown loafers | flowy white off-white midi dress with simple bodice, soft pin-up hair, nude heels |
+| 23 | wedding_day | **본식** (3/14) | P1~P6: classic black tuxedo, crisp white dress shirt, black satin bowtie, polished black oxford shoes, white pocket square | P1~P6: full A-line ivory silk wedding gown with lace bodice and train, long delicate veil, pearl earrings, ivory satin heels, hair half-up |
+| 24 | airport_departure | 초봄(3/17) · 공항 | oversized cream hoodie, black jogger pants, white sneakers, black baseball cap | ivory comfy knit, light-wash straight jeans, white sneakers, black crossbody bag |
+| 25 | hotel_checkin | 봄(3/18) · 정물 | (사람 없음) | (사람 없음) |
+| 26 | bali_beach | 봄(3/19) · 비치 | P1 white linen open shirt + beige swim shorts + straw hat, P2 silhouette, P3 발자국, P4 navy swim shorts (shirtless), P5 rash guard + swim shorts | P1 ivory crochet cover-up over white one-piece swimsuit, P2 silhouette, P3 발자국, P4 black one-piece swimsuit, P5 snorkel gear over swimsuit |
+| 27 | infinity_pool | 봄(3/20) · 풀 | swim shorts only | white cutout one-piece swimsuit (pool lounge float) |
+| 28 | bali_dinner | 봄(3/21) · 저녁 | white linen long-sleeve shirt, beige chinos, leather sandals | soft coral silk slip midi dress, gold thin necklace, strappy nude sandals |
+| 29 | island_daytrip | 봄(3/22) · 액티브 | pale blue linen shirt (unbuttoned over a white tee), beige tailored shorts, straw hat | P1 ivory linen jumpsuit + straw hat, P2 flowy white maxi dress, P3 cream wrap dress |
+| 30 | return_home | 봄(3/24) · 공항 귀국 | gray hoodie, black joggers, white sneakers, tired expression OK | oatmeal cardigan over white tee, dark-wash jeans, white sneakers, messy low bun |
+| 31 | album_order | 봄(3/28) · 홈 | charcoal knit top, black joggers | ivory oversized button-down shirt, soft beige knit pants, hair in loose low bun |
+| 32 | parents_visit | 봄(4월초) · 단정 외출 | navy knit cardigan, white button-down shirt underneath, beige slacks, brown loafers | ivory satin blouse, beige pleated midi skirt, low nude pumps, small pearl earrings |
+| 33 | album_draft | 봄(4/18) · 홈 | (overhead shot, hands only — gray knit sleeve) | (overhead shot, hands only — ivory knit sleeve) |
+| 34 | album_delivery | 봄(4/28) · 홈 | plain gray t-shirt, black sweatpants | cream knit cardigan over white tee, soft beige sweatpants |
+| 35 | gift_to_parents | 봄(5/3) · 외출 | light beige blazer, white dress shirt, gray trousers, brown loafers | soft coral silk blouse, ivory midi A-line skirt, nude low heels |
+| 36 | month_anniversary | 늦봄(5/13) · 저녁 데이트 | charcoal slim suit (no tie), white shirt with top button open, black oxford shoes | black satin slip midi dress, simple gold pendant, black strappy heels |
+
+### 적용 예시 (프롬프트에 어떻게 끼워 넣는가)
+
+**원래 프롬프트**:
+```
+Photo 1/3 — 돗자리 위의 두 사람
+Cheolsu and Younghee sitting on a beige linen picnic blanket
+under full-bloom pink cherry blossom trees at Yeouido Han River
+Park, Seoul. Spring afternoon golden hour...
+```
+
+**옷 덮어쓰기 적용 버전** (머리에 오버라이드 + 옷 라인 추가):
+```
+Use the uploaded reference images ONLY for facial features,
+hairstyle, and body proportions of Cheolsu and Younghee.
+Do NOT copy the clothing from the references — dress them
+according to the outfit description below.
+
+Outfit:
+- Cheolsu wears a light beige cardigan over a white short-sleeve
+  tee, faded blue denim jeans, and white sneakers.
+- Younghee wears a pastel floral midi dress, a beige cropped
+  cardigan, and flat leather sandals.
+
+Scene:
+Cheolsu and Younghee sitting on a beige linen picnic blanket
+under full-bloom pink cherry blossom trees at Yeouido Han River
+Park, Seoul. Spring afternoon golden hour...
+
+[Global Style Tokens]
+```
+
+### 01~04 재생성 옵션 (사용자가 이미 만든 것)
+
+현재 01~04는 레퍼런스 옷 그대로 나왔을 가능성이 높습니다. 3가지 선택:
+
+1. **그대로 두기** — 봄~여름 초반이라 레퍼런스 옷(크림 셔츠 + 아이보리 니트)이 아주 크게 어색하진 않음. 시간 절약.
+2. **재생성** — 위 의상 표에 맞춰 01~04 재생성. 일관된 스토리 기준으로는 권장.
+3. **부분 재생성** — 옷이 특히 어색한 컷만 (예: 04 서점 여름인데 니트 입고 있으면) 골라서 재생성.
+
+05번부터는 위 표 + 오버라이드 지시문으로 바로 적용.
 
 ---
 
