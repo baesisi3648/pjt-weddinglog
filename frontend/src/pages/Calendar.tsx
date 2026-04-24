@@ -13,6 +13,7 @@ import CategoryBadge from '../components/CategoryBadge';
 import { CATEGORY_LABELS } from '../constants/enums';
 import type { Event, Category, EventCreate, EventUpdate } from '../types';
 import type { Photo } from '../types';
+import { photoUrl } from '../utils/photo';
 
 // ─── 날짜 유틸 ──────────────────────────────────────────────────────────────
 function getMonthKey(year: number, month: number): string {
@@ -405,7 +406,7 @@ export default function Calendar() {
                             aria-label={`${e.title} 사진`}
                           >
                             {coverPhoto ? (
-                              <img src={coverPhoto.file_url} alt={e.title} className="w-full h-full object-cover grayscale opacity-80" loading="lazy" />
+                              <img src={photoUrl(coverPhoto.file_url)} alt={e.title} className="w-full h-full object-cover grayscale opacity-80" loading="lazy" />
                             ) : (
                               <div className="w-full h-full bg-surface-container flex items-center justify-center">
                                 <span className="font-label-caps text-[10px] font-bold text-on-surface">

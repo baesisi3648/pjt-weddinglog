@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { toggleSelection } from '../services/timeline_api';
 import type { Chapter, TimelinePhoto } from '../types';
+import { photoUrl } from '../utils/photo';
 
 function padChapterNum(n: number | string): string {
   return String(n).padStart(2, '0');
@@ -62,7 +63,7 @@ function PhotoCard({ photo, onToggle }: PhotoCardProps) {
 
       {/* 사진 */}
       <img
-        src={photo.file_url}
+        src={photoUrl(photo.file_url)}
         alt={photo.caption || '사진'}
         className="w-full aspect-square object-cover mb-4 bg-surface-dim"
       />

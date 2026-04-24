@@ -9,6 +9,7 @@ import { getHomeSummary } from '../services/home_api';
 import CoupleProfileCard from '../components/CoupleProfileCard';
 import CoupleProfileEditModal from '../components/CoupleProfileEditModal';
 import type { Couple, Event, Photo, AlbumOrderDeadline, HomeSummary } from '../types';
+import { photoUrl } from '../utils/photo';
 
 const COUPLE_ID = 'cpl_sample_001';
 
@@ -127,7 +128,7 @@ function RecentPhotosWidget({ photos }: RecentPhotosWidgetProps) {
             style={{ textDecoration: 'none' }}
           >
             <img
-              src={photo.file_url}
+              src={photoUrl(photo.file_url)}
               alt={photo.caption || '사진'}
               className={`w-full aspect-square object-cover bg-surface-dim ${idx === 2 ? 'lg:aspect-square sm:aspect-[2/1]' : ''}`}
             />
