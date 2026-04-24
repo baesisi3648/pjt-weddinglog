@@ -14,6 +14,12 @@ export async function listPhotos(eventId: string): Promise<Photo[]> {
 }
 
 /**
+ * 캘린더 썸네일용 이벤트 사진 목록 조회 (listPhotos alias)
+ * GET /api/events/{event_id}/photos
+ */
+export const listEventPhotos = listPhotos;
+
+/**
  * 사진 업로드
  * POST /api/events/{event_id}/photos  (multipart/form-data)
  */

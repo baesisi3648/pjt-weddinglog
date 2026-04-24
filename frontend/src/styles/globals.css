@@ -1,6 +1,7 @@
 /* Handoff CSS — wl-* 클래스 (styles.css + styles-v2.css + styles-v3.css 병합) */
 /* @import 는 반드시 @tailwind/@layer 보다 먼저 선언해야 함 */
 @import './handoff.css';
+@import './calendar-photos.css';
 
 @tailwind base;
 @tailwind components;

@@ -29,6 +29,9 @@ data/
 *.sqlite3
 *.log
 
+# seed_assets/ (데모 시드 사진)는 반드시 이미지에 포함되어야 한다.
+# 여기에 추가하지 말 것. (app/seed.py 가 이 디렉터리에서 사진을 복사한다.)
+
 # Editor / OS
 .vscode/
 .idea/

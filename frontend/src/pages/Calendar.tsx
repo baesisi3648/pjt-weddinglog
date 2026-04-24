@@ -1,6 +1,7 @@
 // @TASK P2-S1-T1 - Calendar 페이지 API 연동
 // @TASK P2-S1-T2 - 리스트 뷰 탭
 // @TASK P2-S1-T5 - AI 체크리스트 생성 UI
+// @TASK P2-S1-T6 - 월간 뷰 사진 썸네일
 // @SPEC docs/planning/06-tasks.md#P2-S1-T1
 // @SPEC specs/screens/02_calendar.yaml
 
@@ -8,11 +9,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCouple } from '../context/CoupleContext';
 import { listEvents, createEvent, updateEvent, deleteEvent, toggleCompleteEvent } from '../services/event_api';
+import { listEventPhotos } from '../services/photo_api';
 import { requestChecklist } from '../services/ai_api';
 import EventForm from '../components/EventForm';
 import CategoryBadge, { CATEGORY_EMOJIS } from '../components/CategoryBadge';
 import { CATEGORY_LABELS } from '../constants/enums';
 import type { Event, Category, EventCreate, EventUpdate } from '../types';
+import type { Photo } from '../types';
 
 // ─── 카테고리별 색상 (핸드오프 CSS 변수 기반) ───────────────────────────────
 const CATEGORY_RAIL_COLORS: Record<Category, string> = {
@@ -179,6 +182,9 @@ export default function Calendar() {
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // ── 사진 맵: eventId → Photo[] ─────────────────────────────────────────────
+  const [eventPhotosMap, setEventPhotosMap] = useState<Record<string, Photo[]>>({});
+
   // ── UI 상태 ──
   const [selectedDay, setSelectedDay] = useState(now.getDate());
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -197,7 +203,27 @@ export default function Calendar() {
     setApiError(null);
     try {
       const data = await listEvents(coupleId, monthKey);
-      setEvents(Array.isArray(data) ? data : []);
+      const evList = Array.isArray(data) ? data : [];
+      setEvents(evList);
+
+      // 이벤트별 사진 일괄 fetch (방법 C: Promise.all)
+      if (evList.length > 0) {
+        const results = await Promise.all(
+          evList.map(async (ev) => {
+            try {
+              const photos = await listEventPhotos(ev.id);
+              return { eventId: ev.id, photos: Array.isArray(photos) ? photos : [] };
+            } catch {
+              return { eventId: ev.id, photos: [] };
+            }
+          })
+        );
+        const map: Record<string, Photo[]> = {};
+        results.forEach(({ eventId, photos }) => { map[eventId] = photos; });
+        setEventPhotosMap(map);
+      } else {
+        setEventPhotosMap({});
+      }
     } catch (err) {
       const e = err as { response?: { data?: { detail?: string } }; message?: string };
       setApiError(e.response?.data?.detail ?? e.message ?? '일정을 불러올 수 없습니다.');
@@ -414,26 +440,92 @@ export default function Calendar() {
                   const dayOfWeek = i % 7;
                   const isToday = d === todayNum;
                   const isWedding = d === weddingDay;
+
+                  // 사진 있는 이벤트 / 없는 이벤트 분류
+                  const evWithPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
+                  const evWithoutPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
+                  const hasPhotos = evWithPhotos.length > 0;
+
+                  // 셀에 최대 표시: 사진 2장 + 라벨 1개 = 3슬롯
+                  const shownPhotoEvents = evWithPhotos.slice(0, 2);
+                  const shownLabelEvents = evWithoutPhotos.slice(0, Math.max(0, 3 - shownPhotoEvents.length));
+                  const totalShown = shownPhotoEvents.length + shownLabelEvents.length;
+                  const moreCount = ev.length - totalShown;
+
+                  const handleCellClick = () => {
+                    setSelectedDay(d);
+                    const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    setEventForm({ mode: 'create', date: dateStr });
+                  };
+
                   return (
                     <button
                       key={i}
-                      className={`wl-day ${selectedDay === d ? 'is-selected' : ''} ${isToday ? 'is-today' : ''} ${isWedding ? 'is-wedding' : ''} ${dayOfWeek === 5 ? 'is-sat' : ''} ${dayOfWeek === 6 ? 'is-sun' : ''}`}
-                      onClick={() => {
-                        setSelectedDay(d);
-                        const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                        setEventForm({ mode: 'create', date: dateStr });
-                      }}
+                      className={[
+                        'wl-day',
+                        selectedDay === d ? 'is-selected' : '',
+                        isToday ? 'is-today' : '',
+                        isWedding ? 'is-wedding' : '',
+                        dayOfWeek === 5 ? 'is-sat' : '',
+                        dayOfWeek === 6 ? 'is-sun' : '',
+                        hasPhotos ? 'has-photos' : '',
+                      ].filter(Boolean).join(' ')}
+                      onClick={handleCellClick}
                       aria-label={`${d}일${ev.length > 0 ? `, 일정 ${ev.length}개` : ''}`}
                     >
-                      <span className="wl-day-num">{d}</span>
+                      {/* 날짜 숫자 */}
+                      <div className={hasPhotos ? 'wl-day-num-row' : undefined}>
+                        <span className="wl-day-num">{d}</span>
+                      </div>
                       {isWedding && <span className="wl-day-ring">♥</span>}
-                      {ev.length > 0 && (
+
+                      {/* 사진 썸네일 (사진 있는 이벤트) */}
+                      {shownPhotoEvents.map((e) => {
+                        const photos = eventPhotosMap[e.id] ?? [];
+                        const coverPhoto = photos[0];
+                        const extraCount = photos.length - 1;
+                        return (
+                          <div
+                            key={e.id}
+                            className="wl-cal-photo-thumb"
+                            onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
+                            role="img"
+                            aria-label={`${e.title} 사진`}
+                          >
+                            {coverPhoto && (
+                              <img src={coverPhoto.file_url} alt={e.title} loading="lazy" />
+                            )}
+                            {extraCount > 0 && (
+                              <span className="wl-cal-photo-count">+{extraCount}</span>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* 카테고리 라벨 (사진 없는 이벤트) */}
+                      {shownLabelEvents.map((e) => (
+                        <div
+                          key={e.id}
+                          className="wl-cal-label"
+                          style={{ background: CATEGORY_RAIL_COLORS[e.category] ?? '#BFB5AC' }}
+                          onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
+                        >
+                          {e.title}
+                        </div>
+                      ))}
+
+                      {/* 기존 점 (사진도 없고 분류되지 않은 경우: 로딩 전 fallback) */}
+                      {!hasPhotos && ev.length > 0 && evWithPhotos.length === 0 && evWithoutPhotos.length === 0 && (
                         <div className="wl-day-dots">
                           {ev.slice(0, 3).map((e) => (
                             <span key={e.id} className="wl-day-dot" style={{ background: CATEGORY_RAIL_COLORS[e.category] ?? '#BFB5AC' }} />
                           ))}
-                          {ev.length > 3 && <span style={{ fontSize: 9, color: 'var(--wl-ink-3)' }}>+{ev.length - 3}</span>}
                         </div>
+                      )}
+
+                      {/* 초과 개수 */}
+                      {moreCount > 0 && (
+                        <span className="wl-cal-more">+{moreCount}</span>
                       )}
                     </button>
                   );

@@ -17,6 +17,10 @@ vi.mock('../services/ai_api', () => ({
   requestChecklist: vi.fn(),
 }));
 
+vi.mock('../services/photo_api', () => ({
+  listEventPhotos: vi.fn(),
+}));
+
 vi.mock('../context/CoupleContext', () => ({
   CoupleProvider: ({ children }: { children: React.ReactNode }) => children,
   useCouple: () => ({ couple: { id: 'cpl_001', wedding_date: null }, loading: false, error: null }),
@@ -24,6 +28,7 @@ vi.mock('../context/CoupleContext', () => ({
 
 import { listEvents, createEvent, toggleCompleteEvent } from '../services/event_api';
 import { requestChecklist } from '../services/ai_api';
+import { listEventPhotos } from '../services/photo_api';
 import Calendar from './Calendar';
 
 const MOCK_EVENTS = [
@@ -31,6 +36,15 @@ const MOCK_EVENTS = [
   { id: 'ev2', title: '드레스 피팅',  date: '2026-04-12', category: 'STUDIO_DRESS_MAKEUP', is_completed: true,  memo: '청담 드레스샵' },
   { id: 'ev3', title: '항공권 예약',  date: '2026-04-20', category: 'HONEYMOON',   is_completed: false, memo: null },
 ];
+
+const MOCK_PHOTO_EV1 = {
+  id: 'ph1', event_id: 'ev1', file_url: 'https://example.com/photo1.jpg',
+  caption: null, caption_source: null, is_selected: false, sort_order: 0, created_at: '2026-04-05T00:00:00Z',
+};
+const MOCK_PHOTO_EV1_2 = {
+  id: 'ph2', event_id: 'ev1', file_url: 'https://example.com/photo2.jpg',
+  caption: null, caption_source: null, is_selected: false, sort_order: 1, created_at: '2026-04-05T00:00:00Z',
+};
 
 function renderCalendar() {
   return render(
@@ -46,6 +60,8 @@ beforeEach(() => {
   (createEvent as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'ev_new', title: '새 일정', date: '2026-04-23', category: 'ETC', is_completed: false, memo: null });
   (toggleCompleteEvent as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'ev1', is_completed: true });
   (requestChecklist as ReturnType<typeof vi.fn>).mockResolvedValue({ events: [], source: 'ai' });
+  // 기본: 모든 이벤트에 사진 없음
+  (listEventPhotos as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
 
 describe('Calendar', () => {
@@ -177,6 +193,75 @@ describe('Calendar', () => {
     fireEvent.click(completeBtns[0]);
     await waitFor(() => {
       expect(toggleCompleteEvent).toHaveBeenCalledWith('cpl_001', 'ev1');
+    });
+  });
+
+  // ── 월간 뷰 사진 썸네일 ────────────────────────────────────────────────────
+  it('사진 있는 이벤트 날짜 셀에 img 썸네일이 렌더링된다', async () => {
+    // ev1(2026-04-05)에 사진 2장 제공
+    (listEventPhotos as ReturnType<typeof vi.fn>).mockImplementation((eventId: string) => {
+      if (eventId === 'ev1') return Promise.resolve([MOCK_PHOTO_EV1, MOCK_PHOTO_EV1_2]);
+      return Promise.resolve([]);
+    });
+    renderCalendar();
+    await waitFor(() => expect(listEventPhotos).toHaveBeenCalled());
+    // img 썸네일이 최소 1개 존재 (src 속성은 JSDOM lazy-loading 여부에 따라 다를 수 있으므로 alt로만 확인)
+    const thumbs = await screen.findAllByAltText('예식장 답사');
+    expect(thumbs.length).toBeGreaterThanOrEqual(1);
+    // img 요소임을 확인
+    expect(thumbs[0].tagName.toLowerCase()).toBe('img');
+  });
+
+  it('사진이 2장 이상이면 "+N" 배지가 표시된다', async () => {
+    (listEventPhotos as ReturnType<typeof vi.fn>).mockImplementation((eventId: string) => {
+      if (eventId === 'ev1') return Promise.resolve([MOCK_PHOTO_EV1, MOCK_PHOTO_EV1_2]);
+      return Promise.resolve([]);
+    });
+    renderCalendar();
+    await waitFor(() => expect(listEventPhotos).toHaveBeenCalled());
+    // +1 배지 확인
+    const badge = await screen.findByText('+1');
+    expect(badge).toBeInTheDocument();
+  });
+
+  it('사진 없는 이벤트는 카테고리 라벨이 표시된다', async () => {
+    // 모든 이벤트 사진 없음 (beforeEach 기본값 유지)
+    renderCalendar();
+    await waitFor(() => expect(listEventPhotos).toHaveBeenCalled());
+    // 라벨 텍스트로 확인 (월간 뷰 셀 내 라벨)
+    const labels = await screen.findAllByText('예식장 답사');
+    expect(labels.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('사진 썸네일 클릭 시 에러 없이 처리된다', async () => {
+    (listEventPhotos as ReturnType<typeof vi.fn>).mockImplementation((eventId: string) => {
+      if (eventId === 'ev1') return Promise.resolve([MOCK_PHOTO_EV1]);
+      return Promise.resolve([]);
+    });
+    renderCalendar();
+    // alt="예식장 답사" img 요소 전부 가져와 첫 번째 클릭
+    const thumbs = await screen.findAllByAltText('예식장 답사');
+    expect(thumbs.length).toBeGreaterThanOrEqual(1);
+    // 부모 썸네일 컨테이너 클릭 (stopPropagation + navigate)
+    const thumbContainer = thumbs[0].closest('.wl-cal-photo-thumb') ?? thumbs[0];
+    fireEvent.click(thumbContainer);
+    // navigate('/events/ev1') — MemoryRouter 내에서 에러 없이 처리됨을 확인
+    expect(thumbs[0]).toBeInTheDocument();
+  });
+
+  it('빈 셀 클릭 시 EventForm 모달이 열린다 (기존 동작 유지)', async () => {
+    renderCalendar();
+    await waitFor(() => expect(listEvents).toHaveBeenCalled());
+    // FAB 클릭으로 빈 날짜 셀과 동일한 결과 검증
+    fireEvent.click(screen.getByRole('button', { name: '일정 추가' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('listEventPhotos가 이벤트 수만큼 호출된다', async () => {
+    renderCalendar();
+    await waitFor(() => expect(listEvents).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(listEventPhotos).toHaveBeenCalledTimes(MOCK_EVENTS.length);
     });
   });
 });

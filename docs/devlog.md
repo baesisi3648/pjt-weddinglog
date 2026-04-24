@@ -204,6 +204,34 @@
 - **배운 점 3**: 프로덕션에서 `/api` 상대 호출을 계속 쓰려면 **nginx reverse proxy**(frontend 컨테이너를 nginx로) 또는 **backend가 frontend dist 서빙**(FastAPI StaticFiles) 구조가 필요. 이번에는 단순성 위해 브라우저 직접 호출 선택 + CORS로 조율.
 - **P8 제출 준비 시 반영**: README의 "실행 방법"에 "포트 바꾸려면 `.env`의 `WEB_PORT`, `API_PORT` + `CORS_ORIGINS` 3개를 맞춰주세요" 안내 필요. 이번 사건이 정확히 그 시나리오.
 
+### 2026-04-24 13:30 — 풍부한 더미 스토리 + 캘린더 비주얼 업그레이드
+- **도구**: Claude Code (메인) + backend-specialist + frontend-specialist (병렬)
+- **배경**: 사용자가 Apple App Store "Shared Calendar" 앱 레퍼런스 공유. 날짜 셀에 사진 썸네일이 직접 박히는 비주얼 우선 캘린더. 그리고 "더미 이미지 너가 찾아줄 수 있어? 드라마 연예인 커플? 내 사진은 이상할까?" 질문.
+- **더미 이미지 저작권·프라이버시 판단**:
+  - 본인 사진 ❌ — GitHub Public 영구 기록, 면접관 관점 이상함, 프라이버시 리스크
+  - 드라마/연예인 ❌ — 초상권·저작권 침해 (법적 리스크)
+  - **Unsplash/LoremFlickr 익명 스톡 이미지 ✅** — CC0 라이센스, 상업 이용 자유, 익명 모델
+- **외부 의존 회피**: 과제 안내문 "외부 의존 없이 독립 동작" 원칙에 맞게 **repo에 직접 번들** (`backend/seed_assets/photos/`). 심사자가 오프라인이어도 사진 표시.
+- **Unsplash Source API는 deprecation 확인** (HTML 에러 반환). **LoremFlickr로 전환** (`https://loremflickr.com/800/600/wedding`) — 키워드 기반 + 리다이렉트 추적 + 실제 JPEG 반환.
+- **18장 다운로드**: 카테고리별 키워드(`wedding,venue` / `bridal,dress` / `wedding,couple` / `honeymoon,beach` / ...) 18장. 총 1.4MB.
+- **Backend 시딩 (backend-specialist)**:
+  - `seed.py`에 `SEED_EVENTS` 상수 추가 — 15개 이벤트 (D-180부터 D+14까지 스토리 라인)
+  - 각 이벤트에 1-3장 사진 + 사전 캡션 (총 18장, 18 캡션 — 모두 `caption_source="template"`)
+  - 파일 저장 규칙 `file_storage.safe_save_photo`와 100% 일치: `photos/{event_id}/{photo_id}.{ext}`
+  - 멱등성 3단계: 커플 / 이벤트 / 물리 파일 각각 가드
+  - `is_completed = (offset_days <= 0)` — D-day 이전은 완료 처리 (진행도 UX)
+  - `backend/.dockerignore` 에 `seed_assets/` 포함 가드 추가
+- **Frontend 캘린더 비주얼 (frontend-specialist)**:
+  - Calendar.tsx 월간 뷰 셀 렌더링 교체
+  - `Promise.all(events.map(e => listEventPhotos(e.id)))` 일괄 fetch (N+1이지만 15개 이벤트 규모에선 수용 가능)
+  - 사진 있는 이벤트 → `wl-cal-photo-thumb` 44px 썸네일 + "+N" 배지 + 클릭 시 `/events/:id`
+  - 사진 없는 이벤트 → 카테고리 컬러 라벨만
+  - 빈 셀 클릭 → EventForm 모달 (기존 동작 유지, `stopPropagation`으로 썸네일 클릭과 분리)
+  - 모바일 반응형 (390px 이하: 32px 썸네일)
+- **배운 점 1**: **스톡 이미지 서비스는 수명이 있다**. Unsplash Source가 조용히 deprecation된 걸 curl 한 번으로 발견. 시연용 외부 서비스는 실패 시나리오 포함해서 번들 전략이 안전.
+- **배운 점 2**: **시드 데이터에 "스토리"가 있으면 기획 의도가 바로 전달**. 15개 이벤트가 D-180 "예식장 투어" → D-day "본식" → D+14 "앨범 주문"으로 이어지면, 심사자가 아무 설명 없이도 "아 이 앱은 이런 흐름이구나" 체득. 시드는 샘플이 아니라 데모 내러티브.
+- **배운 점 3**: **레퍼런스 이미지는 UX 결정의 지름길**. 사용자가 "Shared Calendar" 스크린샷 하나 공유한 덕분에, "월간 뷰에 썸네일 어떻게 배치할지"를 긴 설명 없이 즉시 공유. 기획 문서보다 한 장의 적절한 스크린샷.
+
 ---
 
 ## 문항 4 답변 초안 (제출 직전 작성)

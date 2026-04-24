@@ -9,6 +9,7 @@ Pytest fixtures:
 from __future__ import annotations
 
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +18,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config import get_settings
 from app.database import Base, get_db
 from app.main import create_app
 
@@ -52,6 +54,27 @@ def db_session(test_engine: Engine) -> Generator[Session, None, None]:
         session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture()
+def tmp_upload_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> Generator[Path, None, None]:
+    """UPLOAD_DIR 을 테스트 임시 디렉터리로 교체.
+
+    seed.py / file_storage.py 등이 `get_settings().UPLOAD_DIR` 을 읽기 때문에
+    해당 속성을 직접 교체하여 실제 프로젝트의 data/uploads/photos 를 오염시키지 않는다.
+    (UPLOAD_DIR 은 pydantic-settings 의 일반 필드이므로 monkeypatch.setattr 로 변경 가능.)
+    """
+    settings = get_settings()
+    tmp_upload = tmp_path / "data" / "uploads" / "photos"
+    tmp_upload.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(settings, "UPLOAD_DIR", tmp_upload)
+    try:
+        yield tmp_upload
+    finally:
+        # lru_cache 기반 singleton 이므로 monkeypatch 가 finalize 에서 원복함.
+        pass
 
 
 @pytest.fixture()
