@@ -1,4 +1,4 @@
-# @TASK P0-T5, P1-R1-T1, P2-R1-T1, P3-R1-T1 - SQLAlchemy 모델 패키지
+# @TASK P0-T5, P1-R1-T1, P2-R1-T1, P3-R1-T1, P5-R1-T1 - SQLAlchemy 모델 패키지
 # @SPEC docs/planning/05-architecture.md#백엔드-구조
 """
 SQLAlchemy ORM 모델 루트.
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from app.models.couple import Couple  # noqa: F401
 from app.models.event import Event  # noqa: F401
+from app.models.order import Order  # noqa: F401
 from app.models.photo import Photo  # noqa: F401
 
-__all__: list[str] = ["Couple", "Event", "Photo"]
+__all__: list[str] = ["Couple", "Event", "Order", "Photo"]

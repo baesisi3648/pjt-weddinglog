@@ -5,9 +5,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getTimeline } from '../services/timeline_api';
 import TimelineChapter from '../components/TimelineChapter';
+import Toast from '../components/Toast';
 import type { TimelineResponse, Chapter } from '../types';
 
 const COUPLE_ID = 'cpl_sample_001';
+const LS_SELECTED_KEY = 'weddinglog_selected_photos';
 
 function calcPages(selectedCount: number): number {
   if (!selectedCount) return 0;
@@ -20,6 +22,7 @@ export default function Timeline() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCount, setSelectedCount] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
 
   const fetchTimeline = useCallback(async () => {
     setLoading(true);
@@ -141,6 +144,11 @@ export default function Timeline() {
         </div>
       )}
 
+      {/* Toast */}
+      {toast && (
+        <Toast message={toast} type="info" onDismiss={() => setToast(null)} />
+      )}
+
       {/* ── 앨범 주문 CTA ── */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#fff8f1] via-[#fff8f1] to-transparent z-40">
         <div className="max-w-container-max mx-auto">
@@ -151,7 +159,20 @@ export default function Timeline() {
               color: isAlbumEnabled ? '#ffffff' : '#85736f',
             }}
             disabled={!isAlbumEnabled}
-            onClick={() => isAlbumEnabled && navigate('/order-checkout')}
+            onClick={() => {
+              if (!isAlbumEnabled) return;
+              // 선택된 photo_ids 수집 (data.chapters에서 is_selected=true인 사진)
+              const allChapters = data?.chapters ?? [];
+              const selectedIds = allChapters.flatMap((ch) =>
+                (ch.photos ?? []).filter((p) => p.is_selected).map((p) => p.id)
+              );
+              if (selectedIds.length === 0) {
+                setToast('사진을 먼저 선택해주세요.');
+                return;
+              }
+              localStorage.setItem(LS_SELECTED_KEY, JSON.stringify(selectedIds));
+              navigate('/order-checkout');
+            }}
           >
             {isAlbumEnabled
               ? `앨범으로 만들기 (${selectedCount}장 선택됨)`

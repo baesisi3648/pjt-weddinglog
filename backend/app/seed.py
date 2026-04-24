@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.models.couple import Couple
 from app.models.event import Event
+from app.models.order import Order
 from app.models.photo import Photo
 
 logger = logging.getLogger(__name__)
@@ -694,3 +695,98 @@ def seed_initial_data(db: Session) -> None:
 
     # 2) 이벤트 + 사진 시딩 (내부적으로 멱등).
     seed_events_and_photos(db, couple)
+
+    # 3) 샘플 주문 시딩 (P5-BACKEND, 멱등).
+    seed_sample_order(db, couple)
+
+
+def seed_sample_order(db: Session, couple: Couple) -> None:
+    """샘플 주문 1건 시딩 (심사자 시연용).
+
+    멱등성:
+        - 해당 커플의 주문이 이미 1건 이상 있으면 no-op.
+
+    구성:
+        - 기존 시드 사진 중 is_selected=True 전체 사용 (Timeline 순서대로
+          5 챕터에 각각 해당 카테고리 사진 묶음).
+        - album_layout = None (프론트가 Step 1 진입 시 별도 compose 호출).
+        - status = pending, quantity = 3, format = SQUARE, cover = HARD.
+    """
+    existing = db.query(Order).filter(Order.couple_id == couple.id).count()
+    if existing > 0:
+        logger.debug(
+            "Orders already seeded for couple=%s (count=%d) — skip",
+            couple.id,
+            existing,
+        )
+        return
+
+    # timeline_service 의 챕터 매핑을 재사용하여 챕터별로 photo_id 를 모은다.
+    from app.services.timeline_service import CHAPTER_MAPPING
+
+    cat_to_idx: dict[str, int] = {
+        cat: idx
+        for idx, ch in enumerate(CHAPTER_MAPPING)
+        for cat in ch.categories
+    }
+
+    # couple 의 모든 이벤트 → 선택된 사진 수집.
+    buckets: dict[int, list[str]] = {
+        i: [] for i in range(len(CHAPTER_MAPPING))
+    }
+    events = (
+        db.query(Event).filter(Event.couple_id == couple.id).all()
+    )
+    for event in events:
+        idx = cat_to_idx.get(event.category)
+        if idx is None:
+            idx = cat_to_idx.get("ETC", len(CHAPTER_MAPPING) - 1)
+        for photo in event.photos:
+            if photo.is_selected:
+                buckets[idx].append(photo.id)
+
+    chapters_selected: list[dict] = []
+    display_number = 0
+    for idx, chapter in enumerate(CHAPTER_MAPPING):
+        photo_ids = buckets[idx]
+        if not photo_ids:
+            continue
+        display_number += 1
+        chapters_selected.append(
+            {
+                "chapter_number": display_number,
+                "title": chapter.title,
+                "photo_ids": photo_ids,
+            }
+        )
+
+    # 선택된 사진이 하나도 없으면 샘플 주문을 만들지 않는다.
+    if not chapters_selected or not any(
+        ch["photo_ids"] for ch in chapters_selected
+    ):
+        logger.debug(
+            "No selected photos for couple=%s — skip sample order",
+            couple.id,
+        )
+        return
+
+    order = Order(
+        id="ord_sample_001",
+        couple_id=couple.id,
+        format="SQUARE",
+        cover_type="HARD",
+        quantity=3,
+        chapters_selected=chapters_selected,
+        album_layout=None,  # 프론트가 compose 호출로 생성.
+        recipient_name="박영희 어머니",
+        recipient_phone="010-1234-5678",
+        recipient_address="서울시 강남구 테헤란로 123, 101동 202호",
+        status="pending",
+    )
+    db.add(order)
+    db.commit()
+    logger.info(
+        "Seeded sample order id=%s for couple=%s",
+        order.id,
+        couple.id,
+    )

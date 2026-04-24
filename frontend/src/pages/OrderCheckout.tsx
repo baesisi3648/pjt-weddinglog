@@ -1,35 +1,166 @@
-// @TASK STITCH-DESIGN - OrderCheckout 페이지 이식 (Stitch checkout_desktop/code.html 기반)
-// @SPEC docs/planning/06-tasks.md#P1.5-S0-T1
+// @TASK P5-FRONTEND - OrderCheckout 4단계 실 API 연동 + AI 앨범 프리뷰
+// @SPEC docs/planning/06-tasks.md#Phase5
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { composeAlbum } from '../services/album_api';
+import { createOrder } from '../services/order_api';
+import MiniBookPreview from '../components/MiniBookPreview';
+import Toast from '../components/Toast';
+import type { AlbumLayout } from '../types/album';
+import type { OrderFormat, OrderCoverType } from '../types/order';
+import type { Photo } from '../types/photo';
 
-type Format = 'square' | 'a4';
-type Cover = 'hard' | 'soft';
+const COUPLE_ID = 'cpl_sample_001';
+const LS_KEY = 'weddinglog_selected_photos';
 
-interface Step {
-  id: number;
-  label: string;
+// 가격 계산
+function calcPrice(format: OrderFormat, coverType: OrderCoverType, quantity: number) {
+  const base = format === 'SQUARE' ? 150000 : 180000;
+  const surcharge = coverType === 'HARD' ? 20000 : 0;
+  return { base, surcharge, total: quantity * (base + surcharge) };
+}
+
+const fmt = (n: number) => n.toLocaleString() + '원';
+
+// 전화번호 정규식 010-xxxx-xxxx
+const PHONE_RE = /^010-\d{4}-\d{4}$/;
+
+type StepId = 1 | 2 | 3 | 4;
+
+const STEPS: { id: StepId; label: string }[] = [
+  { id: 1, label: '앨범 확인' },
+  { id: 2, label: '옵션 선택' },
+  { id: 3, label: '배송 정보' },
+  { id: 4, label: '완료' },
+];
+
+interface FieldErrors {
+  name?: string;
+  phone?: string;
+  address?: string;
 }
 
 export default function OrderCheckout() {
-  const [format, setFormat] = useState<Format>('square');
-  const [cover, setCover] = useState<Cover>('hard');
-  const [qty, setQty] = useState(1);
   const navigate = useNavigate();
 
-  const basePrice = 160000;
-  const a4Surcharge = format === 'a4' ? 20000 : 0;
-  const total = (basePrice + a4Surcharge) * qty;
-  const fmt = (n: number) => n.toLocaleString() + '원';
+  // ── Step 상태 ──
+  const [step, setStep] = useState<StepId>(1);
 
-  const steps: Step[] = [
-    { id: 1, label: '배송 정보' },
-    { id: 2, label: '옵션 선택' },
-    { id: 3, label: '결제 방식' },
-    { id: 4, label: '확인' },
-  ];
-  const current = 2;
+  // ── Step 1: 앨범 구성 ──
+  const [albumLayout, setAlbumLayout] = useState<AlbumLayout | null>(null);
+  const [albumSource, setAlbumSource] = useState<'ai' | 'template' | null>(null);
+  const [composeLoading, setComposeLoading] = useState(false);
+  const [composeError, setComposeError] = useState<string | null>(null);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
+
+  // ── Step 2: 옵션 ──
+  const [format, setFormat] = useState<OrderFormat>('SQUARE');
+  const [coverType, setCoverType] = useState<OrderCoverType>('HARD');
+  const [quantity, setQuantity] = useState(1);
+
+  // ── Step 3: 배송 ──
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [recipientAddress, setRecipientAddress] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  // ── Step 4: 완료 ──
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderCreatedAt, setOrderCreatedAt] = useState<string | null>(null);
+  const [orderLoading, setOrderLoading] = useState(false);
+
+  // ── Toast ──
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
+
+  // LocalStorage에서 사진 ID 로드
+  useEffect(() => {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) {
+      navigate('/timeline');
+      return;
+    }
+    try {
+      const ids = JSON.parse(raw) as string[];
+      if (!ids.length) {
+        navigate('/timeline');
+        return;
+      }
+      setSelectedPhotoIds(ids);
+    } catch {
+      navigate('/timeline');
+    }
+  }, [navigate]);
+
+  // compose 호출
+  const runCompose = useCallback(async (photoIds: string[]) => {
+    if (!photoIds.length) return;
+    setComposeLoading(true);
+    setComposeError(null);
+    try {
+      const res = await composeAlbum(COUPLE_ID, photoIds);
+      setAlbumLayout(res.album_layout);
+      setAlbumSource(res.source);
+    } catch (err) {
+      const e = err as { message?: string };
+      setComposeError(e.message ?? 'AI 앨범 구성에 실패했습니다.');
+    } finally {
+      setComposeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedPhotoIds.length > 0) {
+      runCompose(selectedPhotoIds);
+    }
+  }, [selectedPhotoIds, runCompose]);
+
+  const { base, surcharge, total } = calcPrice(format, coverType, quantity);
+
+  // ── Step 3 검증 ──
+  function validateStep3(): boolean {
+    const errors: FieldErrors = {};
+    if (recipientName.trim().length < 2) errors.name = '이름을 2자 이상 입력해주세요.';
+    if (!PHONE_RE.test(recipientPhone)) errors.phone = '올바른 전화번호 형식을 입력해주세요 (010-xxxx-xxxx).';
+    if (recipientAddress.trim().length < 5) errors.address = '주소를 정확히 입력해주세요.';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  // ── 주문 생성 ──
+  async function handleCreateOrder() {
+    setOrderLoading(true);
+    try {
+      const order = await createOrder(COUPLE_ID, {
+        format,
+        cover_type: coverType,
+        quantity,
+        chapters_selected: {},
+        album_layout: albumLayout,
+        recipient_name: recipientName,
+        recipient_phone: recipientPhone,
+        recipient_address: recipientAddress,
+      });
+      setOrderId(order.id);
+      setOrderCreatedAt(order.created_at);
+      setStep(4);
+    } catch (err) {
+      const e = err as { message?: string };
+      setToast({ message: e.message ?? '주문 생성에 실패했습니다.', type: 'error' });
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
+  // 예상 배송일 (created_at + 14일)
+  function calcDeliveryDate(createdAt: string): string {
+    const d = new Date(createdAt);
+    d.setDate(d.getDate() + 14);
+    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
+  }
+
+  // 더미 photos (실제로는 photoId에서 url을 빌드할 방법 필요; 여기서는 빈 배열로 MiniBookPreview에 전달)
+  const dummyPhotos: Photo[] = [];
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-background">
@@ -46,10 +177,10 @@ export default function OrderCheckout() {
             <div className="h-px w-full bg-outline-variant" />
           </div>
           <ol className="relative flex justify-between" role="list">
-            {steps.map((step) => {
-              const state = step.id < current ? 'done' : step.id === current ? 'current' : 'future';
+            {STEPS.map((s) => {
+              const state = s.id < step ? 'done' : s.id === step ? 'current' : 'future';
               return (
-                <li key={step.id} className="relative flex flex-col items-center">
+                <li key={s.id} className="relative flex flex-col items-center">
                   <div
                     className={`relative flex items-center justify-center rounded-full w-8 h-8 z-10 shadow-sm border ${
                       state === 'done'
@@ -60,7 +191,7 @@ export default function OrderCheckout() {
                     }`}
                   >
                     {state === 'done' ? (
-                      <span className="material-symbols-outlined text-background" style={{ fontSize: '16px', fontVariationSettings: "'wght' 600" }}>check</span>
+                      <span className="material-symbols-outlined text-background" style={{ fontSize: '16px' }}>check</span>
                     ) : state === 'current' ? (
                       <span className="w-2.5 h-2.5 rounded-full bg-on-surface" />
                     ) : null}
@@ -70,7 +201,7 @@ export default function OrderCheckout() {
                       state === 'current' ? 'text-primary' : state === 'done' ? 'text-on-surface' : 'text-outline'
                     }`}
                   >
-                    {step.label}
+                    {s.label}
                   </span>
                 </li>
               );
@@ -78,160 +209,377 @@ export default function OrderCheckout() {
           </ol>
         </nav>
 
-        {/* ── 옵션 섹션 ── */}
-        <section className="flex flex-col gap-lg flex-1 mt-8">
-          {/* 판형 선택 */}
-          <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">판형을 선택해주세요</h2>
-            <div className="grid grid-cols-2 gap-gutter">
-              {/* 정사각형 */}
-              <button
-                className={`relative flex flex-col p-md rounded-lg text-left transition-all hover:bg-surface-dim ${
-                  format === 'square'
-                    ? 'border-2 border-primary bg-surface shadow-sm'
-                    : 'border border-outline-variant bg-surface'
-                }`}
-                onClick={() => setFormat('square')}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <span className="font-body-lg text-on-surface font-medium">정사각형</span>
-                  <span className="material-symbols-outlined fill text-primary" style={{ fontSize: '20px', fontVariationSettings: `'FILL' ${format === 'square' ? 1 : 0}` }}>
-                    {format === 'square' ? 'check_circle' : 'radio_button_unchecked'}
-                  </span>
-                </div>
-                <div className="w-full aspect-square bg-surface-variant rounded border border-outline-variant flex items-center justify-center mb-4">
-                  <div className="w-2/3 h-2/3 border border-outline bg-surface rounded-sm shadow-sm flex items-center justify-center">
-                    <span className="font-label-caps text-label-caps text-outline">1:1 비율</span>
+        {/* ── Step 1: 앨범 확인 ── */}
+        {step === 1 && (
+          <section className="flex flex-col gap-lg flex-1 mt-8">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">앨범 미리보기</h2>
+
+            {composeLoading && (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div
+                  className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin"
+                  aria-hidden="true"
+                />
+                <p className="font-body-md text-on-surface-variant">AI가 앨범을 구성하고 있어요...</p>
+              </div>
+            )}
+
+            {!composeLoading && composeError && (
+              <div className="py-6 text-center">
+                <p className="font-body-md text-error mb-4">{composeError}</p>
+                <button
+                  className="px-5 py-2.5 border border-outline rounded font-body-sm text-body-sm hover:bg-surface-variant transition-colors"
+                  onClick={() => runCompose(selectedPhotoIds)}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {!composeLoading && albumLayout && (
+              <div className="flex flex-col gap-md">
+                {/* 서머리 + 배지 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="font-body-md text-on-surface">
+                      총 <strong>{albumLayout.total_photos}장</strong>
+                    </span>
+                    <span className="text-outline-variant">·</span>
+                    <span className="font-body-md text-on-surface">
+                      <strong>{albumLayout.total_pages}페이지</strong> 예상
+                    </span>
+                    <span className="text-outline-variant">·</span>
+                    <span className="font-body-md text-on-surface">
+                      <strong>{albumLayout.chapters.length}개</strong> 챕터
+                    </span>
                   </div>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">인스타그램 감성의 아담한 사이즈.</p>
-                <p className="font-label-caps text-label-caps text-outline mt-2">+0원</p>
-              </button>
-
-              {/* A4 */}
-              <button
-                className={`relative flex flex-col p-md rounded-lg text-left transition-all hover:bg-surface-dim ${
-                  format === 'a4'
-                    ? 'border-2 border-primary bg-surface shadow-sm'
-                    : 'border border-outline-variant bg-surface'
-                }`}
-                onClick={() => setFormat('a4')}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <span className="font-body-lg text-on-surface font-medium">A4 비율</span>
-                  <span className="material-symbols-outlined text-outline-variant" style={{ fontSize: '20px', fontVariationSettings: `'FILL' ${format === 'a4' ? 1 : 0}` }}>
-                    {format === 'a4' ? 'check_circle' : 'radio_button_unchecked'}
-                  </span>
-                </div>
-                <div className="w-full aspect-square bg-surface-variant rounded border border-outline-variant flex items-center justify-center mb-4">
-                  <div className="w-2/3 h-[85%] border border-outline bg-surface rounded-sm shadow-sm flex items-center justify-center">
-                    <span className="font-label-caps text-label-caps text-outline">세로형</span>
-                  </div>
-                </div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">클래식한 앨범 느낌을 원하신다면.</p>
-                <p className="font-label-caps text-label-caps text-outline mt-2">+20,000원</p>
-              </button>
-            </div>
-          </div>
-
-          <hr className="border-t border-outline-variant" />
-
-          {/* 표지 소재 */}
-          <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">표지 소재</h2>
-            <div className="flex gap-md">
-              {[
-                { value: 'hard' as Cover, label: '하드 커버 (양장)' },
-                { value: 'soft' as Cover, label: '소프트 커버' },
-              ].map(({ value, label }) => (
-                <label key={value} className="flex items-center gap-xs cursor-pointer group" onClick={() => setCover(value)}>
-                  <div
-                    className={`w-5 h-5 rounded-full border flex items-center justify-center relative transition-colors ${
-                      cover === value ? 'border-primary' : 'border-outline-variant'
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                      albumSource === 'ai'
+                        ? 'bg-primary-container text-on-surface border-primary-container'
+                        : 'bg-surface-variant text-on-surface-variant border-outline-variant'
                     }`}
                   >
-                    {cover === value && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                  </div>
-                  <span className={`font-body-md text-body-md transition-colors ${cover === value ? 'text-on-surface' : 'text-on-surface group-hover:text-primary'}`}>
-                    {label}
+                    {albumSource === 'ai' ? 'AI 생성' : '기본 템플릿'}
                   </span>
-                </label>
-              ))}
-            </div>
-          </div>
+                </div>
 
-          <hr className="border-t border-outline-variant" />
+                {/* MiniBookPreview */}
+                <MiniBookPreview layout={albumLayout} photos={dummyPhotos} />
 
-          {/* 수량 + 가격 */}
-          <div className="flex justify-between items-end">
-            <div>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">수량</h2>
-              <div className="flex items-center gap-md">
-                <div className="flex items-center border border-outline-variant rounded bg-surface overflow-hidden">
+                {/* 다시 구성 버튼 */}
+                <div className="flex gap-sm mt-2">
                   <button
-                    aria-label="수량 줄이기"
-                    className="p-2 hover:bg-surface-variant transition-colors"
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
-                    disabled={qty <= 1}
+                    className="px-5 py-2.5 border border-outline rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-variant transition-colors"
+                    onClick={() => runCompose(selectedPhotoIds)}
                   >
-                    <span className="material-symbols-outlined text-on-surface-variant">remove</span>
-                  </button>
-                  <span className="w-12 text-center font-body-lg text-body-lg text-on-surface">{qty}</span>
-                  <button
-                    aria-label="수량 늘리기"
-                    className="p-2 hover:bg-surface-variant transition-colors"
-                    onClick={() => setQty(q => Math.min(10, q + 1))}
-                    disabled={qty >= 10}
-                  >
-                    <span className="material-symbols-outlined text-on-surface-variant">add</span>
+                    다시 구성
                   </button>
                 </div>
-                {qty >= 2 ? (
-                  <p className="font-body-sm text-body-sm text-primary italic">양가 부모님께도</p>
-                ) : (
-                  <p className="font-body-sm text-body-sm text-outline italic">1권도 충분합니다</p>
-                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── Step 2: 옵션 선택 ── */}
+        {step === 2 && (
+          <section className="flex flex-col gap-lg flex-1 mt-8">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">옵션 선택</h2>
+
+            {/* 판형 */}
+            <div>
+              <h3 className="font-body-md text-on-surface font-medium mb-sm">판형</h3>
+              <div className="grid grid-cols-2 gap-gutter">
+                {([
+                  { value: 'SQUARE' as OrderFormat, label: '정사각형', desc: '인스타그램 감성의 아담한 사이즈.', note: '+0원' },
+                  { value: 'A4' as OrderFormat, label: 'A4 비율', desc: '클래식한 앨범 느낌을 원하신다면.', note: '+30,000원' },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    className={`relative flex flex-col p-md rounded-lg text-left transition-all hover:bg-surface-dim ${
+                      format === opt.value
+                        ? 'border-2 border-primary bg-surface shadow-sm'
+                        : 'border border-outline-variant bg-surface'
+                    }`}
+                    onClick={() => setFormat(opt.value)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-body-md text-on-surface font-medium">{opt.label}</span>
+                      <span className="material-symbols-outlined text-primary" style={{ fontSize: '20px' }}>
+                        {format === opt.value ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                    </div>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">{opt.desc}</p>
+                    <p className="font-label-caps text-label-caps text-outline mt-2">{opt.note}</p>
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div className="text-right">
-              <p className="font-label-caps text-label-caps text-outline mb-1">총 결제 예정 금액</p>
-              <p
-                className="font-display-lg text-on-surface leading-none"
-                style={{ fontFamily: 'Fraunces, serif', fontSize: '40px', fontWeight: 300 }}
-              >
-                {fmt(total)}
-              </p>
+            <hr className="border-t border-outline-variant" />
+
+            {/* 표지 */}
+            <div>
+              <h3 className="font-body-md text-on-surface font-medium mb-sm">표지 소재</h3>
+              <div className="flex gap-md">
+                {([
+                  { value: 'HARD' as OrderCoverType, label: '하드 커버 (양장)' },
+                  { value: 'SOFT' as OrderCoverType, label: '소프트 커버' },
+                ] as const).map(({ value, label }) => (
+                  <label key={value} className="flex items-center gap-xs cursor-pointer">
+                    <div
+                      className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+                        coverType === value ? 'border-primary' : 'border-outline-variant'
+                      }`}
+                      onClick={() => setCoverType(value)}
+                    >
+                      {coverType === value && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                    </div>
+                    <span
+                      className={`font-body-md text-body-md transition-colors ${coverType === value ? 'text-on-surface' : 'text-on-surface-variant'}`}
+                      onClick={() => setCoverType(value)}
+                    >
+                      {label}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+
+            <hr className="border-t border-outline-variant" />
+
+            {/* 수량 + 가격 */}
+            <div className="flex justify-between items-end">
+              <div>
+                <h3 className="font-body-md text-on-surface font-medium mb-sm">수량</h3>
+                <div className="flex items-center gap-md">
+                  <div className="flex items-center border border-outline-variant rounded bg-surface overflow-hidden">
+                    <button
+                      aria-label="수량 줄이기"
+                      className="p-2 hover:bg-surface-variant transition-colors disabled:opacity-40"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      <span className="material-symbols-outlined text-on-surface-variant">remove</span>
+                    </button>
+                    <span className="w-12 text-center font-body-lg text-body-lg text-on-surface">{quantity}</span>
+                    <button
+                      aria-label="수량 늘리기"
+                      className="p-2 hover:bg-surface-variant transition-colors disabled:opacity-40"
+                      onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+                      disabled={quantity >= 10}
+                    >
+                      <span className="material-symbols-outlined text-on-surface-variant">add</span>
+                    </button>
+                  </div>
+                  {quantity >= 2 ? (
+                    <p className="font-body-sm text-body-sm text-primary italic">양가 부모님께도 드리기 좋은 권수</p>
+                  ) : (
+                    <p className="font-body-sm text-body-sm text-outline italic">1권도 충분합니다</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <p className="font-label-caps text-label-caps text-outline mb-1">총 결제 예정 금액</p>
+                <p
+                  className="text-on-surface leading-none"
+                  style={{ fontFamily: 'Fraunces, serif', fontSize: '40px', fontWeight: 300 }}
+                >
+                  {fmt(total)}
+                </p>
+                {surcharge > 0 && (
+                  <p className="font-body-sm text-body-sm text-outline mt-1">
+                    기본 {fmt(base)} + 하드커버 {fmt(surcharge)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Step 3: 배송 정보 ── */}
+        {step === 3 && (
+          <section className="flex flex-col gap-md flex-1 mt-8">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">배송 정보</h2>
+
+            <div className="flex flex-col gap-md">
+              {/* 이름 */}
+              <div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant block mb-1" htmlFor="recipient-name">
+                  수령인 이름
+                </label>
+                <input
+                  id="recipient-name"
+                  type="text"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="홍길동"
+                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-surface outline-none focus:border-primary transition-colors ${
+                    fieldErrors.name ? 'border-error' : 'border-outline-variant'
+                  }`}
+                />
+                {fieldErrors.name && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.name}</p>
+                )}
+              </div>
+
+              {/* 전화번호 */}
+              <div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant block mb-1" htmlFor="recipient-phone">
+                  휴대폰
+                </label>
+                <input
+                  id="recipient-phone"
+                  type="tel"
+                  value={recipientPhone}
+                  onChange={(e) => setRecipientPhone(e.target.value)}
+                  placeholder="010-xxxx-xxxx"
+                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-surface outline-none focus:border-primary transition-colors ${
+                    fieldErrors.phone ? 'border-error' : 'border-outline-variant'
+                  }`}
+                />
+                {fieldErrors.phone && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.phone}</p>
+                )}
+              </div>
+
+              {/* 주소 */}
+              <div>
+                <label className="font-body-sm text-body-sm text-on-surface-variant block mb-1" htmlFor="recipient-address">
+                  주소
+                </label>
+                <textarea
+                  id="recipient-address"
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                  placeholder="서울시 성동구 성수이로 22, 404호"
+                  rows={3}
+                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-surface outline-none focus:border-primary transition-colors resize-none ${
+                    fieldErrors.address ? 'border-error' : 'border-outline-variant'
+                  }`}
+                />
+                {fieldErrors.address && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.address}</p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Step 4: 완료 ── */}
+        {step === 4 && (
+          <section className="flex flex-col items-center gap-lg flex-1 mt-16 text-center">
+            {/* 체크 서클 */}
+            <div
+              className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center"
+              style={{ border: '2px solid #e89f8e' }}
+            >
+              <span className="material-symbols-outlined text-primary" style={{ fontSize: '36px' }}>check</span>
+            </div>
+
+            <div>
+              <h2 className="font-headline-sm text-on-surface mb-2" style={{ fontSize: '24px' }}>
+                주문이 완료되었습니다
+              </h2>
+              {orderId && (
+                <p
+                  className="font-mono text-on-surface-variant"
+                  style={{ fontFamily: 'monospace', fontSize: '14px', letterSpacing: '0.05em' }}
+                >
+                  {orderId}
+                </p>
+              )}
+              {orderCreatedAt && (
+                <p className="font-body-sm text-body-sm text-outline mt-2">
+                  예상 배송일: {calcDeliveryDate(orderCreatedAt)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-sm mt-4">
+              <button
+                className="px-6 py-3 border border-outline text-on-surface rounded font-body-sm text-body-sm hover:bg-surface-variant transition-colors"
+                onClick={() => navigate('/')}
+              >
+                홈으로
+              </button>
+              <button
+                className="px-8 py-3 bg-primary text-on-primary rounded font-body-sm text-body-sm hover:bg-primary-fixed-dim transition-colors shadow-sm"
+                onClick={() => navigate('/orders')}
+              >
+                주문 관리로
+              </button>
+            </div>
+          </section>
+        )}
       </main>
 
-      {/* ── 하단 고정 액션 바 ── */}
-      <div className="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-md border-t border-outline-variant py-sm px-gutter flex justify-center z-50">
-        <div className="w-full max-w-container-max flex justify-between items-center">
-          <button
-            className="font-body-sm text-body-sm text-outline hover:text-on-surface transition-colors"
-            onClick={() => navigate('/timeline')}
-          >
-            취소
-          </button>
-          <div className="flex gap-sm">
+      {/* ── 하단 고정 액션 바 (Step 1/2/3) ── */}
+      {step < 4 && (
+        <div className="fixed bottom-0 left-0 w-full bg-surface/90 backdrop-blur-md border-t border-outline-variant py-sm px-gutter flex justify-center z-50">
+          <div className="w-full max-w-container-max flex justify-between items-center">
             <button
-              className="px-6 py-3 rounded-md border border-outline text-on-surface hover:bg-surface-variant transition-colors font-body-sm text-body-sm"
-              onClick={() => navigate(-1)}
+              className="font-body-sm text-body-sm text-outline hover:text-on-surface transition-colors"
+              onClick={() => navigate('/timeline')}
             >
-              이전 단계
+              취소
             </button>
-            <button
-              className="px-8 py-3 rounded-md bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors font-body-sm text-body-sm shadow-sm flex items-center gap-2"
-            >
-              다음으로
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </button>
+            <div className="flex gap-sm">
+              {step > 1 && (
+                <button
+                  className="px-6 py-3 rounded-md border border-outline text-on-surface hover:bg-surface-variant transition-colors font-body-sm text-body-sm"
+                  onClick={() => setStep((s) => (s - 1) as StepId)}
+                >
+                  이전 단계
+                </button>
+              )}
+              {step === 1 && albumLayout && !composeLoading && (
+                <button
+                  className="px-8 py-3 rounded-md bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors font-body-sm text-body-sm shadow-sm flex items-center gap-2"
+                  onClick={() => setStep(2)}
+                >
+                  만족해요
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                </button>
+              )}
+              {step === 2 && (
+                <button
+                  className="px-8 py-3 rounded-md bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors font-body-sm text-body-sm shadow-sm flex items-center gap-2"
+                  onClick={() => setStep(3)}
+                >
+                  다음으로
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                </button>
+              )}
+              {step === 3 && (
+                <button
+                  className="px-8 py-3 rounded-md bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors font-body-sm text-body-sm shadow-sm flex items-center gap-2 disabled:opacity-50"
+                  disabled={orderLoading}
+                  onClick={async () => {
+                    if (!validateStep3()) return;
+                    await handleCreateOrder();
+                  }}
+                >
+                  {orderLoading ? '처리 중...' : '주문하기'}
+                  {!orderLoading && (
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

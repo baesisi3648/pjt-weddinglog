@@ -23,9 +23,12 @@ from app.database import SessionLocal
 from app.init_db import init_db
 from app.routers import (
     ai_router,
+    album_router,
+    couples_orders_router,
     couples_router,
     events_router,
     home_router,
+    orders_router,
     photo_events_router,
     photo_router,
     timeline_router,
@@ -127,6 +130,9 @@ def create_app() -> FastAPI:
     app.include_router(photo_router)
     app.include_router(timeline_router)
     app.include_router(home_router)
+    app.include_router(couples_orders_router)
+    app.include_router(orders_router)
+    app.include_router(album_router)
 
     @app.get("/health", tags=["meta"])
     async def health_check(request: Request) -> dict[str, object]:

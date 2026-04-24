@@ -23,6 +23,7 @@ from app.database import Base
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.event import Event
+    from app.models.order import Order
 
 
 def _generate_couple_id() -> str:
@@ -59,6 +60,13 @@ class Couple(Base):
 
     # 관계: Couple 삭제 시 관련 Event 도 ORM cascade 로 함께 삭제.
     events: Mapped[list["Event"]] = relationship(
+        back_populates="couple",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    # 관계 (P5-R1-T1): Couple 삭제 시 관련 Order 도 cascade 삭제.
+    orders: Mapped[list["Order"]] = relationship(
         back_populates="couple",
         cascade="all, delete-orphan",
         passive_deletes=True,
