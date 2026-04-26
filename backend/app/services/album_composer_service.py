@@ -368,21 +368,19 @@ class AlbumComposerService:
     ) -> list[AlbumPageSchema]:
         """한 챕터의 사진들을 페이지로 포장.
 
-        정통 양장본 톤을 위해 T1/T2 위주로 자동 구성한다.
-        (사용자가 편집 모드에서 T3/T4로 수동 변경 가능.)
+        정통 양장본 톤 — **모든 페이지에 사진 1장**.
+        (사용자가 편집 모드에서 T2/T3/T4 로 수동 변경 가능.)
 
         규칙:
             - 1 페이지: T5 Cover (베스트컷 휴리스틱으로 선정).
-            - 남은 사진 N:
-                * 2장씩 T2 (좌우 분할).
-                * 마지막 잔여 1장은 T1 (풀 블리드).
+            - 남은 사진은 각각 T1 (한 페이지 한 장).
         """
         if not entries:
             return []
 
         pages: list[AlbumPageSchema] = []
 
-        # Cover — 베스트컷 휴리스틱으로 선정. 나머지는 원래 순서 유지.
+        # Cover — 베스트컷 휴리스틱으로 선정.
         cover = cls._select_cover(entries)
         pages.append(
             AlbumPageSchema(
@@ -393,33 +391,19 @@ class AlbumComposerService:
             )
         )
 
+        # 나머지 사진을 모두 한 장씩 T1.
         remaining = [m for m in entries if m.id != cover.id]
         page_no = 2
-
-        # 2장씩 T2 (좌우 분할) — 사진 한 장 한 장이 살아남음.
-        while len(remaining) >= 2:
-            batch = remaining[:2]
-            remaining = remaining[2:]
-            pages.append(
-                AlbumPageSchema(
-                    page_number=page_no,
-                    template="T2",
-                    photo_ids=[m.id for m in batch],
-                    caption=None,
-                )
-            )
-            page_no += 1
-
-        # 마지막 1장 — T1 풀 블리드.
-        if remaining:
+        for m in remaining:
             pages.append(
                 AlbumPageSchema(
                     page_number=page_no,
                     template="T1",
-                    photo_ids=[m.id for m in remaining],
-                    caption=None,
+                    photo_ids=[m.id],
+                    caption=m.caption,
                 )
             )
+            page_no += 1
 
         # 참조 (linter 만족용): LAYOUT_TEMPLATES 는 서비스 외부에서도
         # 참조되므로 import 유지. — 여기서는 별도 처리 없음.

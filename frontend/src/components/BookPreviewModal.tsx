@@ -37,9 +37,9 @@ const PageView = forwardRef<
 function PhotoSlot({ id, photos, className = '' }: { id: string | undefined; photos: Photo[]; className?: string }) {
   const p = id ? getPhoto(photos, id) : undefined;
   return (
-    <div className={`bg-bg-soft overflow-hidden ${className}`}>
+    <div className={`bg-bg overflow-hidden flex items-center justify-center ${className}`}>
       {p ? (
-        <img src={p.file_url} alt={p.caption ?? ''} className="w-full h-full object-cover" />
+        <img src={p.file_url} alt={p.caption ?? ''} className="w-full h-full object-contain" />
       ) : null}
     </div>
   );
@@ -50,20 +50,21 @@ function AlbumPageContent({ page, photos, chapterTitle }: { page: AlbumPage; pho
   const slot = (i: number, cls: string) => <PhotoSlot id={ids[i]} photos={photos} className={cls} />;
 
   if (page.template === 'T5') {
-    // 챕터 표지 — 사진 가득 + 텍스트 하단 오버레이
+    // 챕터 표지 — 흰 바탕 + 검은 글씨, 사진은 contain 으로 위쪽에 배치.
     return (
-      <div className="relative w-full h-full">
-        {slot(0, 'absolute inset-0')}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-          <div className="font-mono text-[10px] tracking-[0.2em] opacity-80 mb-2">
-            CHAPTER · {chapterTitle.toUpperCase()}
+      <div className="w-full h-full p-8 flex flex-col bg-bg">
+        <div className="flex-1 flex items-center justify-center">
+          {slot(0, 'w-full h-full max-h-[60%]')}
+        </div>
+        <div className="mt-6 pt-6 border-t border-line">
+          <div className="font-mono text-[10px] tracking-[0.25em] text-coral mb-2">
+            CHAPTER · {String(page.page_number).padStart(2, '0')}
           </div>
           <div
-            className="font-display-md text-[26px] leading-tight"
+            className="font-display-md text-[24px] leading-tight text-ink"
             style={{ fontFamily: 'Fraunces, serif' }}
           >
-            {page.caption || chapterTitle}
+            {chapterTitle}
           </div>
         </div>
       </div>
@@ -71,11 +72,15 @@ function AlbumPageContent({ page, photos, chapterTitle }: { page: AlbumPage; pho
   }
 
   if (page.template === 'T1') {
+    // 1장 풀 페이지 — 사진 비율 유지(contain), 위아래 여백, 하단 캡션.
     return (
-      <div className="w-full h-full p-3 flex flex-col gap-2">
-        <div className="flex-1 overflow-hidden">{slot(0, 'w-full h-full')}</div>
+      <div className="w-full h-full p-6 flex flex-col bg-bg">
+        <div className="flex-1 flex items-center justify-center overflow-hidden">
+          {slot(0, 'w-full h-full')}
+        </div>
         {page.caption && (
-          <p className="text-[11px] text-ink-muted italic text-center px-2 truncate">
+          <p className="mt-4 text-[12px] text-ink-muted text-center italic truncate"
+             style={{ fontFamily: 'Fraunces, serif' }}>
             {page.caption}
           </p>
         )}
@@ -181,16 +186,30 @@ export default function BookPreviewModal({ layout, photos, onClose }: Props) {
           showPageCorners={true}
           disableFlipByClick={false}
         >
-          {/* 책 표지 (앞) */}
-          <PageView className="bg-coral text-white flex flex-col items-center justify-center p-10">
-            <div className="font-mono text-[10px] tracking-[0.3em] opacity-80 mb-4">WEDDING ALBUM</div>
-            <div
-              className="font-display-md text-[32px] leading-tight text-center"
-              style={{ fontFamily: 'Fraunces, serif' }}
-            >
-              우리의<br />결혼 기록
+          {/* 책 앞표지 — 흰 바탕 + 검은 글씨, 가운데 정렬 */}
+          <PageView className="bg-white text-ink flex flex-col p-12">
+            <div className="flex-1 flex flex-col justify-center items-center text-center">
+              <div className="font-mono text-[10px] tracking-[0.4em] text-coral mb-10">
+                WEDDING ALBUM
+              </div>
+              <div
+                className="font-display-md text-[36px] leading-[1.2] mb-3"
+                style={{ fontFamily: 'Fraunces, serif', fontWeight: 400 }}
+              >
+                우리의
+                <br />
+                결혼 기록
+              </div>
+              <div className="w-10 h-px bg-coral my-8" />
+              <div className="font-mono text-[11px] text-ink-muted tracking-[0.15em]">
+                CHEOLSU · YOUNGHEE
+              </div>
             </div>
-            <div className="mt-6 text-[12px] opacity-70">{layout.total_pages} pages</div>
+            <div className="text-center">
+              <div className="text-[11px] text-ink-muted">
+                {layout.total_pages} pages · {new Date().getFullYear()}
+              </div>
+            </div>
           </PageView>
 
           {/* 본문 페이지들 */}
@@ -200,15 +219,27 @@ export default function BookPreviewModal({ layout, photos, onClose }: Props) {
             </PageView>
           ))}
 
-          {/* 책 표지 (뒤) */}
-          <PageView className="bg-coral/80 text-white flex flex-col items-center justify-center p-10">
-            <div
-              className="font-display-md text-[20px] leading-tight text-center"
-              style={{ fontFamily: 'Fraunces, serif' }}
-            >
-              The End
+          {/* 책 뒤표지 — 흰 바탕 + 검은 글씨, 미니멀 */}
+          <PageView className="bg-white text-ink flex flex-col p-12">
+            <div className="flex-1 flex flex-col justify-center items-center text-center">
+              <div className="w-10 h-px bg-coral mb-8" />
+              <div
+                className="font-display-md text-[20px] leading-tight"
+                style={{ fontFamily: 'Fraunces, serif', fontWeight: 400 }}
+              >
+                The End.
+              </div>
+              <div className="mt-4 text-[12px] text-ink-muted leading-relaxed max-w-[260px]">
+                지나간 날이 한 권의 책으로,
+                <br />
+                다시 함께 펼쳐 볼 수 있게.
+              </div>
             </div>
-            <div className="mt-3 text-[11px] opacity-80">WeddingLog · {new Date().getFullYear()}</div>
+            <div className="text-center">
+              <div className="font-mono text-[10px] tracking-[0.3em] text-ink-muted">
+                WEDDINGLOG · {new Date().getFullYear()}
+              </div>
+            </div>
           </PageView>
         </HTMLFlipBook>
       </div>

@@ -32,15 +32,16 @@ function PhotoSlotEditable({ photoId, photos, className = '', onPick }: SlotProp
     <button
       type="button"
       onClick={onPick}
-      className={`relative bg-bg-soft overflow-hidden flex items-center justify-center hover:opacity-90 transition-opacity group ${className}`}
+      className={`relative bg-bg overflow-hidden flex items-center justify-center hover:opacity-95 transition-opacity group ${className}`}
       aria-label={photo?.caption || '사진 변경'}
     >
       {photo ? (
         <>
+          {/* 정통 앨범 톤 — 사진 비율 유지(contain). 가로/세로 사진은 위아래/좌우에 자연스럽게 여백. */}
           <img
             src={photo.file_url}
             alt={photo.caption || ''}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
           <span className="absolute inset-0 bg-ink/0 group-hover:bg-ink/20 transition-colors flex items-center justify-center text-white text-[12px] opacity-0 group-hover:opacity-100">
             교체

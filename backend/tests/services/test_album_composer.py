@@ -85,15 +85,14 @@ async def test_compose_fallback_when_ai_unavailable() -> None:
     assert chapter.title == "카메라 앞에서, 우리"
     assert chapter.color == "coral"
 
-    # 영상 원칙(정통 양장본 톤) — 자동 구성은 T1/T2/T5 위주.
-    # 5장: T5 Cover(1) + T2(2) + T2(2) = 3페이지.
+    # 정통 양장본 톤 — 한 페이지 한 장(T1) + 챕터 표지(T5).
+    # 5장: T5 Cover(1) + T1×4 = 5페이지.
+    assert len(chapter.pages) == 5
     assert chapter.pages[0].template == "T5"
     assert len(chapter.pages[0].photo_ids) == 1
-    assert chapter.pages[1].template == "T2"
-    assert len(chapter.pages[1].photo_ids) == 2
-    assert chapter.pages[2].template == "T2"
-    assert len(chapter.pages[2].photo_ids) == 2
-    assert len(chapter.pages) == 3
+    for pg in chapter.pages[1:]:
+        assert pg.template == "T1"
+        assert len(pg.photo_ids) == 1
 
 
 @pytest.mark.asyncio
@@ -125,8 +124,8 @@ async def test_compose_groups_into_multiple_chapters() -> None:
 
 
 @pytest.mark.asyncio
-async def test_compose_leftover_three_photos_uses_t2_and_t1() -> None:
-    """커버 1장 + 남은 3장 → T3 (3장)."""
+async def test_compose_each_remaining_photo_uses_t1() -> None:
+    """커버 1장 + 남은 사진 각각 T1(1장)."""
     svc = AlbumComposerService(_NoAIState())
     photos = _mk_photos(
         [
@@ -139,26 +138,28 @@ async def test_compose_leftover_three_photos_uses_t2_and_t1() -> None:
     layout = await svc.compose(photos)  # type: ignore[arg-type]
 
     chapter = layout.chapters[0]
-    # 새 정책 (T1/T2/T5 위주): 4장 → T5(1) + T2(2) + T1(1) = 3페이지.
-    assert len(chapter.pages) == 3
+    # 정통 양장본 — 4장 → T5 + T1×3 = 4페이지.
+    assert len(chapter.pages) == 4
     assert chapter.pages[0].template == "T5"
-    assert chapter.pages[1].template == "T2"
-    assert len(chapter.pages[1].photo_ids) == 2
-    assert chapter.pages[2].template == "T1"
-    assert len(chapter.pages[2].photo_ids) == 1
+    for pg in chapter.pages[1:]:
+        assert pg.template == "T1"
+        assert len(pg.photo_ids) == 1
 
 
 @pytest.mark.asyncio
-async def test_compose_leftover_two_photos_uses_t2() -> None:
+async def test_compose_two_photos_uses_t5_and_t1() -> None:
     svc = AlbumComposerService(_NoAIState())
     photos = _mk_photos(
         [("p1", "CEREMONY"), ("p2", "CEREMONY"), ("p3", "CEREMONY")]
     )
     layout = await svc.compose(photos)  # type: ignore[arg-type]
     chapter = layout.chapters[0]
-    # T5 + T2(2장)
-    assert chapter.pages[1].template == "T2"
-    assert len(chapter.pages[1].photo_ids) == 2
+    # 3장 → T5 + T1×2 = 3페이지.
+    assert len(chapter.pages) == 3
+    assert chapter.pages[0].template == "T5"
+    assert chapter.pages[1].template == "T1"
+    assert len(chapter.pages[1].photo_ids) == 1
+    assert chapter.pages[2].template == "T1"
 
 
 @pytest.mark.asyncio
