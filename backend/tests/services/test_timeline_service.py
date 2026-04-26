@@ -160,7 +160,7 @@ class TestGetTimelineSingleChapter:
         chapter = result["chapters"][0]
         assert chapter["chapter_number"] == 1
         assert chapter["key"] == "wedding_photo"
-        assert chapter["title"] == "웨딩촬영"
+        assert chapter["title"] == "카메라 앞에서, 우리"
         assert chapter["color"] == "coral"
         assert chapter["photo_count"] == 6
         assert len(chapter["photos"]) == 6
@@ -228,13 +228,13 @@ class TestGetTimelineMixedCategories:
 
         prep = result["chapters"][0]
         assert prep["chapter_number"] == 1
-        assert prep["title"] == "준비의 날들"
-        assert prep["color"] == "lavender"
+        assert prep["title"] == "둘이 함께 준비한 시간"
+        assert prep["color"] == "coral"
         assert prep["photo_count"] == 3  # studio 1 + venue 2
 
         cer = result["chapters"][1]
         assert cer["chapter_number"] == 2
-        assert cer["title"] == "그 날 — 본식"
+        assert cer["title"] == "그 날 — 결혼식"
         assert cer["photo_count"] == 1
 
         hm = result["chapters"][2]
@@ -249,7 +249,8 @@ class TestGetTimelineMixedCategories:
 
 
 class TestGetTimelineEtcOnly:
-    def test_etc_only_returns_etc_chapter(self, db_session: Session) -> None:
+    def test_etc_only_returns_dating_chapter(self, db_session: Session) -> None:
+        # 영상 원칙 — ETC 카테고리는 시간순 흐름상 "함께 쌓아온 날들"(dating)로 매핑.
         couple = _make_couple(db_session, "cpl_tl_etc")
         e = _make_event(
             db_session, couple.id, "evt_etc", Category.ETC.value, title="기타"
@@ -259,9 +260,9 @@ class TestGetTimelineEtcOnly:
 
         result = timeline_service.get_timeline(db_session, couple.id)
         assert len(result["chapters"]) == 1
-        assert result["chapters"][0]["key"] == "etc"
-        assert result["chapters"][0]["title"] == "기타"
-        assert result["chapters"][0]["color"] == "gray"
+        assert result["chapters"][0]["key"] == "dating"
+        assert result["chapters"][0]["title"] == "함께 쌓아온 날들"
+        assert result["chapters"][0]["color"] == "coral"
         assert result["chapters"][0]["photo_count"] == 2
 
 

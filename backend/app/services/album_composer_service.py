@@ -323,14 +323,51 @@ class AlbumComposerService:
             generated_by="template",
         )
 
-    @staticmethod
+    # 표지 휴리스틱 — 캡션에 이런 키워드가 있으면 "베스트컷" 후보로 가산.
+    # (커플샷·임팩트 컷을 캡션 톤으로 추정)
+    _COVER_KEYWORDS: tuple[str, ...] = (
+        "둘", "우리", "커플", "함께", "이 컷", "앨범 표지", "앨범 확정",
+        "앨범行", "베스트", "하이라이트", "노을", "선셋", "🤍", "💍", "🌊",
+        "맞대고", "손잡고", "키스", "포옹",
+    )
+
+    @classmethod
+    def _select_cover(cls, entries: list[_PhotoMeta]) -> _PhotoMeta:
+        """챕터 표지로 사용할 사진 1장 선택.
+
+        휴리스틱:
+            1. 캡션이 _COVER_KEYWORDS 중 하나라도 포함 → 가점.
+            2. 동점이면 entries 순서상 뒤에 있는 사진(보통 sort_order 큰 = 베스트컷) 우선.
+            3. 모두 0점이면 마지막 사진 (시간/순서상 가장 늦은 컷이 보통 임팩트 ↑).
+
+        근거: 시드 캡션 톤이 "이 컷 앨범 확정", "둘이서", "노을 실루엣 이 컷 앨범行"
+        같은 패턴이라 키워드 매칭이 베스트컷을 잘 잡아냄.
+        """
+        def score(p: _PhotoMeta, idx: int) -> tuple[int, int]:
+            kw_score = 0
+            cap = (p.caption or "").lower()
+            for kw in cls._COVER_KEYWORDS:
+                if kw.lower() in cap:
+                    kw_score += 1
+            # 동점이면 뒤쪽 idx 우선 → idx 자체를 secondary 키로 사용.
+            return (kw_score, idx)
+
+        scored = [
+            (score(p, idx), p) for idx, p in enumerate(entries)
+        ]
+        # 키 내림차순 정렬 — kw_score 높고, 같으면 idx 큰 것.
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return scored[0][1]
+
+    @classmethod
     def _pack_chapter(
+        cls,
         entries: list[_PhotoMeta], *, chapter_title: str
     ) -> list[AlbumPageSchema]:
         """한 챕터의 사진들을 페이지로 포장.
 
         규칙:
-            - 1 페이지: T5 Cover (첫 사진).
+            - 1 페이지: T5 Cover (베스트컷 휴리스틱으로 선정).
             - 남은 사진 N:
                 * 4장씩 T4 그리드.
                 * 마지막 잔여: 3=T3 / 2=T2 / 1=T1.
@@ -340,8 +377,8 @@ class AlbumComposerService:
 
         pages: list[AlbumPageSchema] = []
 
-        # Cover — 첫 사진.
-        cover = entries[0]
+        # Cover — 베스트컷 휴리스틱으로 선정. 나머지는 원래 순서 유지.
+        cover = cls._select_cover(entries)
         pages.append(
             AlbumPageSchema(
                 page_number=1,
@@ -351,7 +388,7 @@ class AlbumComposerService:
             )
         )
 
-        remaining = entries[1:]
+        remaining = [m for m in entries if m.id != cover.id]
         page_no = 2
 
         # 4장씩 끊어 T4 추가.

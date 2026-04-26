@@ -6,7 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { composeAlbum } from '../services/album_api';
 import { createOrder } from '../services/order_api';
 import { getTimeline } from '../services/timeline_api';
-import MiniBookPreview from '../components/MiniBookPreview';
+import AlbumEditor from '../components/AlbumEditor';
+import BookPreviewModal from '../components/BookPreviewModal';
 import Toast from '../components/Toast';
 import type { AlbumLayout } from '../types/album';
 import type { OrderFormat, OrderCoverType } from '../types/order';
@@ -77,6 +78,9 @@ export default function OrderCheckout() {
 
   // ── Toast ──
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'error' | 'success' } | null>(null);
+
+  // ── 책 미리보기 모달 ──
+  const [bookPreviewOpen, setBookPreviewOpen] = useState(false);
 
   // LocalStorage에서 사진 ID 로드
   useEffect(() => {
@@ -308,18 +312,30 @@ export default function OrderCheckout() {
                   </span>
                 </div>
 
-                {/* MiniBookPreview */}
-                <MiniBookPreview layout={albumLayout} photos={previewPhotos} />
-
-                {/* 다시 구성 버튼 */}
-                <div className="flex gap-sm mt-2">
+                {/* 편집 컨트롤 바 */}
+                <div className="flex items-center gap-3 mt-2 mb-2">
                   <button
-                    className="px-5 py-2.5 border border-outline rounded font-body-sm text-body-sm text-on-surface-variant hover:bg-surface-variant transition-colors"
+                    type="button"
+                    className="px-4 py-2 rounded-full bg-coral text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
+                    onClick={() => setBookPreviewOpen(true)}
+                  >
+                    책으로 미리보기
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-[13px] text-ink-muted hover:text-ink underline-offset-4 hover:underline"
                     onClick={() => runCompose(selectedPhotoIds)}
                   >
-                    다시 구성
+                    AI 다시 구성
                   </button>
                 </div>
+
+                {/* AlbumEditor — 직접 편집 (사진 교체/순서/템플릿/추가/삭제) */}
+                <AlbumEditor
+                  layout={albumLayout}
+                  photos={previewPhotos}
+                  onChange={setAlbumLayout}
+                />
               </div>
             )}
           </section>
@@ -624,6 +640,15 @@ export default function OrderCheckout() {
           message={toast.message}
           type={toast.type}
           onDismiss={() => setToast(null)}
+        />
+      )}
+
+      {/* 책 미리보기 모달 — 양면 펼침 책 모션 */}
+      {bookPreviewOpen && albumLayout && (
+        <BookPreviewModal
+          layout={albumLayout}
+          photos={previewPhotos}
+          onClose={() => setBookPreviewOpen(false)}
         />
       )}
     </div>

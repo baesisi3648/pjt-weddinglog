@@ -129,10 +129,10 @@ def test_timeline_mixed_categories(
 
     chapters = body["chapters"]
     assert len(chapters) == 3
-    # 챕터 표시 순서: wedding_photo → preparation → honeymoon.
+    # 챕터 표시 순서: 시간순(영상 원칙 반영) — preparation → wedding_photo → honeymoon.
     assert [c["key"] for c in chapters] == [
-        "wedding_photo",
         "preparation",
+        "wedding_photo",
         "honeymoon",
     ]
     # chapter_number 는 1부터 재부여.

@@ -82,7 +82,7 @@ async def test_compose_fallback_when_ai_unavailable() -> None:
     assert layout.generated_by == "template"
     assert len(layout.chapters) == 1
     chapter = layout.chapters[0]
-    assert chapter.title == "웨딩촬영"
+    assert chapter.title == "카메라 앞에서, 우리"
     assert chapter.color == "coral"
 
     # 첫 페이지 T5 Cover, 나머지 4장 → T4 Grid.
@@ -106,10 +106,14 @@ async def test_compose_groups_into_multiple_chapters() -> None:
     )
     layout = await svc.compose(photos)  # type: ignore[arg-type]
 
-    # 3 챕터 생성 (웨딩촬영, 본식, 신혼여행).
+    # 3 챕터 생성 (시간순: 웨딩촬영 → 본식 → 신혼여행).
     assert len(layout.chapters) == 3
     chapter_titles = [c.title for c in layout.chapters]
-    assert chapter_titles == ["웨딩촬영", "그 날 — 본식", "첫 여행 — 신혼여행"]
+    assert chapter_titles == [
+        "카메라 앞에서, 우리",
+        "그 날 — 결혼식",
+        "첫 여행 — 신혼여행",
+    ]
 
     # 각 챕터 첫 페이지 = T5 Cover.
     for chapter in layout.chapters:

@@ -45,19 +45,24 @@ class _ChapterDef:
     color: str
 
 
-# 표시 순서 = 이 리스트의 순서.
-# (사진이 0장인 챕터는 응답에서 제외되지만 chapter_number 는 표시되는 챕터 기준 1부터 재부여.)
+# 표시 순서 = 시간 흐름 (일상 → 준비 → 촬영 → 본식 → 신혼여행).
+# 사진이 0장인 챕터는 응답에서 제외되지만 chapter_number 는 표시되는 챕터 기준 1부터 재부여.
 CHAPTER_MAPPING: tuple[_ChapterDef, ...] = (
-    _ChapterDef("wedding_photo", "웨딩촬영", ("WEDDING_PHOTO",), "coral"),
+    # Ch.1 — 일상 데이트 (D-330 ~ D-120, 만남부터 결혼 결심까지)
+    _ChapterDef("dating", "함께 쌓아온 날들", ("ETC",), "coral"),
+    # Ch.2 — 본격 준비 (D-200 ~ D-30, 예식장·스드메·예물·청첩장)
     _ChapterDef(
         "preparation",
-        "준비의 날들",
-        ("STUDIO_DRESS_MAKEUP", "VENUE", "GIFT", "INVITATION"),
-        "lavender",
+        "둘이 함께 준비한 시간",
+        ("VENUE", "STUDIO_DRESS_MAKEUP", "GIFT", "INVITATION"),
+        "coral",
     ),
-    _ChapterDef("ceremony", "그 날 — 본식", ("REHEARSAL", "CEREMONY"), "mint"),
-    _ChapterDef("honeymoon", "첫 여행 — 신혼여행", ("HONEYMOON",), "mint"),
-    _ChapterDef("etc", "기타", ("ETC",), "gray"),
+    # Ch.3 — 웨딩 촬영 (D-90, D-76, D-20)
+    _ChapterDef("wedding_photo", "카메라 앞에서, 우리", ("WEDDING_PHOTO",), "coral"),
+    # Ch.4 — 본식 (D-7, D-Day)
+    _ChapterDef("ceremony", "그 날 — 결혼식", ("REHEARSAL", "CEREMONY"), "coral"),
+    # Ch.5 — 신혼여행 (D+3 ~ D+11)
+    _ChapterDef("honeymoon", "첫 여행 — 신혼여행", ("HONEYMOON",), "coral"),
 )
 
 # category → chapter index 역인덱스 (O(1) 매핑).
