@@ -16,6 +16,31 @@ vi.mock('../services/order_api', () => ({
   createOrder: vi.fn(),
 }));
 
+// react-daum-postcode mock — 외부 iframe 의존 회피.
+// "주소 검색" 버튼 클릭 후 모달이 뜨면 즉시 onComplete 트리거되는 가짜 컴포넌트.
+vi.mock('react-daum-postcode', () => ({
+  default: ({ onComplete }: { onComplete: (data: Record<string, string>) => void }) => {
+    return (
+      <button
+        type="button"
+        data-testid="mock-daum-select"
+        onClick={() =>
+          onComplete({
+            zonecode: '06234',
+            roadAddress: '서울 강남구 테헤란로 123',
+            jibunAddress: '서울 강남구 역삼동 123',
+            address: '서울 강남구 테헤란로 123',
+            buildingName: '',
+            autoRoadAddress: '',
+          })
+        }
+      >
+        가짜 주소 선택
+      </button>
+    );
+  },
+}));
+
 import { composeAlbum } from '../services/album_api';
 import { createOrder } from '../services/order_api';
 import type { AlbumLayout } from '../types/album';
@@ -166,12 +191,15 @@ describe('OrderCheckout', () => {
     // 이름 입력
     const nameInput = screen.getByPlaceholderText(/홍길동/);
     fireEvent.change(nameInput, { target: { value: '홍' } });
-    // 전화번호 잘못된 값 입력
+    // 전화번호 잘못된 값 입력 — 010 으로 시작하지 않는 값.
+    // 정책: "010-1234-5678" 또는 "01012345678" 둘 다 허용. 다른 형식은 거부.
     const phoneInput = screen.getByPlaceholderText(/010-/);
-    fireEvent.change(phoneInput, { target: { value: '01012345678' } });
-    // 주소 입력
-    const addrInput = screen.getByPlaceholderText(/서울시/);
-    fireEvent.change(addrInput, { target: { value: '서울시 강남구' } });
+    fireEvent.change(phoneInput, { target: { value: '02-123-4567' } });
+    // 주소 — Daum 검색 모달 열고 선택(mock)
+    fireEvent.click(screen.getByRole('button', { name: '주소 검색' }));
+    fireEvent.click(await screen.findByTestId('mock-daum-select'));
+    // 상세 주소
+    fireEvent.change(screen.getByPlaceholderText(/상세주소/), { target: { value: '404호' } });
     // 주문하기 클릭 (Step 3 액션 버튼)
     const orderBtns = screen.getAllByRole('button', { name: /주문하기/ });
     fireEvent.click(orderBtns[orderBtns.length - 1]);
@@ -193,7 +221,10 @@ describe('OrderCheckout', () => {
     // 입력
     fireEvent.change(screen.getByPlaceholderText(/홍길동/), { target: { value: '홍길동' } });
     fireEvent.change(screen.getByPlaceholderText(/010-/), { target: { value: '010-1234-5678' } });
-    fireEvent.change(screen.getByPlaceholderText(/서울시/), { target: { value: '서울시 강남구 테헤란로 123' } });
+    // 주소 — Daum 검색 모달 열고 선택(mock) + 상세주소
+    fireEvent.click(screen.getByRole('button', { name: '주소 검색' }));
+    fireEvent.click(await screen.findByTestId('mock-daum-select'));
+    fireEvent.change(screen.getByPlaceholderText(/상세주소/), { target: { value: '404호' } });
     // 주문하기
     const orderBtns = screen.getAllByRole('button', { name: /주문하기/ });
     fireEvent.click(orderBtns[orderBtns.length - 1]);

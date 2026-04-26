@@ -43,7 +43,7 @@ export default function Header() {
         </nav>
 
         <Link
-          to="/order-checkout"
+          to="/timeline?curate=1"
           className="px-4 py-1.5 rounded-full bg-coral text-white text-[12px] font-medium hover:opacity-90 transition-opacity"
         >
           앨범 주문

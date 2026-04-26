@@ -2,7 +2,7 @@
 // @SPEC specs/screens/04_timeline.yaml
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { getTimeline } from '../services/timeline_api';
 import { useCouple } from '../context/CoupleContext';
 import TimelineChapter from '../components/TimelineChapter';
@@ -21,6 +21,7 @@ function calcPages(selectedCount: number): number {
 export default function Timeline() {
   const navigate = useNavigate();
   const { couple } = useCouple();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<TimelineResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +29,18 @@ export default function Timeline() {
   const [toast, setToast] = useState<string | null>(null);
   // 앨범 만들기 클릭 시 사진 정리 모달 노출
   const [curationOpen, setCurationOpen] = useState(false);
+
+  // ?curate=1 query 진입 시 자동으로 정리 모달 오픈 (헤더의 "앨범 주문" 버튼).
+  // 데이터 로딩 후 한 번만 처리한 뒤 query 삭제 (history 깨끗하게).
+  useEffect(() => {
+    if (!data) return;
+    if (searchParams.get('curate') === '1') {
+      setCurationOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('curate');
+      setSearchParams(next, { replace: true });
+    }
+  }, [data, searchParams, setSearchParams]);
 
   const fetchTimeline = useCallback(async () => {
     setLoading(true);

@@ -8,6 +8,7 @@ import { createOrder } from '../services/order_api';
 import { getTimeline } from '../services/timeline_api';
 import AlbumEditor from '../components/AlbumEditor';
 import BookPreviewModal from '../components/BookPreviewModal';
+import DaumPostcode from 'react-daum-postcode';
 import Toast from '../components/Toast';
 import type { AlbumLayout } from '../types/album';
 import type { OrderFormat, OrderCoverType } from '../types/order';
@@ -26,8 +27,9 @@ function calcPrice(format: OrderFormat, coverType: OrderCoverType, quantity: num
 
 const fmt = (n: number) => n.toLocaleString() + '원';
 
-// 전화번호 정규식 010-xxxx-xxxx
-const PHONE_RE = /^010-\d{4}-\d{4}$/;
+// 전화번호 정규식 — 하이픈/공백 제거 후 010 + 10~11자리 검증.
+// 허용: "01012345678", "010-1234-5678", "010 1234 5678"
+const PHONE_RE = /^010[-\s]?\d{3,4}[-\s]?\d{4}$/;
 
 type StepId = 1 | 2 | 3 | 4;
 
@@ -68,8 +70,18 @@ export default function OrderCheckout() {
   // ── Step 3: 배송 ──
   const [recipientName, setRecipientName] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  const [recipientAddress, setRecipientAddress] = useState('');
+  // 주소 = 우편번호 + 도로명주소(또는 지번주소) + 상세주소.
+  // 백엔드에는 합쳐서 한 줄로 보낸다 (recipient_address 단일 필드).
+  const [postcode, setPostcode] = useState('');
+  const [roadAddress, setRoadAddress] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
+  const [postcodeOpen, setPostcodeOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  // 백엔드 전송용: "[우편번호] 도로명주소 상세주소"
+  const recipientAddress = roadAddress
+    ? `[${postcode}] ${roadAddress} ${detailAddress}`.trim()
+    : '';
 
   // ── Step 4: 완료 ──
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -171,7 +183,7 @@ export default function OrderCheckout() {
   function validateStep3(): boolean {
     const errors: FieldErrors = {};
     if (recipientName.trim().length < 2) errors.name = '이름을 2자 이상 입력해주세요.';
-    if (!PHONE_RE.test(recipientPhone)) errors.phone = '올바른 전화번호 형식을 입력해주세요 (010-xxxx-xxxx).';
+    if (!PHONE_RE.test(recipientPhone)) errors.phone = '올바른 전화번호를 입력해주세요 (010-xxxx-xxxx 또는 01012345678).';
     if (recipientAddress.trim().length < 5) errors.address = '주소를 정확히 입력해주세요.';
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -179,13 +191,24 @@ export default function OrderCheckout() {
 
   // ── 주문 생성 ──
   async function handleCreateOrder() {
+    if (!albumLayout) {
+      setToast({ message: '앨범 구성을 먼저 만들어주세요.', type: 'error' });
+      return;
+    }
     setOrderLoading(true);
     try {
+      // 백엔드 ChapterSelectionSchema 형식으로 변환:
+      //   { chapter_number, title, photo_ids[] }
+      const chaptersSelected = albumLayout.chapters.map((ch) => ({
+        chapter_number: ch.chapter_number,
+        title: ch.title,
+        photo_ids: ch.pages.flatMap((p) => p.photo_ids),
+      }));
       const order = await createOrder(COUPLE_ID, {
         format,
         cover_type: coverType,
         quantity,
-        chapters_selected: {},
+        chapters_selected: chaptersSelected,
         album_layout: albumLayout,
         recipient_name: recipientName,
         recipient_phone: recipientPhone,
@@ -195,8 +218,18 @@ export default function OrderCheckout() {
       setOrderCreatedAt(order.created_at);
       setStep(4);
     } catch (err) {
-      const e = err as { message?: string };
-      setToast({ message: e.message ?? '주문 생성에 실패했습니다.', type: 'error' });
+      const e = err as {
+        response?: { data?: { detail?: unknown } };
+        message?: string;
+      };
+      const detail = e.response?.data?.detail;
+      const msg =
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+            ? (detail[0] as { msg?: string } | undefined)?.msg ?? '주문 생성에 실패했습니다.'
+            : e.message ?? '주문 생성에 실패했습니다.';
+      setToast({ message: msg, type: 'error' });
     } finally {
       setOrderLoading(false);
     }
@@ -509,18 +542,52 @@ export default function OrderCheckout() {
                 )}
               </div>
 
-              {/* 주소 */}
+              {/* 주소 — 한국 표준: 검색으로 도로명 자동 + 상세주소 직접 입력 */}
               <div>
-                <label className="font-body-sm text-body-sm text-on-surface-variant block mb-1" htmlFor="recipient-address">
+                <label className="font-body-sm text-body-sm text-on-surface-variant block mb-1">
                   주소
                 </label>
-                <textarea
-                  id="recipient-address"
-                  value={recipientAddress}
-                  onChange={(e) => setRecipientAddress(e.target.value)}
-                  placeholder="서울시 성동구 성수이로 22, 404호"
-                  rows={3}
-                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-surface outline-none focus:border-primary transition-colors resize-none ${
+
+                {/* 우편번호 + 검색 버튼 */}
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={postcode}
+                    readOnly
+                    placeholder="우편번호"
+                    aria-label="우편번호"
+                    className="w-32 border border-outline-variant rounded px-3 py-2.5 font-body-md text-body-md text-on-surface bg-bg-soft outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPostcodeOpen(true)}
+                    className="px-4 py-2.5 rounded bg-coral text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
+                  >
+                    주소 검색
+                  </button>
+                </div>
+
+                {/* 도로명 주소 (read-only) */}
+                <input
+                  type="text"
+                  value={roadAddress}
+                  readOnly
+                  placeholder="주소 검색을 눌러 도로명주소를 선택하세요"
+                  aria-label="도로명 주소"
+                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-bg-soft outline-none mb-2 ${
+                    fieldErrors.address ? 'border-error' : 'border-outline-variant'
+                  }`}
+                />
+
+                {/* 상세 주소 (사용자 입력) */}
+                <input
+                  type="text"
+                  value={detailAddress}
+                  onChange={(e) => setDetailAddress(e.target.value)}
+                  placeholder="상세주소 (동/호수, 층 등)"
+                  aria-label="상세 주소"
+                  disabled={!roadAddress}
+                  className={`w-full border rounded px-4 py-3 font-body-md text-body-md text-on-surface bg-surface outline-none focus:border-primary transition-colors disabled:bg-bg-soft disabled:cursor-not-allowed ${
                     fieldErrors.address ? 'border-error' : 'border-outline-variant'
                   }`}
                 />
@@ -650,6 +717,49 @@ export default function OrderCheckout() {
           photos={previewPhotos}
           onClose={() => setBookPreviewOpen(false)}
         />
+      )}
+
+      {/* 다음 우편번호 검색 모달 */}
+      {postcodeOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="주소 검색"
+          className="fixed inset-0 z-[1500] bg-ink/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && setPostcodeOpen(false)}
+        >
+          <div className="bg-bg w-full max-w-[520px] max-h-[85vh] overflow-hidden flex flex-col rounded">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-line">
+              <h3 className="font-display-md text-[16px] text-ink">주소 검색</h3>
+              <button
+                onClick={() => setPostcodeOpen(false)}
+                aria-label="닫기"
+                className="text-ink-muted hover:text-ink text-[20px] leading-none px-2"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <DaumPostcode
+                onComplete={(data) => {
+                  // 도로명 우선, 없으면 지번주소.
+                  const main = data.roadAddress || data.jibunAddress || data.address;
+                  // 건물명이 있으면 괄호 안에 표시 (예: "성수동 카페거리타워(미왕빌딩)")
+                  const withBuilding =
+                    data.buildingName && data.autoRoadAddress !== ''
+                      ? `${main} (${data.buildingName})`
+                      : main;
+                  setPostcode(data.zonecode);
+                  setRoadAddress(withBuilding);
+                  setDetailAddress('');
+                  setPostcodeOpen(false);
+                }}
+                style={{ width: '100%', height: 460 }}
+                autoClose={false}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

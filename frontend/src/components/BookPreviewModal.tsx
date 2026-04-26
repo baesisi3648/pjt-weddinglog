@@ -5,8 +5,10 @@ import HTMLFlipBook from 'react-pageflip';
 import type { AlbumLayout, AlbumPage } from '../types/album';
 import type { Photo } from '../types/photo';
 
-const PAGE_W = 420;
-const PAGE_H = 540;
+// 가로 앨범(landscape) — 결혼 양장본 정통 비율 (3:2).
+// 양면 펼침 시 1080 x 360, 데스크톱 1280px 컨테이너에서 자연스럽게 fit.
+const PAGE_W = 540;
+const PAGE_H = 380;
 
 interface Props {
   layout: AlbumLayout;
@@ -21,7 +23,7 @@ function getPhoto(photos: Photo[], id: string): Photo | undefined {
 // ─── 페이지 1장 (책 1면) ───────────────────────────────────────────────────
 const PageView = forwardRef<
   HTMLDivElement,
-  { children: React.ReactNode; className?: string }
+  { children?: React.ReactNode; className?: string }
 >(function PageView({ children, className = '' }, ref) {
   return (
     <div
@@ -45,31 +47,33 @@ function PhotoSlot({ id, photos, className = '' }: { id: string | undefined; pho
   );
 }
 
-function AlbumPageContent({ page, photos, chapterTitle }: { page: AlbumPage; photos: Photo[]; chapterTitle: string }) {
+function ChapterCoverPage({
+  chapterNumber,
+  chapterTitle,
+}: {
+  chapterNumber: number;
+  chapterTitle: string;
+}) {
+  // 챕터 인트로 — 글만, 가운데 정렬, 흰 바탕. 가로 페이지 비율에 맞춰 컴팩트.
+  return (
+    <div className="w-full h-full px-6 py-8 flex flex-col justify-center items-center bg-bg text-center">
+      <div className="font-mono text-[9px] tracking-[0.3em] text-coral mb-5">
+        CHAPTER · {String(chapterNumber).padStart(2, '0')}
+      </div>
+      <div className="w-10 h-px bg-coral mb-5" />
+      <h2
+        className="font-display-md text-[20px] leading-[1.3] text-ink max-w-[240px]"
+        style={{ fontFamily: 'Fraunces, serif', fontWeight: 400, wordBreak: 'keep-all' }}
+      >
+        {chapterTitle}
+      </h2>
+    </div>
+  );
+}
+
+function AlbumPageContent({ page, photos }: { page: AlbumPage; photos: Photo[] }) {
   const ids = page.photo_ids;
   const slot = (i: number, cls: string) => <PhotoSlot id={ids[i]} photos={photos} className={cls} />;
-
-  if (page.template === 'T5') {
-    // 챕터 표지 — 흰 바탕 + 검은 글씨, 사진은 contain 으로 위쪽에 배치.
-    return (
-      <div className="w-full h-full p-8 flex flex-col bg-bg">
-        <div className="flex-1 flex items-center justify-center">
-          {slot(0, 'w-full h-full max-h-[60%]')}
-        </div>
-        <div className="mt-6 pt-6 border-t border-line">
-          <div className="font-mono text-[10px] tracking-[0.25em] text-coral mb-2">
-            CHAPTER · {String(page.page_number).padStart(2, '0')}
-          </div>
-          <div
-            className="font-display-md text-[24px] leading-tight text-ink"
-            style={{ fontFamily: 'Fraunces, serif' }}
-          >
-            {chapterTitle}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (page.template === 'T1') {
     // 1장 풀 페이지 — 사진 비율 유지(contain), 위아래 여백, 하단 캡션.
@@ -121,14 +125,38 @@ function AlbumPageContent({ page, photos, chapterTitle }: { page: AlbumPage; pho
   );
 }
 
+// 책 평탄화 항목 타입
+type BookItem =
+  | { kind: 'cover'; chapterNumber: number; chapterTitle: string }
+  | { kind: 'page'; page: AlbumPage }
+  | { kind: 'blank' };
+
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
 export default function BookPreviewModal({ layout, photos, onClose }: Props) {
-  // 책 페이지 평탄화 — chapter.pages 순서대로 + 챕터 제목을 cover 페이지에 전달
+  // 책 페이지 평탄화.
+  // react-pageflip showCover=true 기준:
+  //   - child 0       = 앞표지 (우측 단독)
+  //   - child 1, 2    = 첫 spread (좌, 우)
+  //   - child 3, 4    = 두 번째 spread
+  //   - 마지막 child  = 뒤표지 (좌측 단독)
+  // children 안의 본문 = flatPages 배열, flatPages 인덱스 짝수=좌측, 홀수=우측.
+  // 챕터 표지가 항상 우측이려면 push 직전 length 가 홀수여야 함.
   const flatPages = useMemo(() => {
-    const out: { page: AlbumPage; chapterTitle: string }[] = [];
+    const out: BookItem[] = [];
     for (const ch of layout.chapters) {
-      for (const pg of ch.pages) {
-        out.push({ page: pg, chapterTitle: ch.title });
+      if (!ch.pages.length) continue;
+      // 챕터 표지를 우측에 두기 위해 좌측 빈 페이지 채움.
+      if (out.length % 2 === 0) {
+        out.push({ kind: 'blank' });
+      }
+      out.push({
+        kind: 'cover',
+        chapterNumber: ch.chapter_number,
+        chapterTitle: ch.title,
+      });
+      // 첫 페이지(=원래 T5 cover)는 챕터 인트로 페이지로 대체했으므로 본문은 [1:] 부터.
+      for (const pg of ch.pages.slice(1)) {
+        out.push({ kind: 'page', page: pg });
       }
     }
     return out;
@@ -173,70 +201,79 @@ export default function BookPreviewModal({ layout, photos, onClose }: Props) {
           className=""
           style={{}}
           startPage={0}
-          minWidth={300}
-          maxWidth={500}
-          minHeight={400}
-          maxHeight={700}
+          minWidth={380}
+          maxWidth={620}
+          minHeight={280}
+          maxHeight={460}
           startZIndex={0}
           autoSize={true}
-          usePortrait={true}
+          usePortrait={false}
           clickEventForward={true}
           useMouseEvents={true}
           swipeDistance={30}
           showPageCorners={true}
           disableFlipByClick={false}
         >
-          {/* 책 앞표지 — 흰 바탕 + 검은 글씨, 가운데 정렬 */}
-          <PageView className="bg-white text-ink flex flex-col p-12">
-            <div className="flex-1 flex flex-col justify-center items-center text-center">
-              <div className="font-mono text-[10px] tracking-[0.4em] text-coral mb-10">
+          {/* 책 앞표지 — 흰 바탕 + 검은 글씨, 가운데 정렬 (가로 비율) */}
+          <PageView className="bg-white text-ink">
+            <div className="w-full h-full flex flex-col justify-center items-center text-center px-8 py-6">
+              <div className="font-mono text-[9px] tracking-[0.4em] text-coral mb-6">
                 WEDDING ALBUM
               </div>
               <div
-                className="font-display-md text-[36px] leading-[1.2] mb-3"
+                className="font-display-md text-[28px] leading-[1.2]"
                 style={{ fontFamily: 'Fraunces, serif', fontWeight: 400 }}
               >
-                우리의
-                <br />
-                결혼 기록
+                우리의 결혼 기록
               </div>
-              <div className="w-10 h-px bg-coral my-8" />
-              <div className="font-mono text-[11px] text-ink-muted tracking-[0.15em]">
+              <div className="w-10 h-px bg-coral my-5" />
+              <div className="font-mono text-[10px] text-ink-muted tracking-[0.15em]">
                 CHEOLSU · YOUNGHEE
               </div>
-            </div>
-            <div className="text-center">
-              <div className="text-[11px] text-ink-muted">
+              <div className="mt-6 text-[10px] text-ink-muted">
                 {layout.total_pages} pages · {new Date().getFullYear()}
               </div>
             </div>
           </PageView>
 
-          {/* 본문 페이지들 */}
-          {flatPages.map(({ page, chapterTitle }, idx) => (
-            <PageView key={idx}>
-              <AlbumPageContent page={page} photos={photos} chapterTitle={chapterTitle} />
-            </PageView>
-          ))}
+          {/* 본문 페이지들 — 빈 페이지 / 챕터 인트로(글만) / 사진 페이지 */}
+          {flatPages.map((item, idx) => {
+            if (item.kind === 'blank') {
+              return <PageView key={idx} className="bg-bg" />;
+            }
+            if (item.kind === 'cover') {
+              return (
+                <PageView key={idx}>
+                  <ChapterCoverPage
+                    chapterNumber={item.chapterNumber}
+                    chapterTitle={item.chapterTitle}
+                  />
+                </PageView>
+              );
+            }
+            return (
+              <PageView key={idx}>
+                <AlbumPageContent page={item.page} photos={photos} />
+              </PageView>
+            );
+          })}
 
-          {/* 책 뒤표지 — 흰 바탕 + 검은 글씨, 미니멀 */}
-          <PageView className="bg-white text-ink flex flex-col p-12">
-            <div className="flex-1 flex flex-col justify-center items-center text-center">
-              <div className="w-10 h-px bg-coral mb-8" />
+          {/* 책 뒤표지 — 흰 바탕 + 검은 글씨, 미니멀 (가로 비율) */}
+          <PageView className="bg-white text-ink">
+            <div className="w-full h-full flex flex-col justify-center items-center text-center px-8 py-6">
+              <div className="w-10 h-px bg-coral mb-5" />
               <div
-                className="font-display-md text-[20px] leading-tight"
+                className="font-display-md text-[18px] leading-tight"
                 style={{ fontFamily: 'Fraunces, serif', fontWeight: 400 }}
               >
                 The End.
               </div>
-              <div className="mt-4 text-[12px] text-ink-muted leading-relaxed max-w-[260px]">
+              <div className="mt-3 text-[11px] text-ink-muted leading-relaxed max-w-[240px]">
                 지나간 날이 한 권의 책으로,
                 <br />
                 다시 함께 펼쳐 볼 수 있게.
               </div>
-            </div>
-            <div className="text-center">
-              <div className="font-mono text-[10px] tracking-[0.3em] text-ink-muted">
+              <div className="mt-6 font-mono text-[9px] tracking-[0.3em] text-ink-muted">
                 WEDDINGLOG · {new Date().getFullYear()}
               </div>
             </div>

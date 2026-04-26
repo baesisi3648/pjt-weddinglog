@@ -247,9 +247,7 @@ export default function Landing() {
       {/* ── Footer ───────────────────────────────────────────────── */}
       <footer className="py-10 border-t border-line">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <p className="text-[13px] text-ink-muted">
-            © 2026 WeddingLog — (주)스위트북 채용 과제 데모
-          </p>
+          <p className="text-[13px] text-ink-muted">© 2026 WeddingLog</p>
           <p className="text-[13px] text-ink-muted">
             Powered by FastAPI · React · OpenAI
           </p>

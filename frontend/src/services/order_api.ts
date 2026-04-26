@@ -11,11 +11,18 @@ import type { AlbumLayout } from '../types/album';
 // prod   → 'http://localhost:8100/api' → origin='http://localhost:8100'
 const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/api\/?$/, '');
 
+// 백엔드 ChapterSelectionSchema 와 일치.
+export interface ChapterSelection {
+  chapter_number: number;
+  title: string;
+  photo_ids: string[];
+}
+
 export interface CreateOrderBody {
   format: OrderFormat;
   cover_type: OrderCoverType;
   quantity: number;
-  chapters_selected: Record<string, string[]>;
+  chapters_selected: ChapterSelection[];
   album_layout: AlbumLayout | null;
   recipient_name: string;
   recipient_phone: string;

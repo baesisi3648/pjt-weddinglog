@@ -45,8 +45,9 @@ _COVER_SURCHARGES: dict[str, int] = {
     CoverType.SOFT.value: 0,
 }
 
-# 전화번호 검증 정규식 (010-xxxx-xxxx).
-_PHONE_REGEX = re.compile(r"^010-\d{4}-\d{4}$")
+# 전화번호 검증 정규식 — 하이픈 없거나 있어도 OK. 저장 시 자동 정규화.
+# 허용: "01012345678", "010-1234-5678", "010 1234 5678"
+_PHONE_REGEX = re.compile(r"^010[-\s]?\d{3,4}[-\s]?\d{4}$")
 
 
 class ChapterSelectionSchema(BaseModel):
@@ -91,11 +92,16 @@ class OrderBase(BaseModel):
     @field_validator("recipient_phone")
     @classmethod
     def _validate_phone(cls, v: str) -> str:
-        if not _PHONE_REGEX.match(v):
+        # 하이픈/공백 제거하고 검증 후 표준 형식("010-xxxx-xxxx")으로 정규화.
+        digits = re.sub(r"[\s-]", "", v)
+        if not re.fullmatch(r"010\d{7,8}", digits):
             raise ValueError(
-                "recipient_phone must match 010-xxxx-xxxx format"
+                "recipient_phone must contain 11 digits starting with 010"
             )
-        return v
+        # 정규화: 010-xxxx-xxxx (8자리) 또는 010-xxx-xxxx (7자리, 구형).
+        if len(digits) == 11:
+            return f"{digits[:3]}-{digits[3:7]}-{digits[7:]}"
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
 
     @field_validator("chapters_selected")
     @classmethod
