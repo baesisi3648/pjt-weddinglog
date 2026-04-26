@@ -8,6 +8,10 @@ export interface TimelinePhoto {
   caption: string | null;
   is_selected: boolean;
   source?: TimelinePhotoSource;
+  event_id?: string;
+  event_date?: string;
+  event_title?: string;
+  category?: string;
 }
 
 export interface Chapter {

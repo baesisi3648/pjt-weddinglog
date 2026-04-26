@@ -67,19 +67,20 @@ export default function Landing() {
         </div>
 
         <div className="relative max-w-[1280px] mx-auto px-6 lg:px-10 py-32 w-full">
-          <div className="max-w-[620px]">
+          <div className="max-w-[760px]">
             <p className="font-label-caps text-[12px] tracking-[0.2em] text-ink-muted uppercase mb-6">
               결혼 준비 기록 · 앨범
             </p>
-            <h1 className="font-display-lg text-[44px] md:text-[68px] leading-[1.04] text-ink">
+            <h1
+              className="font-display-lg text-[44px] md:text-[68px] leading-[1.08] text-ink"
+              style={{ wordBreak: 'keep-all' }}
+            >
               결혼 준비,
               <br />
-              그대로 한 권이 됩니다.
+              <span className="whitespace-nowrap">그대로 한 권이 됩니다.</span>
             </h1>
-            <p className="mt-6 text-[18px] leading-[1.65] text-ink-muted max-w-[480px]">
+            <p className="mt-6 text-[18px] leading-[1.65] text-ink-muted max-w-[520px]">
               매일의 일정과 사진이 끝나는 날, 자동으로 책 한 권이 됩니다.
-              <br className="hidden md:block" />
-              부모님께 가장 오래 남는 선물.
             </p>
             <div className="mt-10 flex items-center gap-6">
               <Link
@@ -191,8 +192,11 @@ export default function Landing() {
               <p className="font-label-caps text-[12px] tracking-[0.2em] text-coral uppercase mb-3">
                 데모 데이터
               </p>
-              <h2 className="font-display-md text-[28px] md:text-[36px] leading-[1.15] text-ink max-w-[520px]">
-                가상 커플 "철수 ♥ 영희"의 1년 기록.
+              <h2
+                className="font-display-md text-[24px] md:text-[32px] leading-[1.2] text-ink"
+                style={{ wordBreak: 'keep-all' }}
+              >
+                <span className="whitespace-nowrap">가상 커플 "철수 ♥ 영희"의 1년 기록.</span>
               </h2>
             </div>
             <p className="text-[13px] text-ink-muted max-w-[280px] md:text-right">
@@ -201,9 +205,15 @@ export default function Landing() {
               24개 일정 · 125장 사진 · 1건 주문.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {GALLERY.map((name) => (
-              <div key={name} className="aspect-square overflow-hidden rounded-sm">
+          {/* 한 장씩 큰 이미지로 — 모바일 1열, 데스크톱 2열 (각 사진 한 장 한 장이 살아남음) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {GALLERY.map((name, idx) => (
+              <div
+                key={name}
+                className={`overflow-hidden rounded-sm ${
+                  idx === 0 ? 'md:col-span-2 aspect-[16/7]' : 'aspect-[4/3]'
+                }`}
+              >
                 <img
                   src={`/landing/${name}.png`}
                   alt=""

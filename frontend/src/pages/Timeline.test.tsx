@@ -8,6 +8,17 @@ vi.mock('../services/timeline_api', () => ({
   toggleSelection: vi.fn(),
 }));
 
+// CoupleProvider 의존성 mock — Timeline 이 wedding_date 를 useCouple 에서 가져옴.
+vi.mock('../context/CoupleContext', () => ({
+  CoupleProvider: ({ children }: { children: React.ReactNode }) => children,
+  useCouple: () => ({
+    couple: { id: 'cpl_001', wedding_date: '2026-03-14' },
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
 import Timeline from './Timeline';
 import { getTimeline, toggleSelection } from '../services/timeline_api';
 

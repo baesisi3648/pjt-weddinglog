@@ -189,6 +189,7 @@ def get_timeline(
                     "caption": photo.caption,
                     "caption_source": photo.caption_source,
                     "is_selected": photo.is_selected,
+                    "event_id": event.id,
                     "event_date": event.date.isoformat(),
                     "event_title": event.title,
                     "category": event.category,

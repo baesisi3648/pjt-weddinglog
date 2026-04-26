@@ -101,23 +101,25 @@ def _group_by_chapter(
 # -----------------------------------------------------------------------------
 _SYSTEM_PROMPT = (
     "당신은 한국의 결혼 앨범 아트디렉터입니다. "
-    "사용자가 선택한 사진들의 메타데이터를 받아 앨범 레이아웃을 설계합니다.\n"
+    "사용자가 선택한 사진들의 메타데이터를 받아 정통 양장본 톤의 "
+    "앨범 레이아웃을 설계합니다.\n"
     "\n"
     "레이아웃 템플릿 (photo_count 엄격 준수):\n"
     "- T1 Full Bleed (1장): 임팩트 컷, CEREMONY/WEDDING_PHOTO 우선.\n"
-    "- T2 Half Split (2장): 좌우 대비.\n"
-    "- T3 Hero+Two (3장): 큰 1장 + 작은 2장, STUDIO_DRESS_MAKEUP/VENUE 선호.\n"
-    "- T4 Grid 2x2 (4장): 일상 기록, HONEYMOON/ETC 다수 사진에 적합.\n"
+    "- T2 Half Split (2장): 좌우 대비. ★ 자동 구성에서 가장 자주 사용.\n"
+    "- T3 Hero+Two (3장): 큰 1장 + 작은 2장. (가급적 사용 자제)\n"
+    "- T4 Grid 2x2 (4장): 4장 그리드. (사용자가 명시 요청 시에만)\n"
     "- T5 Cover (1장): 챕터 표지, 각 챕터 page_number=1 에만 사용.\n"
     "\n"
     "규칙:\n"
-    "1. 카테고리별 챕터 그룹핑 (timeline_service 와 동일: 웨딩촬영/준비의 날들/"
-    "본식/신혼여행/기타).\n"
+    "1. 시간 흐름 챕터 그룹핑 (timeline_service 와 동일: 함께 쌓아온 날들 → "
+    "둘이 함께 준비한 시간 → 카메라 앞에서, 우리 → 그 날 — 결혼식 → 첫 여행).\n"
     "2. 각 챕터의 첫 페이지(page_number=1)는 반드시 T5 Cover.\n"
-    "3. 페이지의 photo_ids 길이 = 해당 템플릿의 photo_count (엄격 일치).\n"
-    "4. 하나의 사진은 최대 한 페이지에만 등장.\n"
-    "5. 총 페이지 수 ≈ ceil(사진 수 / 2.5), ±20% 허용.\n"
-    "6. color 는 coral/lavender/mint/gold/gray 중 하나.\n"
+    "3. ★ 자동 구성은 T1/T2 위주 (T3/T4 사용 자제). 사진 한 장이 살아남게.\n"
+    "4. 페이지의 photo_ids 길이 = 해당 템플릿의 photo_count (엄격 일치).\n"
+    "5. 하나의 사진은 최대 한 페이지에만 등장.\n"
+    "6. 총 페이지 수 ≈ ceil(사진 수 / 1.8), ±20% 허용.\n"
+    "7. color 는 'coral' 1개로 통일.\n"
     "\n"
     "응답은 반드시 JSON 객체로 다음 스키마를 따라야 합니다:\n"
     '{"total_photos": int, "total_pages": int, "generated_by": "ai", '
@@ -366,11 +368,14 @@ class AlbumComposerService:
     ) -> list[AlbumPageSchema]:
         """한 챕터의 사진들을 페이지로 포장.
 
+        정통 양장본 톤을 위해 T1/T2 위주로 자동 구성한다.
+        (사용자가 편집 모드에서 T3/T4로 수동 변경 가능.)
+
         규칙:
             - 1 페이지: T5 Cover (베스트컷 휴리스틱으로 선정).
             - 남은 사진 N:
-                * 4장씩 T4 그리드.
-                * 마지막 잔여: 3=T3 / 2=T2 / 1=T1.
+                * 2장씩 T2 (좌우 분할).
+                * 마지막 잔여 1장은 T1 (풀 블리드).
         """
         if not entries:
             return []
@@ -391,41 +396,22 @@ class AlbumComposerService:
         remaining = [m for m in entries if m.id != cover.id]
         page_no = 2
 
-        # 4장씩 끊어 T4 추가.
-        while len(remaining) >= 4:
-            batch = remaining[:4]
-            remaining = remaining[4:]
+        # 2장씩 T2 (좌우 분할) — 사진 한 장 한 장이 살아남음.
+        while len(remaining) >= 2:
+            batch = remaining[:2]
+            remaining = remaining[2:]
             pages.append(
                 AlbumPageSchema(
                     page_number=page_no,
-                    template="T4",
+                    template="T2",
                     photo_ids=[m.id for m in batch],
                     caption=None,
                 )
             )
             page_no += 1
 
-        # 잔여 처리.
-        leftover = len(remaining)
-        if leftover == 3:
-            pages.append(
-                AlbumPageSchema(
-                    page_number=page_no,
-                    template="T3",
-                    photo_ids=[m.id for m in remaining],
-                    caption=None,
-                )
-            )
-        elif leftover == 2:
-            pages.append(
-                AlbumPageSchema(
-                    page_number=page_no,
-                    template="T2",
-                    photo_ids=[m.id for m in remaining],
-                    caption=None,
-                )
-            )
-        elif leftover == 1:
+        # 마지막 1장 — T1 풀 블리드.
+        if remaining:
             pages.append(
                 AlbumPageSchema(
                     page_number=page_no,

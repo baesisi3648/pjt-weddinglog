@@ -4,8 +4,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getTimeline } from '../services/timeline_api';
+import { useCouple } from '../context/CoupleContext';
 import TimelineChapter from '../components/TimelineChapter';
 import Toast from '../components/Toast';
+import PhotoCurationModal from '../components/PhotoCurationModal';
 import type { TimelineResponse, Chapter } from '../types';
 
 const COUPLE_ID = 'cpl_sample_001';
@@ -18,11 +20,14 @@ function calcPages(selectedCount: number): number {
 
 export default function Timeline() {
   const navigate = useNavigate();
+  const { couple } = useCouple();
   const [data, setData] = useState<TimelineResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCount, setSelectedCount] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  // 앨범 만들기 클릭 시 사진 정리 모달 노출
+  const [curationOpen, setCurationOpen] = useState(false);
 
   const fetchTimeline = useCallback(async () => {
     setLoading(true);
@@ -158,17 +163,7 @@ export default function Timeline() {
             disabled={!isAlbumEnabled}
             onClick={() => {
               if (!isAlbumEnabled) return;
-              // 선택된 photo_ids 수집 (data.chapters에서 is_selected=true인 사진)
-              const allChapters = data?.chapters ?? [];
-              const selectedIds = allChapters.flatMap((ch) =>
-                (ch.photos ?? []).filter((p) => p.is_selected).map((p) => p.id)
-              );
-              if (selectedIds.length === 0) {
-                setToast('사진을 먼저 선택해주세요.');
-                return;
-              }
-              localStorage.setItem(LS_SELECTED_KEY, JSON.stringify(selectedIds));
-              navigate('/order-checkout');
+              setCurationOpen(true);
             }}
           >
             {isAlbumEnabled
@@ -177,6 +172,24 @@ export default function Timeline() {
           </button>
         </div>
       </div>
+
+      {/* 사진 정리 모달 — 앨범 만들기 직전 단계 */}
+      {curationOpen && (
+        <PhotoCurationModal
+          chapters={chapters}
+          weddingDate={couple?.wedding_date ?? null}
+          onClose={() => setCurationOpen(false)}
+          onConfirm={(selectedIds) => {
+            if (selectedIds.length === 0) {
+              setToast('사진을 1장 이상 선택해주세요.');
+              return;
+            }
+            localStorage.setItem(LS_SELECTED_KEY, JSON.stringify(selectedIds));
+            setCurationOpen(false);
+            navigate('/order-checkout');
+          }}
+        />
+      )}
     </div>
   );
 }
