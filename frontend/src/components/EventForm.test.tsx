@@ -72,8 +72,8 @@ describe('EventForm', () => {
     it('날짜 없이 제출 시 날짜 에러가 표시된다', async () => {
       renderForm({ date: null });
       await userEvent.type(screen.getByLabelText(/제목/), '테스트');
-      // 날짜 필드 비우기
-      const dateInput = screen.getByLabelText(/날짜/);
+      // 시작 날짜 필드 비우기 (종료 날짜는 선택이므로 별도 label 로 구분)
+      const dateInput = screen.getByLabelText(/시작 날짜/);
       fireEvent.change(dateInput, { target: { value: '' } });
       fireEvent.click(screen.getByRole('button', { name: '저장' }));
       await waitFor(() => {
@@ -90,7 +90,7 @@ describe('EventForm', () => {
 
       await userEvent.type(screen.getByLabelText(/제목/), '예식장 답사');
 
-      const dateInput = screen.getByLabelText(/날짜/);
+      const dateInput = screen.getByLabelText(/시작 날짜/);
       fireEvent.change(dateInput, { target: { value: '2026-04-23' } });
 
       const catSelect = screen.getByLabelText(/카테고리/);
@@ -104,6 +104,7 @@ describe('EventForm', () => {
         expect(mockOnSubmit).toHaveBeenCalledWith({
           title: '예식장 답사',
           date: '2026-04-23',
+          end_date: null,
           category: 'VENUE',
           memo: '강남 예식장 2층',
         });
@@ -121,7 +122,12 @@ describe('EventForm', () => {
 
       await waitFor(() => {
         expect(mockOnSubmit).toHaveBeenCalledWith(
-          expect.objectContaining({ title: '결혼식', category: 'CEREMONY', memo: null })
+          expect.objectContaining({
+            title: '결혼식',
+            category: 'CEREMONY',
+            memo: null,
+            end_date: null,
+          })
         );
       });
     });

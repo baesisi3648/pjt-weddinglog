@@ -5,9 +5,9 @@
 AIService 테스트 (OpenAI 없는 환경에서의 폴백 포함).
 
 핵심 시나리오:
-- openai_available=False 이면 15개 템플릿 반환
+- openai_available=False 이면 사전정의 템플릿(D-360 ~ D+14, 24개) 반환
 - 각 항목에 is_ai_generated=True, category 는 Category enum 값 중 하나
-- D-180, D-day, D+14 날짜 오프셋 정확성
+- D-360, D-day, D+14 날짜 오프셋 정확성
 - OpenAI 호출 실패 시(예외) 폴백으로 빠지고 source="template"
 """
 from __future__ import annotations
@@ -29,12 +29,16 @@ class TestFallback:
         return AIService(SimpleNamespace(openai_available=False))
 
     @pytest.mark.asyncio
-    async def test_returns_15_items(self) -> None:
+    async def test_returns_template_events(self) -> None:
+        """사전정의 템플릿 개수만큼 반환."""
+        from app.services.ai_service import _TEMPLATES
         svc = self._svc_no_ai()
         wedding = date(2026, 10, 25)
         result = await svc.generate_checklist(wedding)
         assert result["source"] == "template"
-        assert len(result["events"]) == 15
+        assert len(result["events"]) == len(_TEMPLATES)
+        # 최소 보장: 15개 이상 (초기 스펙 호환)
+        assert len(result["events"]) >= 15
 
     @pytest.mark.asyncio
     async def test_each_item_is_ai_generated_flag(self) -> None:
@@ -56,21 +60,29 @@ class TestFallback:
 
     @pytest.mark.asyncio
     async def test_date_offsets_correct(self) -> None:
-        """첫 항목 D-180, 마지막 항목 D+14 기준 날짜 계산."""
+        """첫 항목 D-360(최초 템플릿 offset), D-day 는 본식, 마지막 D+14 기준 계산."""
+        from app.services.ai_service import _TEMPLATES
         svc = self._svc_no_ai()
         wedding = date(2026, 10, 25)
         result = await svc.generate_checklist(wedding)
 
         events = result["events"]
-        # 첫 항목: D-180
-        assert events[0]["date"] == (wedding + timedelta(days=-180)).isoformat()
+        first_offset = _TEMPLATES[0][0]
+        last_offset = _TEMPLATES[-1][0]
+
+        # 첫 항목: 템플릿 첫 offset 과 매칭
+        assert events[0]["date"] == (
+            wedding + timedelta(days=first_offset)
+        ).isoformat()
         # D-day (offset=0) 는 "본식"
         ceremony = next(
             e for e in events if e["date"] == wedding.isoformat()
         )
         assert "본식" in ceremony["title"]
-        # 마지막 항목: D+14
-        assert events[-1]["date"] == (wedding + timedelta(days=14)).isoformat()
+        # 마지막 항목: 템플릿 마지막 offset 과 매칭
+        assert events[-1]["date"] == (
+            wedding + timedelta(days=last_offset)
+        ).isoformat()
 
     @pytest.mark.asyncio
     async def test_dates_sorted_ascending(self) -> None:
@@ -104,4 +116,5 @@ class TestOpenAIFailureFallback:
         monkeypatch.setattr(svc, "_call_openai_checklist", _boom)
         result = await svc.generate_checklist(date(2026, 10, 25))
         assert result["source"] == "template"
-        assert len(result["events"]) == 15
+        from app.services.ai_service import _TEMPLATES
+        assert len(result["events"]) == len(_TEMPLATES)

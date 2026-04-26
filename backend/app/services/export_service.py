@@ -455,6 +455,7 @@ class ExportService:
                     "caption": None,
                     "caption_source": None,
                     "date": None,
+                    "end_date": None,
                     "category": None,
                 }
                 continue
@@ -462,6 +463,11 @@ class ExportService:
             event_date = (
                 photo.event.date.isoformat()
                 if photo.event is not None
+                else None
+            )
+            event_end_date = (
+                photo.event.end_date.isoformat()
+                if photo.event is not None and photo.event.end_date is not None
                 else None
             )
             category = (
@@ -474,6 +480,7 @@ class ExportService:
                 "caption": photo.caption,
                 "caption_source": photo.caption_source,
                 "date": event_date,
+                "end_date": event_end_date,
                 "category": category,
             }
         return out

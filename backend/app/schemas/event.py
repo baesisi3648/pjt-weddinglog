@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import date as _date
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 from app.schemas.enums import Category
 
@@ -35,7 +35,11 @@ class EventBase(BaseModel):
     """이벤트 공통 필드."""
 
     title: str = Field(..., min_length=1, max_length=200, description="일정 제목")
-    date: _date = Field(..., description="일정 날짜")
+    date: _date = Field(..., description="일정 시작 날짜")
+    end_date: _date | None = Field(
+        default=None,
+        description="일정 종료 날짜 (선택). date 와 다르면 multi-day 이벤트.",
+    )
     category: str = Field(
         ...,
         description="카테고리 (Category enum 9개 값 중 하나)",
@@ -47,6 +51,12 @@ class EventBase(BaseModel):
     def _check_category(cls, v: str) -> str:
         return _validate_category(v)
 
+    @model_validator(mode="after")
+    def _check_date_range(self) -> "EventBase":
+        if self.end_date is not None and self.end_date < self.date:
+            raise ValueError("end_date must be on or after date")
+        return self
+
 
 class EventCreate(EventBase):
     """이벤트 생성 입력."""
@@ -57,6 +67,7 @@ class EventUpdate(BaseModel):
 
     title: str | None = Field(default=None, min_length=1, max_length=200)
     date: _date | None = Field(default=None)
+    end_date: _date | None = Field(default=None)
     category: str | None = Field(default=None)
     memo: str | None = Field(default=None)
     is_completed: bool | None = Field(default=None)
@@ -80,3 +91,17 @@ class EventResponse(EventBase):
     is_ai_generated: bool
     created_at: datetime
     updated_at: datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_multi_day(self) -> bool:
+        """end_date 가 date 보다 이후면 True."""
+        return self.end_date is not None and self.end_date > self.date
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def duration_days(self) -> int:
+        """이벤트 총 기간 (일). 단일 이벤트는 1."""
+        if self.end_date is None:
+            return 1
+        return (self.end_date - self.date).days + 1

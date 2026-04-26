@@ -4,54 +4,79 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Stitch DESIGN.md — Material Design 3 토큰 전체
-        surface: '#fff8f1',
-        'surface-dim': '#e2d9ca',
-        'surface-bright': '#fff8f1',
-        'surface-container-lowest': '#ffffff',
-        'surface-container-low': '#fcf2e3',
-        'surface-container': '#f6eddd',
-        'surface-container-high': '#f0e7d8',
-        'surface-container-highest': '#ebe1d2',
-        'on-surface': '#1f1b12',
-        'on-surface-variant': '#524340',
-        'inverse-surface': '#353026',
-        'inverse-on-surface': '#f9f0e0',
-        outline: '#85736f',
-        'outline-variant': '#d7c2bd',
-        'surface-tint': '#894f41',
-        primary: '#894f41',
-        'on-primary': '#ffffff',
-        'primary-container': '#e89f8e',
-        'on-primary-container': '#693529',
-        'inverse-primary': '#ffb4a3',
-        'primary-fixed': '#ffdad2',
-        'primary-fixed-dim': '#ffb4a3',
-        'on-primary-fixed': '#370e05',
-        'on-primary-fixed-variant': '#6d382b',
-        secondary: '#5f5e5f',
-        'on-secondary': '#ffffff',
-        'secondary-container': '#e2dfe0',
-        'on-secondary-container': '#636263',
-        'secondary-fixed': '#e5e2e3',
-        'secondary-fixed-dim': '#c8c6c7',
-        'on-secondary-fixed': '#1c1b1c',
-        'on-secondary-fixed-variant': '#474647',
-        tertiary: '#8c4d3f',
-        'on-tertiary': '#ffffff',
-        'tertiary-container': '#ed9d8c',
-        'on-tertiary-container': '#6c3327',
-        'tertiary-fixed': '#ffdad3',
-        'tertiary-fixed-dim': '#ffb4a4',
-        'on-tertiary-fixed': '#390c04',
-        'on-tertiary-fixed-variant': '#70362a',
-        error: '#ba1a1a',
-        'on-error': '#ffffff',
-        'error-container': '#ffdad6',
-        'on-error-container': '#93000a',
-        background: '#fff8f1',
-        'on-background': '#1f1b12',
-        'surface-variant': '#ebe1d2',
+        // ────────────────────────────────────────────────────────────────
+        // 4-색 원칙 (영상의 "메인 1 + 흑백 + 보조 1" 룰)
+        //   bg     #FFFCF7  아이보리 배경
+        //   ink    #1A1614  진한 잉크 (제목/본문)
+        //   line   #E8DFD3  가는 구분선·placeholder
+        //   coral  #C46A53  유일한 강조색 (CTA, multi-day bar)
+        // 짧은 alias — 새 컴포넌트(랜딩 등)는 이걸 사용한다.
+        // ────────────────────────────────────────────────────────────────
+        bg: '#FFFCF7',
+        'bg-soft': '#F8F1E5',
+        ink: '#1A1614',
+        'ink-muted': '#6B6058',
+        line: '#E8DFD3',
+        coral: '#C46A53',
+        'coral-soft': '#F2D9D0',
+
+        // ────────────────────────────────────────────────────────────────
+        // 기존 Material Design 3 토큰 — 위 4색 팔레트로 매핑하여 통합.
+        // 옛 페이지가 토큰 키 그대로 써도 새 톤이 자동 적용된다.
+        // ────────────────────────────────────────────────────────────────
+        surface: '#FFFCF7',
+        'surface-dim': '#F0E6D5',
+        'surface-bright': '#FFFCF7',
+        'surface-container-lowest': '#FFFFFF',
+        'surface-container-low': '#FBF6EC',
+        'surface-container': '#F8F1E5',
+        'surface-container-high': '#F2EAD9',
+        'surface-container-highest': '#ECE2CF',
+        'on-surface': '#1A1614',
+        'on-surface-variant': '#6B6058',
+        'inverse-surface': '#2B2420',
+        'inverse-on-surface': '#FFFCF7',
+        outline: '#9A8C82',
+        'outline-variant': '#E8DFD3',
+
+        // 강조 — coral 1색으로 통일
+        'surface-tint': '#C46A53',
+        primary: '#C46A53',
+        'on-primary': '#FFFFFF',
+        'primary-container': '#F2D9D0',
+        'on-primary-container': '#5A2418',
+        'inverse-primary': '#F2D9D0',
+        'primary-fixed': '#F8E5DD',
+        'primary-fixed-dim': '#E89F8E',
+        'on-primary-fixed': '#370E05',
+        'on-primary-fixed-variant': '#7A3526',
+
+        // secondary/tertiary는 무채색으로 흡수 (강조 색 분산 방지)
+        secondary: '#6B6058',
+        'on-secondary': '#FFFFFF',
+        'secondary-container': '#ECE2CF',
+        'on-secondary-container': '#4A4138',
+        'secondary-fixed': '#ECE2CF',
+        'secondary-fixed-dim': '#C8BEB5',
+        'on-secondary-fixed': '#1A1614',
+        'on-secondary-fixed-variant': '#3F3530',
+        tertiary: '#C46A53',
+        'on-tertiary': '#FFFFFF',
+        'tertiary-container': '#F2D9D0',
+        'on-tertiary-container': '#5A2418',
+        'tertiary-fixed': '#F8E5DD',
+        'tertiary-fixed-dim': '#E89F8E',
+        'on-tertiary-fixed': '#370E05',
+        'on-tertiary-fixed-variant': '#7A3526',
+
+        // 에러는 그대로 유지 (의미적 색)
+        error: '#BA1A1A',
+        'on-error': '#FFFFFF',
+        'error-container': '#FFDAD6',
+        'on-error-container': '#93000A',
+        background: '#FFFCF7',
+        'on-background': '#1A1614',
+        'surface-variant': '#ECE2CF',
       },
       fontFamily: {
         'display-lg': ['Fraunces', 'serif'],

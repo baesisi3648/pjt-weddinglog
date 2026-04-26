@@ -212,15 +212,34 @@ describe('Calendar', () => {
     expect(thumbs[0].tagName.toLowerCase()).toBe('img');
   });
 
-  it('사진이 2장 이상이면 "+N" 배지가 표시된다', async () => {
+  it('사진이 5장 이상이면 "+N" 오버레이가 표시된다', async () => {
+    // 최신 Calendar 는 4장까지 모자이크 → 초과분만 "+N" 표시.
+    const makePhoto = (id: string, sort: number) => ({
+      id,
+      event_id: 'ev1',
+      file_url: `https://example.com/${id}.jpg`,
+      caption: null,
+      caption_source: null,
+      is_selected: false,
+      sort_order: sort,
+      created_at: '2026-04-05T00:00:00Z',
+    });
+    const photos = [
+      makePhoto('ph1', 0),
+      makePhoto('ph2', 1),
+      makePhoto('ph3', 2),
+      makePhoto('ph4', 3),
+      makePhoto('ph5', 4),
+      makePhoto('ph6', 5),
+    ];
     (listEventPhotos as ReturnType<typeof vi.fn>).mockImplementation((eventId: string) => {
-      if (eventId === 'ev1') return Promise.resolve([MOCK_PHOTO_EV1, MOCK_PHOTO_EV1_2]);
+      if (eventId === 'ev1') return Promise.resolve(photos);
       return Promise.resolve([]);
     });
     renderCalendar();
     await waitFor(() => expect(listEventPhotos).toHaveBeenCalled());
-    // +1 배지 확인
-    const badge = await screen.findByText('+1');
+    // 6장 - 표시 4장 = +2
+    const badge = await screen.findByText('+2');
     expect(badge).toBeInTheDocument();
   });
 

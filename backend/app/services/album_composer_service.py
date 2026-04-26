@@ -22,11 +22,15 @@ AlbumComposerService — AI(OpenAI) 앨범 구성 또는 규칙 기반 폴백.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import math
 from dataclasses import dataclass
 from typing import Any
+
+# OpenAI 호출 자체 타임아웃 (초). 백엔드 30s + 프론트 60s 마진 확보.
+_OPENAI_TIMEOUT_SEC = 30.0
 
 from app.models.photo import Photo
 from app.schemas.album import (
@@ -222,18 +226,34 @@ class AlbumComposerService:
             "target_pages": math.ceil(len(metas) / 2.5),
         }
 
-        completion = self._client.chat.completions.create(  # type: ignore[union-attr]
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": _SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": json.dumps(user_payload, ensure_ascii=False),
-                },
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.6,
-        )
+        # sync OpenAI 호출을 별도 스레드에서 실행 + 타임아웃 강제.
+        # FastAPI 이벤트 루프 블록 방지 + 응답 지연 시 폴백 보장.
+        def _call() -> Any:
+            return self._client.chat.completions.create(  # type: ignore[union-attr]
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": json.dumps(
+                            user_payload, ensure_ascii=False
+                        ),
+                    },
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.6,
+                timeout=_OPENAI_TIMEOUT_SEC,
+            )
+
+        try:
+            completion = await asyncio.wait_for(
+                asyncio.to_thread(_call),
+                timeout=_OPENAI_TIMEOUT_SEC + 2.0,
+            )
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(
+                f"OpenAI compose timeout after {_OPENAI_TIMEOUT_SEC}s"
+            ) from exc
 
         raw = completion.choices[0].message.content or "{}"
         payload = json.loads(raw)

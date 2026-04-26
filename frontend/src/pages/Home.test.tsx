@@ -105,42 +105,7 @@ describe('Home', () => {
     });
   });
 
-  it('urgency=normal → 2차 카운트다운 숨김', async () => {
-    (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME);
-    renderHome();
-    await waitFor(() => screen.getByText(/철수/));
-    expect(screen.queryByText(/앨범 주문 추천/)).not.toBeInTheDocument();
-  });
-
-  it('urgency=warning → yellow 배지 표시', async () => {
-    const data = {
-      ...MOCK_HOME,
-      couple: { ...MOCK_HOME.couple, wedding_date: futureDate(18) },
-      album_order_deadline: { date: futureDate(18), days_remaining: 18, urgency: 'warning' },
-    };
-    (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
-    renderHome();
-    await waitFor(() => {
-      expect(screen.getByText(/앨범 주문 추천/)).toBeInTheDocument();
-      expect(document.querySelector('[data-urgency="warning"]')).toBeTruthy();
-    });
-  });
-
-  it('urgency=urgent → red 배지 표시', async () => {
-    const data = {
-      ...MOCK_HOME,
-      couple: { ...MOCK_HOME.couple, wedding_date: futureDate(10) },
-      album_order_deadline: { date: futureDate(10), days_remaining: 10, urgency: 'urgent' },
-    };
-    (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
-    renderHome();
-    await waitFor(() => {
-      expect(screen.getByText(/앨범 주문 추천/)).toBeInTheDocument();
-      expect(document.querySelector('[data-urgency="urgent"]')).toBeTruthy();
-    });
-  });
-
-  it('urgency=expired → "앨범 주문 기한 만료" 표시', async () => {
+  it('어떤 urgency 값이 와도 압박성 카운트다운 메시지를 표시하지 않는다 (앨범은 언제든 주문 가능)', async () => {
     const data = {
       ...MOCK_HOME,
       couple: { ...MOCK_HOME.couple, wedding_date: pastDate(5) },
@@ -148,9 +113,9 @@ describe('Home', () => {
     };
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
     renderHome();
-    await waitFor(() => {
-      expect(screen.getByText(/앨범 주문 기한 만료/)).toBeInTheDocument();
-    });
+    await waitFor(() => screen.getByText(/철수/));
+    expect(screen.queryByText(/앨범 주문 기한 만료/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/앨범 주문 추천/)).not.toBeInTheDocument();
   });
 
   it('D+ 상태: wedding_date 과거 → "D+N" 형식 표시', async () => {
@@ -166,7 +131,7 @@ describe('Home', () => {
     });
   });
 
-  it('D+ 상태 → 타임라인 정리 UX 메시지 표시', async () => {
+  it('D+ 상태 → 결혼 후 안내 메시지 표시', async () => {
     const data = {
       ...MOCK_HOME,
       couple: { ...MOCK_HOME.couple, wedding_date: pastDate(10) },
@@ -175,25 +140,25 @@ describe('Home', () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
     renderHome();
     await waitFor(() => {
-      expect(screen.getByText(/타임라인 정리를 마무리/)).toBeInTheDocument();
+      expect(screen.getByText(/타임라인 정리하러 가기/)).toBeInTheDocument();
     });
   });
 
-  it('photo_counts.selected >= 1 → "앨범 주문하기" CTA 활성화', async () => {
+  it('photo_counts.selected >= 1 → "앨범 만들기" CTA 활성화', async () => {
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_HOME); // selected: 5
     renderHome();
     await waitFor(() => {
-      const btn = screen.getByRole('button', { name: /앨범 주문하기/ });
+      const btn = screen.getByRole('button', { name: /앨범 만들기/ });
       expect(btn).not.toBeDisabled();
     });
   });
 
-  it('photo_counts.selected = 0 → "앨범 주문하기" CTA 비활성화', async () => {
+  it('photo_counts.selected = 0 → "앨범 만들기" CTA 비활성화', async () => {
     const data = { ...MOCK_HOME, photo_counts: { total: 0, selected: 0 } };
     (getHomeSummary as ReturnType<typeof vi.fn>).mockResolvedValue(data);
     renderHome();
     await waitFor(() => {
-      const btn = screen.getByRole('button', { name: /앨범 주문하기/ });
+      const btn = screen.getByRole('button', { name: /앨범 만들기/ });
       expect(btn).toBeDisabled();
     });
   });

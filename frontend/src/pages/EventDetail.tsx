@@ -70,7 +70,7 @@ export default function EventDetail() {
     setSaving(true);
     try {
       const updated = await updateEvent(coupleId, eventId, {
-        title: event.title, date: event.date, category: event.category, memo,
+        title: event.title, date: event.date, end_date: event.end_date, category: event.category, memo,
       });
       setEvent(updated);
       setMemo(updated.memo ?? '');
@@ -133,7 +133,17 @@ export default function EventDetail() {
   }
 
   const categoryLabel = event ? (CATEGORY_LABELS[event.category] ?? event.category) : '';
-  const dateLabel = event ? formatDate(event.date) : '';
+  const dateLabel = (() => {
+    if (!event) return '';
+    const start = formatDate(event.date);
+    if (!event.end_date || event.end_date === event.date) return start;
+    const startD = new Date(event.date);
+    const endD = new Date(event.end_date);
+    if (startD.getFullYear() === endD.getFullYear() && startD.getMonth() === endD.getMonth()) {
+      return `${start} ~ ${String(endD.getDate()).padStart(2, '0')}`;
+    }
+    return `${start} ~ ${formatDate(event.end_date)}`;
+  })();
 
   return (
     <div className="flex flex-col pb-32">
@@ -144,7 +154,7 @@ export default function EventDetail() {
           onClick={() => navigate('/calendar')}
           aria-label="캘린더로 돌아가기"
         >
-          <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'wght' 300" }}>arrow_back</span>
+          <span aria-hidden="true" className="text-[18px] leading-none">←</span>
         </button>
         <span className="text-[#B5AEA0]">캘린더</span>
       </div>

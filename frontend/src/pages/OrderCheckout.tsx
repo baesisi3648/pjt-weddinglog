@@ -1,15 +1,17 @@
 // @TASK P5-FRONTEND - OrderCheckout 4단계 실 API 연동 + AI 앨범 프리뷰
 // @SPEC docs/planning/06-tasks.md#Phase5
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { composeAlbum } from '../services/album_api';
 import { createOrder } from '../services/order_api';
+import { getTimeline } from '../services/timeline_api';
 import MiniBookPreview from '../components/MiniBookPreview';
 import Toast from '../components/Toast';
 import type { AlbumLayout } from '../types/album';
 import type { OrderFormat, OrderCoverType } from '../types/order';
 import type { Photo } from '../types/photo';
+import { photoUrl } from '../utils/photo';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_KEY = 'weddinglog_selected_photos';
@@ -53,6 +55,9 @@ export default function OrderCheckout() {
   const [composeLoading, setComposeLoading] = useState(false);
   const [composeError, setComposeError] = useState<string | null>(null);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
+  // MiniBookPreview 가 layout.photo_ids → 이미지로 그릴 수 있도록
+  // 선택된 사진의 메타(file_url, caption)를 timeline 응답에서 가져온다.
+  const [photoMap, setPhotoMap] = useState<Record<string, Photo>>({});
 
   // ── Step 2: 옵션 ──
   const [format, setFormat] = useState<OrderFormat>('SQUARE');
@@ -91,6 +96,47 @@ export default function OrderCheckout() {
       navigate('/timeline');
     }
   }, [navigate]);
+
+  // selectedPhotoIds 가 채워지면 timeline 에서 사진 메타 (file_url) 수집.
+  // - timeline 응답 chapters[].photos[]: { id, file_url, caption, ... }
+  // - file_url 은 "/api/photos/{id}/file" 상대 경로 → photoUrl()로 절대화
+  useEffect(() => {
+    if (!selectedPhotoIds.length) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const tl = await getTimeline(COUPLE_ID);
+        if (cancelled) return;
+        const map: Record<string, Photo> = {};
+        for (const ch of tl.chapters ?? []) {
+          for (const p of ch.photos ?? []) {
+            map[p.id] = {
+              id: p.id,
+              event_id: '',
+              file_url: photoUrl(p.file_url),
+              caption: p.caption ?? null,
+              caption_source: null,
+              is_selected: p.is_selected ?? false,
+              sort_order: 0,
+              created_at: '',
+            } as Photo;
+          }
+        }
+        setPhotoMap(map);
+      } catch {
+        // 사진 메타가 없어도 layout 자체는 보임 (회색 박스만)
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedPhotoIds]);
+
+  // MiniBookPreview 에 넘길 photos 배열 (선택된 ID 만)
+  const previewPhotos: Photo[] = useMemo(() => {
+    if (!selectedPhotoIds.length) return [];
+    return selectedPhotoIds
+      .map((id) => photoMap[id])
+      .filter((p): p is Photo => Boolean(p));
+  }, [selectedPhotoIds, photoMap]);
 
   // compose 호출
   const runCompose = useCallback(async (photoIds: string[]) => {
@@ -159,8 +205,6 @@ export default function OrderCheckout() {
     return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
   }
 
-  // 더미 photos (실제로는 photoId에서 url을 빌드할 방법 필요; 여기서는 빈 배열로 MiniBookPreview에 전달)
-  const dummyPhotos: Photo[] = [];
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-background">
@@ -191,7 +235,7 @@ export default function OrderCheckout() {
                     }`}
                   >
                     {state === 'done' ? (
-                      <span className="material-symbols-outlined text-background" style={{ fontSize: '16px' }}>check</span>
+                      <span className="text-background text-[12px] font-bold leading-none" aria-hidden="true">✓</span>
                     ) : state === 'current' ? (
                       <span className="w-2.5 h-2.5 rounded-full bg-on-surface" />
                     ) : null}
@@ -265,7 +309,7 @@ export default function OrderCheckout() {
                 </div>
 
                 {/* MiniBookPreview */}
-                <MiniBookPreview layout={albumLayout} photos={dummyPhotos} />
+                <MiniBookPreview layout={albumLayout} photos={previewPhotos} />
 
                 {/* 다시 구성 버튼 */}
                 <div className="flex gap-sm mt-2">
@@ -305,8 +349,13 @@ export default function OrderCheckout() {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-body-md text-on-surface font-medium">{opt.label}</span>
-                      <span className="material-symbols-outlined text-primary" style={{ fontSize: '20px' }}>
-                        {format === opt.value ? 'check_circle' : 'radio_button_unchecked'}
+                      <span
+                        aria-hidden="true"
+                        className={`w-5 h-5 rounded-full border flex items-center justify-center text-[12px] font-bold ${
+                          format === opt.value ? 'border-coral bg-coral text-white' : 'border-outline'
+                        }`}
+                      >
+                        {format === opt.value ? '✓' : ''}
                       </span>
                     </div>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">{opt.desc}</p>
@@ -360,7 +409,7 @@ export default function OrderCheckout() {
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       disabled={quantity <= 1}
                     >
-                      <span className="material-symbols-outlined text-on-surface-variant">remove</span>
+                      <span aria-hidden="true" className="text-on-surface-variant text-[18px] leading-none px-1">−</span>
                     </button>
                     <span className="w-12 text-center font-body-lg text-body-lg text-on-surface">{quantity}</span>
                     <button
@@ -369,7 +418,7 @@ export default function OrderCheckout() {
                       onClick={() => setQuantity((q) => Math.min(10, q + 1))}
                       disabled={quantity >= 10}
                     >
-                      <span className="material-symbols-outlined text-on-surface-variant">add</span>
+                      <span aria-hidden="true" className="text-on-surface-variant text-[18px] leading-none px-1">+</span>
                     </button>
                   </div>
                   {quantity >= 2 ? (
@@ -470,12 +519,9 @@ export default function OrderCheckout() {
         {/* ── Step 4: 완료 ── */}
         {step === 4 && (
           <section className="flex flex-col items-center gap-lg flex-1 mt-16 text-center">
-            {/* 체크 서클 */}
-            <div
-              className="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center"
-              style={{ border: '2px solid #e89f8e' }}
-            >
-              <span className="material-symbols-outlined text-primary" style={{ fontSize: '36px' }}>check</span>
+            {/* 체크 서클 — 코랄 단색 + 텍스트 ✓ */}
+            <div className="w-20 h-20 rounded-full bg-coral text-white flex items-center justify-center">
+              <span aria-hidden="true" className="text-[32px] font-light leading-none">✓</span>
             </div>
 
             <div>
@@ -500,7 +546,7 @@ export default function OrderCheckout() {
             <div className="flex gap-sm mt-4">
               <button
                 className="px-6 py-3 border border-outline text-on-surface rounded font-body-sm text-body-sm hover:bg-surface-variant transition-colors"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/home')}
               >
                 홈으로
               </button>
@@ -540,7 +586,7 @@ export default function OrderCheckout() {
                   onClick={() => setStep(2)}
                 >
                   만족해요
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                  <span aria-hidden="true">→</span>
                 </button>
               )}
               {step === 2 && (
@@ -549,7 +595,7 @@ export default function OrderCheckout() {
                   onClick={() => setStep(3)}
                 >
                   다음으로
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                  <span aria-hidden="true">→</span>
                 </button>
               )}
               {step === 3 && (
@@ -563,7 +609,7 @@ export default function OrderCheckout() {
                 >
                   {orderLoading ? '처리 중...' : '주문하기'}
                   {!orderLoading && (
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
+                    <span aria-hidden="true">✓</span>
                   )}
                 </button>
               )}

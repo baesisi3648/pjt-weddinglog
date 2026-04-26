@@ -47,7 +47,9 @@ class Event(Base):
         id: 'evt_xxxxxxxxxxx' 형태.
         couple_id: 소속 커플 (외래키, cascade delete).
         title: 일정 제목 (최대 200자).
-        date: 일정 날짜.
+        date: 일정 시작 날짜.
+        end_date: 일정 종료 날짜 (선택). 값이 있고 date 와 다르면 multi-day 이벤트.
+            캘린더에서 주 단위 가로 bar 형태로 렌더한다.
         category: Category enum 값(str). Pydantic 레이어에서 검증.
         memo: 메모 (선택, Text).
         is_completed: 완료 여부.
@@ -65,6 +67,7 @@ class Event(Base):
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     category: Mapped[str] = mapped_column(String(40), nullable=False)
     memo: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_completed: Mapped[bool] = mapped_column(

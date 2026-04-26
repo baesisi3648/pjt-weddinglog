@@ -1,8 +1,6 @@
-// @TASK P2-S1-T4 - CategoryBadge 테스트
-// @SPEC docs/planning/06-tasks.md#P2-S1-T4
-
+// @TASK CategoryBadge 테스트 — 영상 원칙 적용 후 (이모지 ❌ / 텍스트 라벨 ✅)
 import { render, screen } from '@testing-library/react';
-import CategoryBadge, { CATEGORY_EMOJIS } from './CategoryBadge';
+import CategoryBadge from './CategoryBadge';
 import { CATEGORIES, CATEGORY_LABELS } from '../constants/enums';
 import type { Category } from '../types';
 
@@ -16,67 +14,27 @@ describe('CategoryBadge', () => {
     });
   });
 
-  it('9개 카테고리 각각 올바른 이모지를 렌더링한다', () => {
-    const categories = Object.values(CATEGORIES) as Category[];
-    categories.forEach((cat) => {
-      const { unmount } = render(<CategoryBadge category={cat} />);
-      expect(screen.getByText(CATEGORY_EMOJIS[cat])).toBeInTheDocument();
-      unmount();
-    });
+  it('이모지·아이콘 없이 텍스트 라벨만 렌더링된다 (영상 원칙)', () => {
+    const { container } = render(<CategoryBadge category="WEDDING_PHOTO" />);
+    // material-symbols 클래스 없음
+    expect(container.querySelector('.material-symbols-outlined')).toBeNull();
+    // 이모지(📷 등) 없음
+    expect(container.textContent).toBe('웨딩촬영');
   });
 
-  it('WEDDING_PHOTO — 웨딩촬영 + 📷', () => {
-    render(<CategoryBadge category="WEDDING_PHOTO" />);
-    expect(screen.getByText('웨딩촬영')).toBeInTheDocument();
-    expect(screen.getByText('📷')).toBeInTheDocument();
-  });
-
-  it('STUDIO_DRESS_MAKEUP — 스드메 + 💄', () => {
-    render(<CategoryBadge category="STUDIO_DRESS_MAKEUP" />);
-    expect(screen.getByText('스드메')).toBeInTheDocument();
-    expect(screen.getByText('💄')).toBeInTheDocument();
-  });
-
-  it('VENUE — 예식장 + 🏛️', () => {
-    render(<CategoryBadge category="VENUE" />);
-    expect(screen.getByText('예식장')).toBeInTheDocument();
-    expect(screen.getByText('🏛️')).toBeInTheDocument();
-  });
-
-  it('GIFT — 예물·예단 + 💍', () => {
-    render(<CategoryBadge category="GIFT" />);
-    expect(screen.getByText('예물·예단')).toBeInTheDocument();
-    expect(screen.getByText('💍')).toBeInTheDocument();
-  });
-
-  it('INVITATION — 청첩장 + ✉️', () => {
-    render(<CategoryBadge category="INVITATION" />);
-    expect(screen.getByText('청첩장')).toBeInTheDocument();
-    expect(screen.getByText('✉️')).toBeInTheDocument();
-  });
-
-  it('REHEARSAL — 리허설 + 🎭', () => {
-    render(<CategoryBadge category="REHEARSAL" />);
-    expect(screen.getByText('리허설')).toBeInTheDocument();
-    expect(screen.getByText('🎭')).toBeInTheDocument();
-  });
-
-  it('CEREMONY — 본식 + 💒', () => {
-    render(<CategoryBadge category="CEREMONY" />);
-    expect(screen.getByText('본식')).toBeInTheDocument();
-    expect(screen.getByText('💒')).toBeInTheDocument();
-  });
-
-  it('HONEYMOON — 신혼여행 + ✈️', () => {
-    render(<CategoryBadge category="HONEYMOON" />);
-    expect(screen.getByText('신혼여행')).toBeInTheDocument();
-    expect(screen.getByText('✈️')).toBeInTheDocument();
-  });
-
-  it('ETC — 기타 + 📌', () => {
-    render(<CategoryBadge category="ETC" />);
-    expect(screen.getByText('기타')).toBeInTheDocument();
-    expect(screen.getByText('📌')).toBeInTheDocument();
+  it.each([
+    ['WEDDING_PHOTO', '웨딩촬영'],
+    ['STUDIO_DRESS_MAKEUP', '스드메'],
+    ['VENUE', '예식장'],
+    ['GIFT', '예물·예단'],
+    ['INVITATION', '청첩장'],
+    ['REHEARSAL', '리허설'],
+    ['CEREMONY', '본식'],
+    ['HONEYMOON', '신혼여행'],
+    ['ETC', '기타'],
+  ] as const)('%s — %s 라벨 렌더링', (category, label) => {
+    render(<CategoryBadge category={category} />);
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it('size sm 렌더링', () => {

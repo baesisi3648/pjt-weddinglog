@@ -25,12 +25,12 @@ from app.seed import (
 
 
 # -----------------------------------------------------------------------------
-# 기존 동작: 커플 시딩 (유지)
+# 커플 시딩
 # -----------------------------------------------------------------------------
 def test_seed_creates_sample_couple_when_empty(
     db_session: Session, tmp_upload_dir: Path
 ) -> None:
-    """빈 DB 상태에서 시드 호출 → 샘플 커플 1개 생성."""
+    """빈 DB 상태에서 시드 호출 → 샘플 커플 1개 생성 (철수 ♥ 영희, 2026-03-14)."""
     assert db_session.query(Couple).count() == 0
 
     seed_initial_data(db_session)
@@ -41,7 +41,7 @@ def test_seed_creates_sample_couple_when_empty(
     assert sample.id == SAMPLE_COUPLE_ID
     assert sample.groom_name == "철수"
     assert sample.bride_name == "영희"
-    assert sample.wedding_date == date(2026, 10, 25)
+    assert sample.wedding_date == date(2026, 3, 14)
 
 
 def test_seed_is_idempotent(
@@ -64,12 +64,12 @@ def test_seed_is_idempotent(
 
 
 # -----------------------------------------------------------------------------
-# 신규: 이벤트 + 사진 시딩
+# 이벤트 + 사진 시딩
 # -----------------------------------------------------------------------------
-def test_seed_creates_15_events(
+def test_seed_creates_all_events(
     db_session: Session, tmp_upload_dir: Path
 ) -> None:
-    """seed_events_and_photos 가 SEED_EVENTS 개수만큼 이벤트를 만든다."""
+    """seed_events_and_photos 가 SEED_EVENTS 의 전체 개수만큼 이벤트 생성."""
     seed_initial_data(db_session)
 
     events = (
@@ -77,7 +77,33 @@ def test_seed_creates_15_events(
         .filter(Event.couple_id == SAMPLE_COUPLE_ID)
         .all()
     )
-    assert len(events) == len(SEED_EVENTS) == 15
+    assert len(events) == len(SEED_EVENTS)
+    # 현재 스펙: 24개 이벤트 (단일 22 + multi-day 2)
+    assert len(events) >= 20
+
+
+def test_seed_includes_multi_day_events(
+    db_session: Session, tmp_upload_dir: Path
+) -> None:
+    """제주 프리웨딩(2박 3일), 신혼여행(8박 9일) 이 multi-day 로 시딩되어야 한다."""
+    seed_initial_data(db_session)
+
+    multi = (
+        db_session.query(Event)
+        .filter(Event.couple_id == SAMPLE_COUPLE_ID)
+        .filter(Event.end_date.isnot(None))
+        .order_by(Event.date.asc())
+        .all()
+    )
+    assert len(multi) == 2
+
+    jeju = multi[0]
+    assert "제주" in jeju.title
+    assert (jeju.end_date - jeju.date).days == 2  # 2박 3일
+
+    honeymoon = multi[1]
+    assert "신혼여행" in honeymoon.title
+    assert (honeymoon.end_date - honeymoon.date).days == 8  # 8박 9일
 
 
 def test_seed_photo_counts_match_spec(
@@ -93,7 +119,9 @@ def test_seed_photo_counts_match_spec(
         .all()
     }
 
-    for offset, title, _cat, _memo, photo_files, _captions in SEED_EVENTS:
+    for entry in SEED_EVENTS:
+        # 새 형식: (offset, end_offset|None, title, cat, memo, photo_files, captions)
+        _offset, _end_offset, title, _cat, _memo, photo_files, _captions = entry
         assert title in events, f"missing event: {title}"
         event = events[title]
         photos = (
@@ -121,7 +149,6 @@ def test_seed_copies_physical_photo_files(
 
     upload_root = get_settings().UPLOAD_DIR.resolve()
     for photo in photos:
-        # file_path 형식 검증
         assert photo.file_path.startswith("photos/"), (
             f"unexpected file_path: {photo.file_path!r}"
         )
@@ -130,17 +157,15 @@ def test_seed_copies_physical_photo_files(
         assert parts[1] == photo.event_id
         assert parts[2].startswith(photo.id + ".")
 
-        # 물리 파일 존재 확인 (safe_save_photo 규칙과 동일하게
-        # UPLOAD_DIR 의 부모 기준 상대경로를 해석).
         abs_path = upload_root.parent / photo.file_path
         assert abs_path.exists(), f"missing on disk: {abs_path}"
         assert abs_path.stat().st_size > 0
 
 
-def test_seed_first_event_is_venue_tour(
+def test_seed_first_event_is_hangang_picnic(
     db_session: Session, tmp_upload_dir: Path
 ) -> None:
-    """첫 번째 이벤트가 '예식장 투어', category VENUE, offset -180 임을 검증."""
+    """가장 이른 이벤트는 한강 피크닉 (D-330), ETC 카테고리."""
     seed_initial_data(db_session)
 
     couple = db_session.query(Couple).filter(
@@ -154,18 +179,17 @@ def test_seed_first_event_is_venue_tour(
         .all()
     )
     first = events[0]
-    assert first.title.startswith("예식장 투어")
-    assert first.category == "VENUE"
-    # wedding_date - 180 일
-    assert first.date == couple.wedding_date + timedelta(days=-180)
+    assert "한강" in first.title
+    assert first.category == "ETC"
+    assert first.date == couple.wedding_date + timedelta(days=-330)
 
 
 def test_seed_events_captions_match(
     db_session: Session, tmp_upload_dir: Path
 ) -> None:
-    """SEED_EVENTS 의 captions 가 photo_files 와 길이 일치해야 한다
-    (런타임 zip 으로 일치하는 쪽만 생성되는 실수 방지 — 정의 자체 검증)."""
-    for offset, title, _cat, _memo, photo_files, captions in SEED_EVENTS:
+    """SEED_EVENTS 의 captions 가 photo_files 와 길이 일치해야 한다."""
+    for entry in SEED_EVENTS:
+        _offset, _end_offset, title, _cat, _memo, photo_files, captions = entry
         assert len(photo_files) == len(captions), (
             f"{title}: photo_files({len(photo_files)}) vs "
             f"captions({len(captions)}) mismatch"
@@ -194,12 +218,10 @@ def test_seed_photos_have_template_captions(
 def test_seed_events_completion_flag(
     db_session: Session, tmp_upload_dir: Path
 ) -> None:
-    """D-day 이전/당일 이벤트는 완료 처리, 이후는 미완료."""
+    """이벤트 종료일(또는 단일 이벤트의 시작일)이 오늘 이전/당일이면 완료, 이후면 미완료."""
     seed_initial_data(db_session)
 
-    couple = db_session.query(Couple).filter(
-        Couple.id == SAMPLE_COUPLE_ID
-    ).one()
+    today = date.today()
     events = (
         db_session.query(Event)
         .filter(Event.couple_id == SAMPLE_COUPLE_ID)
@@ -207,10 +229,12 @@ def test_seed_events_completion_flag(
     )
 
     for e in events:
-        delta = (e.date - couple.wedding_date).days
-        if delta <= 0:
-            assert e.is_completed is True, f"{e.title} (delta={delta}) not completed"
+        basis = e.end_date or e.date
+        if basis <= today:
+            assert e.is_completed is True, (
+                f"{e.title} (basis={basis}) should be completed"
+            )
         else:
             assert e.is_completed is False, (
-                f"{e.title} (delta={delta}) should not be completed"
+                f"{e.title} (basis={basis}) should not be completed"
             )

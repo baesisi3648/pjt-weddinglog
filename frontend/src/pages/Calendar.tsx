@@ -38,6 +38,43 @@ function dateToDayNum(dateStr: string | undefined, year: number, month: number):
   return null;
 }
 
+// Multi-day 이벤트 bar 위치 타입
+type BarPosition = 'single' | 'start' | 'middle' | 'end';
+
+interface MultiDayBar {
+  event: Event;
+  position: BarPosition;
+  showTitle: boolean; // 주 시작/이벤트 시작일에서만 제목 표시
+}
+
+function parseDateLocal(dateStr: string): Date {
+  // YYYY-MM-DD 를 로컬 시간대 자정으로 파싱 (new Date("YYYY-MM-DD")는 UTC 자정).
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, (m ?? 1) - 1, d ?? 1);
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+// Multi-day bar — coral 한 가지 + 명도 단계 (영상 "2~3색 원칙")
+// 카테고리는 색이 아닌 텍스트 라벨로 구분한다.
+const CATEGORY_BAR_CLASS: Record<Category, string> = {
+  WEDDING_PHOTO: 'bg-[#C46A53] text-white',
+  HONEYMOON: 'bg-[#C46A53] text-white',
+  CEREMONY: 'bg-[#1A1614] text-white',
+  VENUE: 'bg-[#F2D9D0] text-[#5A2418]',
+  STUDIO_DRESS_MAKEUP: 'bg-[#F2D9D0] text-[#5A2418]',
+  GIFT: 'bg-[#F2D9D0] text-[#5A2418]',
+  INVITATION: 'bg-[#F2D9D0] text-[#5A2418]',
+  REHEARSAL: 'bg-[#F2D9D0] text-[#5A2418]',
+  ETC: 'bg-[#ECE2CF] text-[#4A4138]',
+} as const;
+
 const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
 const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -148,12 +185,50 @@ export default function Calendar() {
     else setViewMonth(m => m + 1);
   };
 
+  // eventsByDay: 각 날짜(day)가 속한 이벤트들. Multi-day 이벤트는 모든 해당 일자에 등록.
+  // multiDayBarsByDay: 각 날짜 셀 상단에 렌더할 bar segment 목록.
   const eventsByDay: Record<number, Event[]> = {};
+  const multiDayBarsByDay: Record<number, MultiDayBar[]> = {};
+
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
+  const lastOfMonth = new Date(viewYear, viewMonth + 1, 0);
+
   events.forEach((ev) => {
-    const day = dateToDayNum(ev.date, viewYear, viewMonth);
-    if (day !== null) {
+    const start = parseDateLocal(ev.date);
+    const end = ev.end_date ? parseDateLocal(ev.end_date) : start;
+    const isMulti = ev.end_date !== null && ev.end_date !== undefined && end.getTime() > start.getTime();
+
+    // 이벤트가 이번 달과 겹치는 범위 계산
+    const rangeStart = start < firstOfMonth ? firstOfMonth : start;
+    const rangeEnd = end > lastOfMonth ? lastOfMonth : end;
+    if (rangeStart > rangeEnd) return;
+
+    for (
+      let dt = new Date(rangeStart);
+      dt <= rangeEnd;
+      dt = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + 1)
+    ) {
+      const day = dt.getDate();
       if (!eventsByDay[day]) eventsByDay[day] = [];
       eventsByDay[day].push(ev);
+
+      if (isMulti) {
+        const isStartDay = sameDay(dt, start);
+        const isEndDay = sameDay(dt, end);
+        const isSunday = dt.getDay() === 0;
+        const isFirstOfMonth = dt.getDate() === 1;
+
+        let position: BarPosition;
+        if (isStartDay && isEndDay) position = 'single';
+        else if (isStartDay) position = 'start';
+        else if (isEndDay) position = 'end';
+        else position = 'middle';
+
+        const showTitle = isStartDay || isSunday || isFirstOfMonth;
+
+        if (!multiDayBarsByDay[day]) multiDayBarsByDay[day] = [];
+        multiDayBarsByDay[day].push({ event: ev, position, showTitle });
+      }
     }
   });
 
@@ -251,6 +326,18 @@ export default function Calendar() {
     const d = new Date(dateStr);
     return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   };
+  const formatDateRange = (start: string, end: string | null): string => {
+    if (!end || end === start) return formatDate(start);
+    const s = new Date(start);
+    const e = new Date(end);
+    const sStr = `${s.getFullYear()}.${String(s.getMonth()+1).padStart(2,'0')}.${String(s.getDate()).padStart(2,'0')}`;
+    // 같은 연/월이면 종료는 일만 표시 (예: "2025.12.28 ~ 30")
+    if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+      return `${sStr} ~ ${String(e.getDate()).padStart(2,'0')}`;
+    }
+    const eStr = `${e.getFullYear()}.${String(e.getMonth()+1).padStart(2,'0')}.${String(e.getDate()).padStart(2,'0')}`;
+    return `${sStr} ~ ${eStr}`;
+  };
 
   return (
     <div className="flex flex-col gap-md">
@@ -262,7 +349,7 @@ export default function Calendar() {
             aria-label="이전 달"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_left</span>
+            <span aria-hidden="true" className="text-[18px] leading-none">←</span>
           </button>
           <h2 className="font-display-md text-display-md text-on-surface">
             {viewYear}년 {MONTH_NAMES[viewMonth]}
@@ -272,7 +359,7 @@ export default function Calendar() {
             aria-label="다음 달"
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface-variant"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>chevron_right</span>
+            <span aria-hidden="true" className="text-[18px] leading-none">→</span>
           </button>
         </div>
 
@@ -283,8 +370,7 @@ export default function Calendar() {
             disabled={aiLoading || !coupleId}
             className="flex items-center gap-2 px-4 py-2 rounded-full text-primary hover:bg-surface-variant transition-colors border border-transparent font-body-sm text-body-sm disabled:opacity-50"
           >
-            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>auto_awesome</span>
-            {aiLoading ? '생성 중...' : 'AI로 체크리스트 자동 생성'}
+            {aiLoading ? '생성 중…' : 'AI로 체크리스트 자동 생성'}
           </button>
 
           {/* 뷰 토글 */}
@@ -362,18 +448,21 @@ export default function Calendar() {
               }
 
               const ev = eventsByDay[d] ?? [];
+              const bars = multiDayBarsByDay[d] ?? [];
               const dayOfWeek = i % 7;
               const isToday = d === todayNum;
               const isWedding = d === weddingDay;
               const isSelected = selectedDay === d;
               const isSunday = dayOfWeek === 0;
 
-              const evWithPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
-              const evWithoutPhotos = ev.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
+              // Multi-day 이벤트는 사진 모자이크에서 제외 (중복 표시 방지 — bar 로만 노출)
+              const singleDayEv = ev.filter((e) => !e.is_multi_day);
+              const evWithPhotos = singleDayEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
+              const evWithoutPhotos = singleDayEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
               const shownPhotoEvents = evWithPhotos.slice(0, 2);
               const shownLabelEvents = evWithoutPhotos.slice(0, Math.max(0, 3 - shownPhotoEvents.length));
               const totalShown = shownPhotoEvents.length + shownLabelEvents.length;
-              const moreCount = ev.length - totalShown;
+              const moreCount = singleDayEv.length - totalShown;
 
               return (
                 <button
@@ -397,6 +486,51 @@ export default function Calendar() {
                     <span className={`font-body-sm text-body-sm ${isSunday ? 'text-error' : 'text-on-surface-variant'} ${isWedding ? 'text-primary font-semibold' : ''}`}>
                       {d}
                     </span>
+                  )}
+
+                  {/* Multi-day 이벤트 bar (주 단위로 끊어져서 렌더) */}
+                  {bars.length > 0 && (
+                    <div className="flex flex-col gap-[2px] mt-1 -mx-2">
+                      {bars.map((bar, idx) => {
+                        const colorClass = CATEGORY_BAR_CLASS[bar.event.category];
+                        const radiusClass =
+                          bar.position === 'single'
+                            ? 'rounded-sm mx-1'
+                            : bar.position === 'start'
+                              ? 'rounded-l-sm ml-1'
+                              : bar.position === 'end'
+                                ? 'rounded-r-sm mr-1'
+                                : '';
+                        return (
+                          <div
+                            key={`${bar.event.id}-${idx}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={(evt) => {
+                              evt.stopPropagation();
+                              navigate(`/events/${bar.event.id}`);
+                            }}
+                            onKeyDown={(evt) => {
+                              if (evt.key === 'Enter' || evt.key === ' ') {
+                                evt.stopPropagation();
+                                navigate(`/events/${bar.event.id}`);
+                              }
+                            }}
+                            className={`${colorClass} ${radiusClass} h-[18px] px-1.5 flex items-center text-[10px] font-medium truncate overflow-hidden cursor-pointer hover:opacity-90`}
+                            title={`${bar.event.title} · ${bar.event.date}${bar.event.end_date ? ` ~ ${bar.event.end_date}` : ''}`}
+                            aria-label={`${bar.event.title} · 다일 일정`}
+                          >
+                            {bar.showTitle ? (
+                              <span className="truncate">
+                                {bar.event.title}
+                              </span>
+                            ) : (
+                              <span>&nbsp;</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
 
                   {/* 사진 모자이크 — 셀을 꽉 채우는 그리드 (1~4장 + "+N") */}
@@ -448,22 +582,16 @@ export default function Calendar() {
                     );
                   })()}
 
-                  {/* 이벤트 라벨 (사진 없는 이벤트) */}
+                  {/* 이벤트 라벨 (사진 없는 이벤트) — 아이콘 ❌, 코랄 점 + 제목 */}
                   {shownLabelEvents.length > 0 && (
                     <div className="mt-1 flex flex-col gap-1 w-full px-1">
                       {shownLabelEvents.map((e) => (
                         <div
                           key={e.id}
-                          className="flex items-center gap-1 text-[11px] leading-none text-on-surface truncate"
+                          className="flex items-center gap-1.5 text-[11px] leading-none text-on-surface truncate"
                           onClick={(evt) => { evt.stopPropagation(); navigate(`/events/${e.id}`); }}
                         >
-                          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
-                            {e.category === 'CEREMONY' ? 'favorite' :
-                             e.category === 'WEDDING_PHOTO' ? 'photo_camera' :
-                             e.category === 'VENUE' ? 'location_on' :
-                             e.category === 'GIFT' ? 'card_giftcard' :
-                             'calendar_today'}
-                          </span>
+                          <span className="block w-1 h-1 rounded-full bg-coral shrink-0" aria-hidden="true" />
                           <span className="truncate">{e.title}</span>
                         </div>
                       ))}
@@ -517,7 +645,7 @@ export default function Calendar() {
                     aria-label={e.is_completed ? '완료 해제' : '완료'}
                   >
                     {e.is_completed && (
-                      <span className="material-symbols-outlined text-white" style={{ fontSize: '12px', fontVariationSettings: "'wght' 600" }}>check</span>
+                      <span className="text-white text-[10px] font-bold leading-none" aria-hidden="true">✓</span>
                     )}
                   </button>
                   <div className="flex-1 min-w-0">
@@ -526,7 +654,14 @@ export default function Calendar() {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <CategoryBadge category={e.category} size="sm" />
-                      <span className="font-mono-id text-mono-id text-outline">{e.date}</span>
+                      <span className="font-mono-id text-mono-id text-outline">
+                        {formatDateRange(e.date, e.end_date)}
+                      </span>
+                      {e.is_multi_day && (
+                        <span className="font-label-caps text-[10px] text-primary px-1.5 py-0.5 rounded bg-primary-container/60">
+                          {e.duration_days}일
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
@@ -578,7 +713,7 @@ export default function Calendar() {
                 }`}
               >
                 {e.is_completed && (
-                  <span className="material-symbols-outlined text-white" style={{ fontSize: '12px', fontVariationSettings: "'wght' 600" }}>check</span>
+                  <span className="text-white text-[10px] font-bold leading-none" aria-hidden="true">✓</span>
                 )}
               </button>
               <div className="flex-1 min-w-0" onClick={() => navigate(`/events/${e.id}`)}>
@@ -587,7 +722,14 @@ export default function Calendar() {
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <CategoryBadge category={e.category} size="sm" />
-                  <span className="font-mono-id text-mono-id text-outline">{formatDate(e.date)}</span>
+                  <span className="font-mono-id text-mono-id text-outline">
+                    {formatDateRange(e.date, e.end_date)}
+                  </span>
+                  {e.is_multi_day && (
+                    <span className="font-label-caps text-[10px] text-primary px-1.5 py-0.5 rounded bg-primary-container/60">
+                      {e.duration_days}일
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
@@ -614,7 +756,7 @@ export default function Calendar() {
           setEventForm({ mode: 'create', date: dateStr });
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>add</span>
+        <span aria-hidden="true" className="text-[26px] leading-none">+</span>
       </button>
 
       {/* EventForm 모달 */}

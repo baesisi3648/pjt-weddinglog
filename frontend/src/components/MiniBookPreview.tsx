@@ -12,13 +12,8 @@ interface Props {
   editable?: boolean;
 }
 
-const CHAPTER_COLORS: Record<string, { bg: string; text: string }> = {
-  coral:    { bg: '#fce8e3', text: '#8b3626' },
-  lavender: { bg: '#ede8f7', text: '#4a3f7a' },
-  mint:     { bg: '#e4f4ee', text: '#2d6e52' },
-  gold:     { bg: '#fdf4e0', text: '#7a5c1a' },
-  gray:     { bg: '#efefef', text: '#4a4a4a' },
-};
+// 영상 원칙 — 챕터를 색으로 구분하지 않고 모노톤 + 텍스트로.
+const CHAPTER_BAND = { bg: '#F8F1E5', text: '#1A1614', accent: '#C46A53' } as const;
 
 function getPhoto(photos: Photo[], id: string): Photo | undefined {
   return photos.find((p) => p.id === id);
@@ -114,23 +109,22 @@ export default function MiniBookPreview({ layout, photos }: Props) {
       aria-label="앨범 미리보기"
     >
       {layout.chapters.map((chapter) => {
-        const colorStyle = CHAPTER_COLORS[chapter.color] ?? CHAPTER_COLORS.gray;
         return (
           <div key={chapter.chapter_number} className="flex flex-col gap-2">
-            {/* 챕터 타이틀 띠 */}
+            {/* 챕터 타이틀 띠 — 모노톤 + 코랄 액센트 */}
             <div
-              className="px-4 py-2 rounded flex items-center gap-2"
-              style={{ background: colorStyle.bg }}
+              className="px-4 py-2 rounded flex items-center gap-3"
+              style={{ background: CHAPTER_BAND.bg }}
             >
               <span
-                className="font-mono text-xs opacity-60"
-                style={{ color: colorStyle.text }}
+                className="font-mono text-[10px] tracking-[0.15em]"
+                style={{ color: CHAPTER_BAND.accent }}
               >
                 CH.{String(chapter.chapter_number).padStart(2, '0')}
               </span>
               <span
                 className="font-medium text-sm"
-                style={{ color: colorStyle.text, fontFamily: 'Fraunces, serif' }}
+                style={{ color: CHAPTER_BAND.text, fontFamily: 'Fraunces, serif' }}
               >
                 {chapter.title}
               </span>

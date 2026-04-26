@@ -8,7 +8,9 @@ import { CATEGORIES, CATEGORY_LABELS, CATEGORY_LIST } from '../constants/enums';
 import CategoryBadge from './CategoryBadge';
 import type { Category, Event, EventCreate, EventUpdate } from '../types';
 
-type EventFormInitial = Pick<Event, 'id' | 'title' | 'date' | 'category' | 'memo'>;
+type EventFormInitial = Pick<Event, 'id' | 'title' | 'date' | 'category' | 'memo'> & {
+  end_date?: string | null;
+};
 
 interface EventFormProps {
   mode?: 'create' | 'edit';
@@ -29,6 +31,7 @@ export default function EventForm({
 
   const [title, setTitle] = useState('');
   const [eventDate, setEventDate] = useState(date ?? today);
+  const [endDate, setEndDate] = useState<string>('');
   const [category, setCategory] = useState<Category | ''>('');
   const [memo, setMemo] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,6 +42,7 @@ export default function EventForm({
     if (mode === 'edit' && initialData) {
       setTitle(initialData.title ?? '');
       setEventDate(initialData.date ?? today);
+      setEndDate(initialData.end_date ?? '');
       setCategory(initialData.category ?? '');
       setMemo(initialData.memo ?? '');
     }
@@ -50,6 +54,7 @@ export default function EventForm({
     if (!title.trim()) errs.title = '제목을 입력해주세요.';
     if (title.trim().length > 100) errs.title = '제목은 100자 이하여야 합니다.';
     if (!eventDate) errs.date = '날짜를 선택해주세요.';
+    if (endDate && endDate < eventDate) errs.end_date = '종료일은 시작일 이후여야 합니다.';
     if (!category) errs.category = '카테고리를 선택해주세요.';
     if (category && !CATEGORY_LIST.includes(category as Category)) errs.category = '유효하지 않은 카테고리입니다.';
     if (memo.length > 500) errs.memo = '메모는 500자 이하여야 합니다.';
@@ -69,6 +74,7 @@ export default function EventForm({
       await onSubmit({
         title: title.trim(),
         date: eventDate,
+        end_date: endDate ? endDate : null,
         category: category as Category,
         memo: memo.trim() || null,
       });
@@ -175,7 +181,7 @@ export default function EventForm({
               htmlFor="event-date"
               style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wl-ink-2, #5C5149)', marginBottom: 6 }}
             >
-              날짜 <span style={{ color: '#E8967C' }}>*</span>
+              시작 날짜 <span style={{ color: '#E8967C' }}>*</span>
             </label>
             <input
               id="event-date"
@@ -195,6 +201,37 @@ export default function EventForm({
             {errors.date && (
               <span id="date-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
                 {errors.date}
+              </span>
+            )}
+          </div>
+
+          {/* 종료 날짜 (선택) — 여행/연속 일정용 */}
+          <div style={{ marginBottom: 14 }}>
+            <label
+              htmlFor="event-end-date"
+              style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wl-ink-2, #5C5149)', marginBottom: 6 }}
+            >
+              종료 날짜 <span style={{ color: 'var(--wl-ink-4, #BFB5AC)', fontWeight: 400 }}>(여러 날이면 입력)</span>
+            </label>
+            <input
+              id="event-end-date"
+              type="date"
+              value={endDate}
+              min={eventDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              aria-invalid={!!errors.end_date}
+              aria-describedby={errors.end_date ? 'end-date-error' : undefined}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '10px 12px', fontSize: 14,
+                border: `1px solid ${errors.end_date ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                borderRadius: 8, background: 'white',
+                color: 'var(--wl-ink, #2B2420)', outline: 'none',
+              }}
+            />
+            {errors.end_date && (
+              <span id="end-date-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+                {errors.end_date}
               </span>
             )}
           </div>

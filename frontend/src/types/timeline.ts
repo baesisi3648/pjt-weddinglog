@@ -23,7 +23,8 @@ export interface Chapter {
 
 export interface TimelineResponse {
   total_photos: number;
-  total_selected: number;
+  /** 백엔드 응답 원본 필드명 (timeline_service.py). */
+  selected_photos: number;
   total_pages_estimated: number;
   chapters: Chapter[];
 }

@@ -24,9 +24,14 @@ describe('App', () => {
     // 렌더링이 에러 없이 완료되면 통과
   });
 
-  it('shows Home page on "/" route', () => {
+  it('shows Landing page on "/" route', () => {
     renderApp();
-    // Header 로고 또는 홈 콘텐츠가 표시되는지 확인
-    expect(screen.getByText(/WeddingLog/i)).toBeInTheDocument();
+    // 랜딩 페이지의 GNB 로고 노출 확인 (텍스트 로고 = WeddingLog)
+    expect(screen.getAllByText(/WeddingLog/i).length).toBeGreaterThan(0);
+  });
+
+  it('shows Home (Layout) on "/home" route', () => {
+    renderApp(['/home']);
+    expect(screen.getAllByText(/WeddingLog/i).length).toBeGreaterThan(0);
   });
 });

@@ -17,7 +17,7 @@ import logging
 from datetime import date
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.event import Event
@@ -74,7 +74,12 @@ def list_by_couple(
 
     if month is not None:
         start, end = _parse_month(month)
-        stmt = stmt.where(Event.date >= start, Event.date <= end)
+        # Multi-day 이벤트 겹침 포함: 이벤트 기간 [date, COALESCE(end_date,date)]
+        # 이 [start, end] 와 교차하면 반환.
+        stmt = stmt.where(
+            Event.date <= end,
+            func.coalesce(Event.end_date, Event.date) >= start,
+        )
 
     if category is not None:
         stmt = stmt.where(Event.category == category)
@@ -149,6 +154,7 @@ def create(
         couple_id=couple_id,
         title=event_in.title,
         date=event_in.date,
+        end_date=event_in.end_date,
         category=event_in.category,
         memo=event_in.memo,
         is_ai_generated=is_ai_generated,

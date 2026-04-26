@@ -13,7 +13,7 @@ import { getTimeline, toggleSelection } from '../services/timeline_api';
 
 const MOCK_TIMELINE = {
   total_photos: 8,
-  total_selected: 5,
+  selected_photos: 5,
   total_pages_estimated: 3,
   chapters: [
     {
@@ -48,7 +48,7 @@ const MOCK_TIMELINE = {
 
 const EMPTY_TIMELINE = {
   total_photos: 0,
-  total_selected: 0,
+  selected_photos: 0,
   total_pages_estimated: 0,
   chapters: [],
 };
@@ -107,11 +107,11 @@ describe('Timeline', () => {
     });
   });
 
-  it('빈 타임라인(chapters=[]) → "아직 사진이 없습니다" 메시지', async () => {
+  it('빈 타임라인(chapters=[]) → "아직 사진이 없어요" 메시지', async () => {
     (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue(EMPTY_TIMELINE);
     renderTimeline();
     await waitFor(() => {
-      expect(screen.getByText(/아직 사진이 없습니다/)).toBeInTheDocument();
+      expect(screen.getByText(/아직 사진이 없어요/)).toBeInTheDocument();
     });
   });
 
@@ -133,7 +133,7 @@ describe('Timeline', () => {
   });
 
   it('selected_photos >= 1 → "앨범으로 만들기" 버튼 활성화', async () => {
-    (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TIMELINE); // total_selected: 5
+    (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TIMELINE); // selected_photos: 5
     renderTimeline();
     await waitFor(() => {
       const btn = screen.getByRole('button', { name: /앨범으로 만들기/ });
@@ -141,8 +141,8 @@ describe('Timeline', () => {
     });
   });
 
-  it('total_selected = 0 → "앨범으로 만들기" 버튼 비활성화', async () => {
-    (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue({ ...MOCK_TIMELINE, total_selected: 0 });
+  it('selected_photos = 0 → "앨범으로 만들기" 버튼 비활성화', async () => {
+    (getTimeline as ReturnType<typeof vi.fn>).mockResolvedValue({ ...MOCK_TIMELINE, selected_photos: 0 });
     renderTimeline();
     await waitFor(() => {
       const btn = screen.getByRole('button', { name: /앨범으로 만들기/ });

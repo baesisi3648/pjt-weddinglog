@@ -158,11 +158,11 @@ describe('Orders', () => {
     });
   });
 
-  it('빈 목록: "아직 주문이 없습니다" 표시', async () => {
+  it('빈 목록: "아직 주문이 없어요" 표시', async () => {
     (listOrders as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     renderOrders();
     await waitFor(() => {
-      expect(screen.getByText('아직 주문이 없습니다')).toBeInTheDocument();
+      expect(screen.getByText(/아직 주문이 없어요/)).toBeInTheDocument();
     });
   });
 

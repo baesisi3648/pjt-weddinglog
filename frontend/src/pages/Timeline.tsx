@@ -30,7 +30,7 @@ export default function Timeline() {
     try {
       const result = await getTimeline(COUPLE_ID);
       setData(result);
-      setSelectedCount(result.total_selected ?? 0);
+      setSelectedCount(result.selected_photos ?? 0);
     } catch (err) {
       const e = err as { message?: string };
       setError(e.message ?? '타임라인을 불러오지 못했습니다.');
@@ -81,20 +81,17 @@ export default function Timeline() {
 
       {/* ── 빈 상태 ── */}
       {!loading && !error && chapters.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant rounded-lg">
-          <span className="material-symbols-outlined text-4xl text-outline-variant mb-4" style={{ fontVariationSettings: "'FILL' 0" }}>
-            photo_library
-          </span>
-          <h2 className="font-headline-sm text-headline-sm text-on-surface mb-2">아직 사진이 없습니다</h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mb-6">
-            일정을 만들고 사진을 추가해보세요.
+        <div className="py-24 border-t border-line">
+          <h2 className="font-display-md text-[28px] text-ink mb-3">아직 사진이 없어요.</h2>
+          <p className="text-[15px] text-ink-muted mb-8 max-w-[420px]">
+            캘린더에 일정을 추가하고 사진을 올리면 자동으로 챕터가 묶입니다.
           </p>
           <Link
             to="/calendar"
-            className="px-6 py-2.5 font-body-sm text-body-sm border border-on-surface text-on-surface rounded hover:bg-surface-dim transition-colors"
+            className="inline-block px-6 py-3 rounded-full bg-coral text-white text-[14px] font-medium hover:opacity-90 transition-opacity"
             style={{ textDecoration: 'none' }}
           >
-            캘린더로 이동
+            캘린더로 가기
           </Link>
         </div>
       )}

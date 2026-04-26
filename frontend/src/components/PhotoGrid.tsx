@@ -58,7 +58,7 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
                   title="삭제"
                   onClick={() => onDelete?.(photo.id)}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+                  <span aria-hidden="true" className="text-[16px] leading-none">×</span>
                 </button>
               </div>
 
@@ -69,7 +69,6 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
                   type="button"
                   onClick={() => setCaptionOpenId(captionOpenId === photo.id ? null : photo.id)}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>auto_awesome</span>
                   AI 캡션 추천
                 </button>
                 <div className="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">

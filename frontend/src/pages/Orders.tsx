@@ -136,15 +136,9 @@ export default function Orders() {
 
       {/* 빈 상태 */}
       {!loading && !error && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-outline-variant rounded-lg bg-surface/50">
-          <span
-            className="material-symbols-outlined text-4xl text-outline-variant mb-4"
-            style={{ fontVariationSettings: "'FILL' 0" }}
-          >
-            inventory_2
-          </span>
-          <h2 className="font-headline-sm text-on-surface mb-2" style={{ fontSize: '24px' }}>
-            {activeTab === 'all' ? '아직 주문이 없습니다' : `${TABS.find((t) => t.id === activeTab)?.label} 주문이 없습니다`}
+        <div className="py-24 border-t border-line">
+          <h2 className="font-display-md text-[28px] text-ink mb-3">
+            {activeTab === 'all' ? '아직 주문이 없어요.' : `${TABS.find((t) => t.id === activeTab)?.label} 주문이 없어요.`}
           </h2>
           {activeTab === 'all' && (
             <>
@@ -230,8 +224,8 @@ export default function Orders() {
                       title="주문 콘텐츠·메타데이터 ZIP 다운로드 (파트너 인계용)"
                       data-testid={`download-${order.id}`}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
-                      데이터 다운로드
+                      <span aria-hidden="true">↓</span>
+                      <span>데이터 다운로드</span>
                     </a>
 
                     {/* 상태 전이 버튼 */}

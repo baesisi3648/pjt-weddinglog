@@ -34,10 +34,13 @@ def _seed(db: Session, cid: str, wd: date = date(2026, 10, 25)) -> str:
     return cid
 
 
-def test_ai_checklist_fallback_persists_15_events(
+def test_ai_checklist_fallback_persists_events(
     client: TestClient, db_session: Session
 ) -> None:
-    """키 없을 때 폴백 — 15개 이벤트 생성 + DB 저장."""
+    """키 없을 때 폴백 — 사전정의 템플릿 이벤트 생성 + DB 저장."""
+    from app.services.ai_service import _TEMPLATES
+    expected_count = len(_TEMPLATES)
+
     cid = _seed(db_session, "cpl_ai_fb", wd=date(2026, 10, 25))
 
     r = client.post(
@@ -47,20 +50,19 @@ def test_ai_checklist_fallback_persists_15_events(
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["source"] == "template"
-    assert len(body["events"]) == 15
+    assert len(body["events"]) == expected_count
 
     for ev in body["events"]:
         assert ev["couple_id"] == cid
         assert ev["is_ai_generated"] is True
         assert ev["id"].startswith("evt_")
 
-    # DB 에 실제로 저장되었는지 확인
     stored = (
         db_session.query(Event)
         .filter(Event.couple_id == cid)
         .all()
     )
-    assert len(stored) == 15
+    assert len(stored) == expected_count
 
 
 def test_ai_checklist_uses_couple_wedding_date_when_omitted(
@@ -91,7 +93,8 @@ def test_ai_checklist_dry_run_does_not_persist(
     assert r.status_code == 200
     body = r.json()
     assert body["source"] == "template"
-    assert len(body["events"]) == 15
+    from app.services.ai_service import _TEMPLATES
+    assert len(body["events"]) == len(_TEMPLATES)
 
     # id 가 None/빈 문자열이거나 DB 미저장 상태일 수 있다.
     stored = (
