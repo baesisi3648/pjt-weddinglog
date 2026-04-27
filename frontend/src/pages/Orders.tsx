@@ -17,12 +17,14 @@ const TABS: { id: FilterTab; label: string }[] = [
   { id: 'pending', label: '대기 중' },
   { id: 'processing', label: '제작 중' },
   { id: 'completed', label: '완료' },
+  { id: 'cancelled', label: '취소' },
 ];
 
 const STATUS_STYLES: Record<OrderStatus, { dot: string; bg: string; border: string; text: string; label: string }> = {
   pending:    { dot: '#d7c2bd', bg: 'transparent', border: '#d7c2bd',  text: '#85736f', label: '대기 중' },
   processing: { dot: '#e89f8e', bg: 'transparent', border: '#85736f',  text: '#1f1b12', label: '제작 중' },
   completed:  { dot: '#85736f', bg: '#ebe1d2',     border: '#85736f',  text: '#524340', label: '완료' },
+  cancelled:  { dot: '#B5AEA0', bg: 'transparent', border: '#d7c2bd',  text: '#B5AEA0', label: '취소' },
 };
 
 function formatDate(iso: string): string {
@@ -231,13 +233,27 @@ export default function Orders() {
                     {/* 상태 전이 버튼 */}
                     <div className="flex items-center gap-3">
                       {order.status === 'pending' && (
-                        <button
-                          className="font-body-sm text-body-sm border border-primary-container text-on-surface px-4 py-2 rounded hover:bg-primary-container/10 transition-colors disabled:opacity-50"
-                          disabled={isPatching}
-                          onClick={() => handleStatusTransition(order.id, 'processing')}
-                        >
-                          {isPatching ? '처리 중...' : '제작 시작'}
-                        </button>
+                        <>
+                          {/* 사용자 취소 — pending 일 때만 가능 (제작 시작 후엔 불가) */}
+                          <button
+                            className="font-body-sm text-body-sm border border-line text-ink-muted px-4 py-2 rounded hover:border-error hover:text-error transition-colors disabled:opacity-50"
+                            disabled={isPatching}
+                            onClick={() => {
+                              if (window.confirm('이 주문을 취소할까요? 취소 후엔 되돌릴 수 없어요.')) {
+                                handleStatusTransition(order.id, 'cancelled');
+                              }
+                            }}
+                          >
+                            취소
+                          </button>
+                          <button
+                            className="font-body-sm text-body-sm border border-primary-container text-on-surface px-4 py-2 rounded hover:bg-primary-container/10 transition-colors disabled:opacity-50"
+                            disabled={isPatching}
+                            onClick={() => handleStatusTransition(order.id, 'processing')}
+                          >
+                            {isPatching ? '처리 중...' : '제작 시작'}
+                          </button>
+                        </>
                       )}
                       {order.status === 'processing' && (
                         <button
@@ -255,6 +271,11 @@ export default function Orders() {
                         >
                           완료
                         </button>
+                      )}
+                      {order.status === 'cancelled' && (
+                        <span className="font-body-sm text-body-sm text-ink-muted px-4 py-2 italic">
+                          취소된 주문
+                        </span>
                       )}
                     </div>
                   </div>

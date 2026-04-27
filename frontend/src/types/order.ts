@@ -5,7 +5,7 @@ import type { AlbumLayout } from './album';
 
 export type OrderFormat = 'SQUARE' | 'A4';
 export type OrderCoverType = 'HARD' | 'SOFT';
-export type OrderStatus = 'pending' | 'processing' | 'completed';
+export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 
 export interface Order {
   id: string;

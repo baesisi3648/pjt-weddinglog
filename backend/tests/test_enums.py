@@ -24,7 +24,9 @@ EXPECTED_CATEGORY_VALUES: list[str] = [
 
 EXPECTED_ORDER_FORMAT_VALUES: list[str] = ["SQUARE", "A4"]
 EXPECTED_COVER_TYPE_VALUES: list[str] = ["HARD", "SOFT"]
-EXPECTED_ORDER_STATUS_VALUES: list[str] = ["pending", "processing", "completed"]
+EXPECTED_ORDER_STATUS_VALUES: list[str] = [
+    "pending", "processing", "completed", "cancelled",
+]
 
 
 class TestCategoryEnum:
@@ -59,8 +61,9 @@ class TestCoverTypeEnum:
 
 
 class TestOrderStatusEnum:
-    def test_order_status_has_three_values(self) -> None:
-        assert len(list(OrderStatus)) == 3
+    def test_order_status_has_four_values(self) -> None:
+        # pending / processing / completed / cancelled (Council M6 + 사용자 취소).
+        assert len(list(OrderStatus)) == 4
 
     def test_order_status_values_match_spec(self) -> None:
         actual = [s.value for s in OrderStatus]

@@ -54,9 +54,11 @@ class OrderStatus(str, Enum):
     """주문 상태 (소문자, 일방향 전이).
 
     resources.yaml > orders.constraints.status_transition 참조.
-    pending → processing → completed (역방향 불가).
+    · pending → processing → completed (정방향)
+    · pending → cancelled (사용자 취소, 제작 전에만 가능)
     """
 
     pending = "pending"
     processing = "processing"
     completed = "completed"
+    cancelled = "cancelled"

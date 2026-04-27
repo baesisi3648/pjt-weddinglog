@@ -209,9 +209,9 @@ export default function Landing() {
               함께 펼쳐집니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              결혼식에서 받은 축하 메시지를 책 첫 장에. 가족이 책을 펼치면
-              그날의 마음이 손글씨로 다시 만나집니다. 우측 상단 QR을 스캔하면
-              영상 메시지로도 이어져요.
+              결혼식에서 받은 축하 메시지를 책 첫 장에. 책을 펼치면
+              그날의 축하 메시지들이 나타납니다. 우측 상단 QR을 스캔하면
+              메시지들을 확인할 수 있어요.
             </p>
           </div>
         </div>
@@ -306,11 +306,8 @@ export default function Landing() {
 
       {/* ── Footer ───────────────────────────────────────────────── */}
       <footer className="py-10 border-t border-line">
-        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 text-center">
           <p className="text-[13px] text-ink-muted">© 2026 WeddingLog</p>
-          <p className="text-[13px] text-ink-muted">
-            Powered by FastAPI · React · OpenAI
-          </p>
         </div>
       </footer>
     </div>

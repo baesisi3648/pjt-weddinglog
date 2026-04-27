@@ -20,10 +20,14 @@ class OrderStateMachine:
     """주문 상태 전이 규칙."""
 
     # 허용된 전이: 현재 상태 → 목표 상태 집합.
+    # · pending → processing → completed (정방향)
+    # · pending → cancelled (사용자 취소 — 제작 시작 전에만 가능)
+    # · processing/completed → cancelled (불가)
     ALLOWED_TRANSITIONS: dict[str, set[str]] = {
-        "pending": {"processing"},
+        "pending": {"processing", "cancelled"},
         "processing": {"completed"},
         "completed": set(),
+        "cancelled": set(),
     }
 
     @classmethod

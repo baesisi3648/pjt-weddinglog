@@ -87,9 +87,10 @@ export default function BlessingsPage({
             }}
           >
             <span className="block">{m.text}</span>
+            {/* 이름은 Pretendard 산세리프(font-body)로 — 손글씨 메시지와 분리 */}
             <span
-              className="block font-hand-en text-[10px] opacity-85 mt-0.5"
-              style={{ letterSpacing: '0.5px' }}
+              className="block font-body text-[10px] opacity-85 mt-1 not-italic"
+              style={{ letterSpacing: '0' }}
             >
               — {m.name}
             </span>

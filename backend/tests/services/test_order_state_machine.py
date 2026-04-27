@@ -62,11 +62,33 @@ class TestOrderStateMachineEdgeCases:
 
     def test_unknown_current_raises(self) -> None:
         with pytest.raises(ValueError, match="Unknown current status"):
-            OrderStateMachine.transition("cancelled", "completed")
+            OrderStateMachine.transition("draft", "completed")
 
     def test_completed_is_terminal(self) -> None:
         # completed 에서 어느 상태로도 전이 불가.
         assert OrderStateMachine.ALLOWED_TRANSITIONS["completed"] == set()
+
+    def test_cancelled_is_terminal(self) -> None:
+        # cancelled 에서 어느 상태로도 전이 불가 (재개 불가).
+        assert OrderStateMachine.ALLOWED_TRANSITIONS["cancelled"] == set()
+
+    def test_pending_to_cancelled_ok(self) -> None:
+        """사용자 취소 — pending 에서만 허용."""
+        assert OrderStateMachine.can_transition("pending", "cancelled") is True
+        OrderStateMachine.transition("pending", "cancelled")  # 예외 없음
+
+    def test_processing_to_cancelled_fails(self) -> None:
+        """제작 시작 후엔 취소 불가 (인쇄 비용 발생 가정)."""
+        assert (
+            OrderStateMachine.can_transition("processing", "cancelled") is False
+        )
+        with pytest.raises(ValueError, match="Invalid transition"):
+            OrderStateMachine.transition("processing", "cancelled")
+
+    def test_completed_to_cancelled_fails(self) -> None:
+        """완료된 주문은 취소 불가."""
+        with pytest.raises(ValueError, match="Invalid transition"):
+            OrderStateMachine.transition("completed", "cancelled")
 
     def test_processing_to_pending_fails(self) -> None:
         # 추가 역방향 — can_transition=False 확인.

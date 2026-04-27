@@ -7,9 +7,9 @@ import type { Photo } from '../types/photo';
 import BlessingsPage from './BlessingsPage';
 
 // 가로 앨범(landscape) — 결혼 양장본 정통 비율 (3:2).
-// 양면 펼침 시 1080 x 360, 데스크톱 1280px 컨테이너에서 자연스럽게 fit.
-const PAGE_W = 540;
-const PAGE_H = 380;
+// 1.5배 확대 (사용자 가독성 ↑) — 양면 펼침 시 1620 x 570.
+const PAGE_W = 810;
+const PAGE_H = 570;
 
 interface Props {
   layout: AlbumLayout;
@@ -194,10 +194,10 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
           className=""
           style={{}}
           startPage={0}
-          minWidth={380}
-          maxWidth={620}
-          minHeight={280}
-          maxHeight={460}
+          minWidth={500}
+          maxWidth={900}
+          minHeight={350}
+          maxHeight={640}
           startZIndex={0}
           autoSize={true}
           usePortrait={false}
