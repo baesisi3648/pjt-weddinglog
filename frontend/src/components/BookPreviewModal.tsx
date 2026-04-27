@@ -4,16 +4,24 @@ import React, { forwardRef, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { AlbumLayout, AlbumPage } from '../types/album';
 import type { Photo } from '../types/photo';
+import type { OrderFormat } from '../types/order';
 import BlessingsPage from './BlessingsPage';
 
-// 가로 앨범(landscape) — 결혼 양장본 정통 비율 (3:2).
-// 1.5배 확대 (사용자 가독성 ↑) — 양면 펼침 시 1620 x 570.
-const PAGE_W = 810;
-const PAGE_H = 570;
+// 결혼앨범 비율 — 한국 시장 표준.
+//  • 정사각형 1:1 (30×30cm)        — 한국 스튜디오 클래식.
+//  • 가로 양장본 3:2 (35×23cm)     — 본식·신혼여행 와이드 컷에 강함.
+const FORMAT_DIMENSIONS: Record<OrderFormat, { width: number; height: number; label: string; ratio: string }> = {
+  SQUARE: { width: 600, height: 600, label: '정사각형', ratio: '1:1' },
+  A4:     { width: 810, height: 540, label: '가로 양장본', ratio: '3:2' },
+};
 
 interface Props {
   layout: AlbumLayout;
   photos: Photo[];
+  /** 현재 선택된 판형 — 미리보기 비율을 결정한다. */
+  format: OrderFormat;
+  /** 미리보기 안에서 판형 변경 → 부모(OrderCheckout) 의 format 동기화. */
+  onChangeFormat: (next: OrderFormat) => void;
   /** 축하 메시지 페이지 메인 사진 (사용자가 교체했으면 그 URL, 아니면 기본값 사용) */
   blessingMainPhoto?: string;
   onClose: () => void;
@@ -26,13 +34,13 @@ function getPhoto(photos: Photo[], id: string): Photo | undefined {
 // ─── 페이지 1장 (책 1면) ───────────────────────────────────────────────────
 const PageView = forwardRef<
   HTMLDivElement,
-  { children?: React.ReactNode; className?: string }
->(function PageView({ children, className = '' }, ref) {
+  { children?: React.ReactNode; className?: string; width: number; height: number }
+>(function PageView({ children, className = '', width, height }, ref) {
   return (
     <div
       ref={ref}
       className={`bg-bg ${className}`}
-      style={{ width: PAGE_W, height: PAGE_H }}
+      style={{ width, height }}
     >
       {children}
     </div>
@@ -135,7 +143,11 @@ type BookItem =
   | { kind: 'page'; page: AlbumPage };
 
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
-export default function BookPreviewModal({ layout, photos, blessingMainPhoto, onClose }: Props) {
+export default function BookPreviewModal({ layout, photos, format, onChangeFormat, blessingMainPhoto, onClose }: Props) {
+  const dim = FORMAT_DIMENSIONS[format];
+  const PAGE_W = dim.width;
+  const PAGE_H = dim.height;
+
   // 책 페이지 평탄화 — 빈 페이지 패리티 제거.
   // 각 챕터: [텍스트 인트로 페이지] + [T5 커버 사진(P.1)] + [T1 본문 사진들...]
   // T5 페이지를 건너뛰지 않음 — P.1 사진이 손실되지 않도록.
@@ -164,13 +176,37 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {/* 상단 바 */}
-      <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-center justify-between px-6 py-4 gap-4">
         <div className="text-white">
           <div className="font-mono text-[10px] tracking-[0.2em] opacity-70">PREVIEW</div>
           <div className="font-display-md text-[18px]" style={{ fontFamily: 'Fraunces, serif' }}>
             앨범 미리보기
           </div>
         </div>
+
+        {/* 판형 토글 — 미리보기 안에서 즉시 비율 전환 */}
+        <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-1">
+          {(['SQUARE', 'A4'] as const).map((opt) => {
+            const meta = FORMAT_DIMENSIONS[opt];
+            const active = format === opt;
+            return (
+              <button
+                key={opt}
+                onClick={() => onChangeFormat(opt)}
+                aria-pressed={active}
+                className={`px-4 py-1.5 rounded-full text-[12px] transition-colors ${
+                  active
+                    ? 'bg-white text-ink font-medium'
+                    : 'text-white/80 hover:text-white'
+                }`}
+              >
+                {meta.label}
+                <span className="ml-1.5 font-mono text-[10px] opacity-60">{meta.ratio}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <button
           onClick={onClose}
           aria-label="닫기"
@@ -180,9 +216,10 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
         </button>
       </div>
 
-      {/* 책 본체 */}
+      {/* 책 본체 — format 변경 시 key 로 flipbook 재마운트 (size 동적 대응) */}
       <div className="flex-1 flex items-center justify-center px-4 py-2 overflow-hidden">
         <HTMLFlipBook
+          key={format}
           width={PAGE_W}
           height={PAGE_H}
           size="fixed"
@@ -194,10 +231,10 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
           className=""
           style={{}}
           startPage={0}
-          minWidth={500}
-          maxWidth={900}
-          minHeight={350}
-          maxHeight={640}
+          minWidth={Math.round(PAGE_W * 0.6)}
+          maxWidth={Math.round(PAGE_W * 1.1)}
+          minHeight={Math.round(PAGE_H * 0.6)}
+          maxHeight={Math.round(PAGE_H * 1.1)}
           startZIndex={0}
           autoSize={true}
           usePortrait={false}
@@ -207,8 +244,8 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
           showPageCorners={true}
           disableFlipByClick={false}
         >
-          {/* 책 앞표지 — 흰 바탕 + 검은 글씨, 가운데 정렬 (가로 비율) */}
-          <PageView className="bg-white text-ink">
+          {/* 책 앞표지 — 흰 바탕 + 검은 글씨, 가운데 정렬 */}
+          <PageView width={PAGE_W} height={PAGE_H} className="bg-white text-ink">
             <div className="w-full h-full flex flex-col justify-center items-center text-center px-8 py-6">
               <div className="font-mono text-[9px] tracking-[0.4em] text-coral mb-6">
                 WEDDING ALBUM
@@ -230,8 +267,8 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
           </PageView>
 
           {/* 축복 메시지 첫 페이지 — 좌측 빈 면 + 우측 본식 사진 + 손글씨 */}
-          <PageView className="bg-bg" />
-          <PageView>
+          <PageView width={PAGE_W} height={PAGE_H} className="bg-bg" />
+          <PageView width={PAGE_W} height={PAGE_H}>
             <BlessingsPage variant="book" mainPhoto={blessingMainPhoto} />
           </PageView>
 
@@ -239,7 +276,7 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
           {flatPages.map((item, idx) => {
             if (item.kind === 'cover') {
               return (
-                <PageView key={idx}>
+                <PageView key={idx} width={PAGE_W} height={PAGE_H}>
                   <ChapterCoverPage
                     chapterNumber={item.chapterNumber}
                     chapterTitle={item.chapterTitle}
@@ -248,14 +285,14 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
               );
             }
             return (
-              <PageView key={idx}>
+              <PageView key={idx} width={PAGE_W} height={PAGE_H}>
                 <AlbumPageContent page={item.page} photos={photos} />
               </PageView>
             );
           })}
 
-          {/* 책 뒤표지 — 흰 바탕 + 검은 글씨, 미니멀 (가로 비율) */}
-          <PageView className="bg-white text-ink">
+          {/* 책 뒤표지 — 흰 바탕 + 검은 글씨, 미니멀 */}
+          <PageView width={PAGE_W} height={PAGE_H} className="bg-white text-ink">
             <div className="w-full h-full flex flex-col justify-center items-center text-center px-8 py-6">
               <div className="w-10 h-px bg-coral mb-5" />
               <div
@@ -278,7 +315,7 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
       </div>
 
       <div className="text-center text-white/60 text-[11px] pb-4">
-        모서리를 끌거나 클릭해 페이지를 넘기세요
+        모서리를 끌거나 클릭해 페이지를 넘기세요 · 현재 {dim.label} ({dim.ratio})
       </div>
     </div>
   );

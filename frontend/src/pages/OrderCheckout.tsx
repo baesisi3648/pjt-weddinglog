@@ -412,8 +412,8 @@ export default function OrderCheckout() {
               <h3 className="font-body-md text-on-surface font-medium mb-sm">판형</h3>
               <div className="grid grid-cols-2 gap-gutter">
                 {([
-                  { value: 'SQUARE' as OrderFormat, label: '정사각형', desc: '인스타그램 감성의 아담한 사이즈.', note: '+0원' },
-                  { value: 'A4' as OrderFormat, label: 'A4 비율', desc: '클래식한 앨범 느낌을 원하신다면.', note: '+30,000원' },
+                  { value: 'SQUARE' as OrderFormat, label: '정사각형 (1:1)', desc: '30×30cm. 한국 스튜디오 클래식.', note: '+0원' },
+                  { value: 'A4' as OrderFormat, label: '가로 양장본 (3:2)', desc: '35×23cm. 본식 컷이 살아나는 와이드.', note: '+30,000원' },
                 ] as const).map((opt) => (
                   <button
                     key={opt.value}
@@ -743,6 +743,8 @@ export default function OrderCheckout() {
         <BookPreviewModal
           layout={albumLayout}
           photos={previewPhotos}
+          format={format}
+          onChangeFormat={setFormat}
           blessingMainPhoto={blessingMainPhotoUrl}
           onClose={() => setBookPreviewOpen(false)}
         />

@@ -33,7 +33,7 @@ function formatDate(iso: string): string {
 }
 
 function formatSpec(order: Order): string {
-  const fmtMap = { SQUARE: '정사각형', A4: 'A4 비율' };
+  const fmtMap = { SQUARE: '정사각형', A4: '가로 양장본' };
   const coverMap = { HARD: '하드커버', SOFT: '소프트커버' };
   return `${fmtMap[order.format]} · ${coverMap[order.cover_type]} · ${order.quantity}권`;
 }
