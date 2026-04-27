@@ -175,13 +175,23 @@ OPENAI_API_KEY=sk-...
 
 ---
 
-## 5. AI 사용 — 폴백 전략
+## 5. AI 도구 사용 내역
+
+### 5.1 개발 과정에서 사용한 AI 도구
+
+| AI 도구 | 활용 단계 | 활용 내용 |
+|---------|----------|----------|
+| **Claude Code (Opus 4.7)** | 기획 + 빌드 메인 | 9개 기획 문서 작성, 화면 명세, 태스크 분해, 백엔드/프론트 구현, 테스트 작성, 디버깅 (총 50 커밋의 메인 페어 프로그래머) |
+| **가상 패널 리뷰** (Claude 기반) | 기획 보강 | CTO/UX/Security 3 인 관점으로 기획서 검토 → OrderStateMachine 별도 분리, photo_id unguessable, magic number 검증 등 *실무 디테일* 보강 |
+| **Google Stitch MCP** | 디자인 단계 | 6개 화면(Home/Calendar/EventDetail/Timeline/OrderCheckout/Orders) HTML/JSX 목업 생성 → React 18 포팅 입력으로 사용 |
+| **OpenAI GPT-4o-mini** | 앱 내 런타임 기능 | 체크리스트 자동 생성, 사진 캡션 추천, 앨범 레이아웃 자동 구성 (모두 폴백 짝지어둠) |
+| **nano_banana** | 더미 데이터 | 시드용 결혼 준비 사진 123장 생성 (한강 피크닉 / 발리 신혼여행 등 시나리오별) |
+
+### 5.2 앱 내장 AI 폴백 전략
 
 > "OpenAI 키가 있는 심사자만 좋은 경험을 받게 하면 안 된다."
 
 앱 시작 시 `OPENAI_API_KEY` 유효성을 1회 체크 → `app.state.openai_available: bool` 플래그 보관.
-
-### 3가지 AI 기능 모두 폴백 보유
 
 | 기능 | AI 응답 | 폴백 |
 |------|---------|------|
@@ -189,15 +199,16 @@ OPENAI_API_KEY=sk-...
 | 캡션 추천 | GPT-4o-mini 가 3개 후보 | 카테고리별 3개 사전 캡션 (9 카테고리) |
 | 앨범 자동 구성 | GPT-4o-mini 가 챕터/페이지 레이아웃 설계 | T5 챕터 커버 + 나머지 T1 한 페이지 한 장 |
 
-### 투명성
+### 5.3 투명성
 
 API 응답에 `source: "ai" | "template"` 포함. UI는 "자동 추천" / "기본 템플릿" 배지로 노출.
 
-### 안전장치
+### 5.4 안전장치
 
-- AI 호출은 `asyncio.to_thread + asyncio.wait_for(timeout=30s)` 로 보호
-- AI 응답 JSON 파싱 실패 / 스키마 불일치 / 타임아웃 → 자동 폴백 진입
-- 앨범 구성: AI가 T2/T3/T4 생성 시 검증에서 거부 → 폴백 (T1/T5만 허용)
+- **OpenAI 클라이언트**: `AsyncOpenAI()` async-native — 이벤트 루프 비차단, 100명 동시 호출에도 스레드 풀 부담 없음
+- **타임아웃**: SDK timeout 파라미터로 30초 강제 → 응답 지연 시 즉시 폴백 진입
+- **응답 검증**: JSON 파싱 실패 / 스키마 불일치 / `source` 값 미존재 → 자동 폴백
+- **앨범 구성 추가 검증**: AI 가 T2/T3/T4 (한 페이지 다중 사진) 반환 시 정통 양장본 톤 위반으로 거부 → 폴백 (T1/T5 만 허용)
 
 ---
 
