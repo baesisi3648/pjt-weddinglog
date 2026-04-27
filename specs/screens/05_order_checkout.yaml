@@ -69,10 +69,10 @@ components:
       - fieldgroup: "format_select"
         label: "'판형'"
         options:
-          - radio_square: "정사각형 (21×21cm) - 180,000원/권"
+          - radio_square: "정사각형 (1:1, 30×30cm) - 150,000원/권"
             value: SQUARE
             default: true
-          - radio_a4: "A4 (21×29.7cm) - 200,000원/권"
+          - radio_a4: "가로 양장본 (3:2, 35×23cm) - 180,000원/권"
             value: A4
         on_change: "price_total 재계산"
 
@@ -99,10 +99,10 @@ components:
       - section: "price_summary"
         layout: "left-align, larger fonts"
         content:
-          - line_base: "1권 기본가: 180,000원 (or 200,000)"
-          - line_cover: "표지 추가: +20,000원 (if HARD)"
-          - line_total: "총 가격: 600,000원 (or calculated)"
-          - note: "'3권 주동 시 총 60만원입니다. 부모님께도 드릴 수 있네요!' (secondary color)"
+          - line_base: "1권 기본가: 150,000원 (정사각형) / 180,000원 (가로 양장본)"
+          - line_cover: "표지 추가: +20,000원 (if HARD, 판형 무관 균일)"
+          - line_total: "총 가격: 510,000원 (정사각형 + 하드커버 3권 예시)"
+          - note: "'3권 주문 시 총 51만원입니다. 부모님께도 드릴 수 있네요!' (secondary color)"
 
       - button_prev: "'이전' (gray, 50% width)"
       - button_next: "'다음' (coral-500, 50% width)"
@@ -136,7 +136,7 @@ components:
           - line: "판형: 정사각형"
           - line: "표지: 하드커버"
           - line: "수량: 3권"
-          - line: "총 가격: 600,000원"
+          - line: "총 가격: 510,000원"
 
       - button_prev: "'이전' (gray, 50%)"
       - button_next: "'주문하기' (coral-500, 50%)"
@@ -165,11 +165,11 @@ components:
       - order_summary:
           - title: "'주문 요약'"
           - lines:
-              - "판형: 정사각형 21×21cm"
+              - "판형: 정사각형 30×30cm"
               - "표지: 하드커버"
               - "수량: 3권"
               - "선택 사진: 45장"
-              - "총 가격: 600,000원"
+              - "총 가격: 510,000원"
 
       - button_orders_page: "'주문 관리 페이지로' (coral-500, full-width)"
         action: "navigate to /orders"
@@ -241,9 +241,9 @@ tests:
   - name: "Step 2 가격 계산"
     when: "수량을 1에서 3으로 변경"
     then:
-      - "base_price: 180,000 (SQUARE)"
-      - "cover_premium: 0 (SOFT) → 20,000 (HARD)"
-      - "total = (180,000 + cover_premium) * 3"
+      - "base_price: 150,000 (SQUARE) / 180,000 (A4)"
+      - "cover_premium: 0 (SOFT) → 20,000 (HARD, 판형 무관)"
+      - "total = (base_price + cover_premium) * 3"
       - "가격 요약 즉시 업데이트"
 
   - name: "Step 3 폼 검증"

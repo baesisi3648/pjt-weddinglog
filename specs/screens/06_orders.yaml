@@ -90,7 +90,7 @@ components:
                   - text: "'수령인: 박민준' (Pretendard 14px)"
 
               - section_price:
-                  - text: "'총 가격: 600,000원' (Pretendard 18px, bold, coral-500)"
+                  - text: "'총 가격: 510,000원' (Pretendard 18px, bold, coral-500)"
 
               - section_actions:
                   layout: "horizontal, gap-2"
@@ -124,7 +124,7 @@ order_detail_modal:
         - field_format: "'정사각형 (21×21cm)'"
         - field_cover: "'하드커버'"
         - field_quantity: "'3권'"
-        - field_price: "'총 가격: 600,000원' (bold, coral-500)"
+        - field_price: "'총 가격: 510,000원' (bold, coral-500)"
 
     - section_order_status:
         - title: "'주문 상태'"

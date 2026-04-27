@@ -474,20 +474,20 @@ GET /api/couples/{couple_id}/timeline
 {
   "format": {
     "value": "SQUARE",
-    "label": "정사각형 (21x21cm)",
-    "price_per_book": 180000
+    "label": "정사각형 (1:1, 30×30cm)",
+    "price_per_book": 150000
   },
   "cover_type": {
     "value": "HARD",
     "label": "하드커버",
-    "price_per_book": 20000  // 추가 비용
+    "price_per_book": 20000  // 추가 비용 (판형 무관, 균일)
   },
   "quantity": 3,
-  "base_price": 180000,  // 1권 기본가
+  "base_price": 150000,  // 1권 기본가 (정사각형 기준)
   "cover_premium": 20000,  // 하드커버 추가
-  "total_price_per_book": 200000,  // base + cover
-  "total_price": 600000,  // per_book * quantity
-  "message": "3권 주문 시 총 60만원입니다. 부모님께도 드릴 수 있네요!"
+  "total_price_per_book": 170000,  // base + cover
+  "total_price": 510000,  // per_book * quantity
+  "message": "3권 주문 시 총 51만원입니다. 부모님께도 드릴 수 있네요!"
 }
 ```
 
@@ -567,7 +567,7 @@ GET /api/couples/{couple_id}/orders
       "status": "pending",
       "format": "SQUARE",
       "quantity": 3,
-      "total_price": 600000,
+      "total_price": 510000,
       "recipient_name": "박민준"
     },
     ...
@@ -604,7 +604,7 @@ GET /api/orders/{order_id}
   "recipient_name": "박민준",
   "recipient_phone": "010-1234-5678",
   "recipient_address": "서울시 강남구 테헤란로 123",
-  "total_price": 600000,
+  "total_price": 510000,
   "status": "pending",
   "status_updated_at": "2026-04-28T14:00:00Z",
   "created_at": "2026-04-28T14:00:00Z"

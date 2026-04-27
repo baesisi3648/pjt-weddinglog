@@ -1515,7 +1515,7 @@
 - REFACTOR: 통화 포맷
 
 **Acceptance Criteria**:
-- [ ] base_price: SQUARE 180000, A4 200000 (임시)
+- [ ] base_price: SQUARE 150000, A4 180000
 - [ ] cover_surcharge: HARD +20000, SOFT 0
 - [ ] total_price_per_book = base + surcharge
 - [ ] total_price = per_book * quantity
