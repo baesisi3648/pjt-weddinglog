@@ -2,7 +2,7 @@
 
 > 결혼 준비 과정의 일정·사진·축하 메시지를 한 권의 책으로 묶어주는 서비스.
 
-[![Tests](https://img.shields.io/badge/tests-177%20frontend%20%2F%20BE%20full-green)]() [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%2018-blue)]() [![Docker](https://img.shields.io/badge/run-docker--compose%20up-success)]()
+[![Tests](https://img.shields.io/badge/tests-280%20BE%20%2F%20177%20FE-green)]() [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%2018-blue)]() [![Docker](https://img.shields.io/badge/run-docker--compose%20up-success)]()
 
 ---
 
@@ -19,7 +19,7 @@ WeddingLog 는 사용자가 **6개월 ~ 1년에 걸친 결혼 준비 과정**을
 ```
 홈 (D-day 카운트)
    ↓
-캘린더 — 일정 추가 (또는 자동 체크리스트로 15개 한 번에)
+캘린더 — 일정 추가 (또는 자동 체크리스트로 24개 한 번에)
    ↓
 일정 상세 — 사진 업로드 + 캡션
    ↓
@@ -52,7 +52,7 @@ docker-compose up
 
 - 백엔드 FastAPI (포트 **8000**)
 - 프론트엔드 React (포트 **3000**)
-- SQLite 자동 시딩 — 더미 커플 "성우 ♥ 은비" + 24개 일정 + 41장 사진 + 9개 축하 메시지
+- SQLite 자동 시딩 — 더미 커플 "철수 ♥ 영희" (wedding_date 2026-03-14) + 24개 일정 + 123장 사진 + 9개 축하 메시지 + 샘플 주문 1건
 - 헬스체크 통과 후 프론트엔드가 백엔드를 의존성으로 기동
 
 브라우저에서 **http://localhost:3000** 접속.
@@ -72,8 +72,8 @@ WEB_PORT=3100   # 3000 충돌 시
 
 | 기능 | OpenAI 키 있음 | OpenAI 키 없음 |
 |------|---------------|----------------|
-| AI 체크리스트 자동 생성 | GPT-4o-mini 가 일정 생성 | 사전 정의 15개 일정 (D-180 ~ D+14) |
-| 사진 캡션 추천 | GPT-4o-mini 가 3개 후보 | 카테고리별 3개 사전 캡션 |
+| AI 체크리스트 자동 생성 | GPT-4o-mini 가 일정 생성 | 사전 정의 24개 일정 (D-360 ~ D+14) |
+| 사진 캡션 추천 | GPT-4o-mini 가 3개 후보 | 카테고리별 3개 사전 캡션 (9개 카테고리 × 3 = 27개 풀) |
 | 앨범 자동 구성 | GPT-4o-mini 가 레이아웃 설계 | 시간순 챕터 + T1 한 페이지 한 장 |
 
 UI에는 **"자동 추천"** vs **"기본 템플릿"** 배지로 출처가 표시됩니다.
@@ -85,18 +85,18 @@ OPENAI_API_KEY=sk-...
 
 ### 시연 시나리오 (Lv1 MVP E2E)
 
-1. http://localhost:3000 접속 → 홈 페이지 D-day 카운트
+1. http://localhost:3000 접속 → 랜딩 페이지 → "둘러보기" 클릭 → 홈 페이지 (철수 ♥ 영희, D-day 카운트)
 2. **캘린더** 클릭 → 24개 일정이 월간/리스트 뷰로 표시 (스튜디오, 본식, 신혼여행 포함)
-3. 다일 일정(예: 발리 신혼여행) 클릭 → 사진 갤러리
+3. 다일 일정(예: 발리 신혼여행) 클릭 → 일정 상세 + 사진 갤러리
 4. 캡션 더블클릭 → 인라인 편집
-5. **타임라인** 클릭 → 5개 챕터 폴라로이드 그리드
-6. 챕터 제목 클릭 → "함께 쌓아온 날들" 을 "우리만의 시작" 으로 수정
-7. 사진 50장 이상 선택 후 **앨범으로 만들기** → 사진 정리 모달
+5. **타임라인** 클릭 → 5개 챕터 폴라로이드 그리드 (총 123장)
+6. 챕터 제목 클릭 → "함께 쌓아온 날들" 을 원하는 제목으로 수정 (localStorage 저장)
+7. **앨범으로 만들기** 클릭 → 사진 정리 모달 (60/70/80/90장 프리셋)
 8. **70장 추천 적용** → 자동 큐레이션
-9. **다음** → 앨범 미리보기 + AlbumEditor 직접 편집
-10. **책으로 미리보기** → 양면 펼침 책 모션, 토글로 1:1 ↔ 3:2 비율 전환
+9. **다음** → 앨범 미리보기 + AlbumEditor 직접 편집 (사진 교체/순서/캡션/챕터 제목)
+10. **책으로 미리보기** → 양면 펼침 책 모션, 상단 토글로 1:1 ↔ 3:2 비율 전환
 11. 주문 정보 입력 → 다음 우편번호 검색 → 주문 완료
-12. **주문 관리** → 주문 상태 전이 + ZIP 데이터 다운로드 (Lv3, 파트너 인계용)
+12. **주문 관리** → 시드된 샘플 주문 + 신규 주문 표시. 상태 전이 + ZIP 데이터 다운로드 (Lv3, 파트너 인계용)
 
 ---
 
@@ -119,7 +119,7 @@ OPENAI_API_KEY=sk-...
 ### Lv2 추가 기능
 
 - 4단계 결제 플로우 (만족도 → 옵션 → 정보 → 확인)
-- 가격 계산: 정사각형 150,000원 / 가로 양장본 180,000원, 하드+30,000원, ×수량
+- 가격 계산: 정사각형 150,000원 / 가로 양장본 180,000원, 하드커버 +20,000원 / 소프트커버 +0원, × 수량
 - 다음 우편번호 API 연동 (한국 표준 주소 입력)
 - OrderStateMachine — pending → processing → completed, pending → cancelled
 
@@ -139,7 +139,7 @@ OPENAI_API_KEY=sk-...
 |------|------|----------|
 | 언어 | Python 3.11 | OpenAI SDK 안정성, 타이핑 성숙도 |
 | 웹 프레임워크 | FastAPI | Pydantic 기반 자동 검증 + OpenAPI 자동 생성 |
-| ORM | SQLAlchemy 2.0 (async-friendly) | 명시적 모델, 마이그레이션 부담 적음 |
+| ORM | SQLAlchemy 2.0 | 명시적 모델, FastAPI Depends 와 자연스러운 결합 |
 | DB | SQLite | 단일 파일, 심사자 환경 의존성 0 |
 | AI | OpenAI GPT-4o-mini | 가성비 + 폴백으로 키 없이도 시연 가능 |
 | 테스트 | pytest + pytest-asyncio | Contract-First TDD |
@@ -150,7 +150,7 @@ OPENAI_API_KEY=sk-...
 |------|------|----------|
 | 프레임워크 | React 18 + Vite | HMR 빠름, 빌드 간단 |
 | 언어 | TypeScript | API 계약 타입 공유 |
-| 스타일 | Tailwind CSS + 4색 팔레트 | coral / lavender / mint / gold warm pastel |
+| 스타일 | Tailwind CSS + 4색 팔레트 | bg(이보리 #FFFCF7) / ink(잉크 #1A1614) / line(구분선 #E8DFD3) / coral(강조 #C46A53) |
 | 폰트 | Fraunces (헤딩) + Pretendard (본문) | 양장본 정통 톤 |
 | 상태관리 | useState/useContext + localStorage | 외부 스토어 없이 충분 |
 | 책 미리보기 | react-pageflip | 양면 펼침 모션 |
@@ -177,8 +177,8 @@ OPENAI_API_KEY=sk-...
 
 | 기능 | AI 응답 | 폴백 |
 |------|---------|------|
-| 체크리스트 자동 생성 | GPT-4o-mini 가 커플 wedding_date 기준 일정 생성 | 사전 정의 15개 (D-180 ~ D+14) |
-| 캡션 추천 | GPT-4o-mini 가 3개 후보 | 카테고리별 3개 사전 캡션 |
+| 체크리스트 자동 생성 | GPT-4o-mini 가 커플 wedding_date 기준 일정 생성 | 사전 정의 24개 (D-360 ~ D+14) |
+| 캡션 추천 | GPT-4o-mini 가 3개 후보 | 카테고리별 3개 사전 캡션 (9 카테고리) |
 | 앨범 자동 구성 | GPT-4o-mini 가 챕터/페이지 레이아웃 설계 | T5 챕터 커버 + 나머지 T1 한 페이지 한 장 |
 
 ### 투명성
@@ -223,7 +223,7 @@ API 응답에 `source: "ai" | "template"` 포함. UI는 "자동 추천" / "기�
 
 ### 6.5 영상 톤 — 카드/아이콘 최소화
 
-- 색상 토큰 12개 → 4개 (coral / lavender / mint / gold) 축소
+- 색상 토큰 12개 → 4개 (bg / ink / line / coral) 축소 — 메인 1색(coral) + 흑백 + 보조 1색 원칙
 - Material Symbols 아이콘 90% 제거 → 텍스트 라벨 위주
 - 폴라로이드는 타임라인 1군데만 (랜덤 회전 ±2°)
 - 카드 그림자 / 그라데이션 / 글로우 등 "AI slop" 회피
@@ -248,7 +248,7 @@ API 응답에 `source: "ai" | "template"` 포함. UI는 "자동 추천" / "기�
 │   │   ├── routers/            # /api/* 8개 라우터
 │   │   ├── services/           # 비즈니스 로직 + 상태머신
 │   │   ├── utils/              # 파일 검증, 날짜 계산
-│   │   ├── seed.py             # 더미 데이터 24 events / 41 photos
+│   │   ├── seed.py             # 더미 데이터 24 events / 123 photos / 1 sample order
 │   │   └── main.py             # FastAPI 앱 + lifespan
 │   ├── seed_assets/            # 시딩용 jpg
 │   └── tests/                  # pytest (모델/서비스/라우터)
@@ -276,18 +276,21 @@ API 응답에 `source: "ai" | "template"` 포함. UI는 "자동 추천" / "기�
 
 | Method | Path | 설명 |
 |--------|------|------|
-| GET | `/api/couples/{id}/home` | 홈 — D-day, 진행률, 다음 일정 |
-| GET | `/api/couples/{id}/events` | 일정 목록 (start/end_date) |
-| POST | `/api/couples/{id}/ai/checklist` | 체크리스트 자동 생성 |
-| POST | `/api/photos` | 사진 업로드 (multipart) |
-| POST | `/api/photos/{id}/captions` | 캡션 추천 (3개 후보) |
+| GET | `/health` | `{ status, openai_available, timestamp }` |
+| GET | `/api/couples/{id}/home` | 홈 — D-day, 다가오는 일정, 최근 사진 |
+| GET | `/api/couples/{id}/events/` | 일정 목록 (start/end_date) |
+| POST | `/api/couples/{id}/events/` | 일정 생성 |
+| POST | `/api/ai/checklist` | 체크리스트 자동 생성 (body: couple_id) |
+| POST | `/api/ai/caption` | 캡션 3개 추천 (body: event_id, photo_id?) |
+| POST | `/api/events/{event_id}/photos` | 사진 업로드 (multipart) |
 | GET | `/api/couples/{id}/timeline` | 챕터 그룹핑 + 사진 |
-| POST | `/api/album/compose` | 앨범 자동 구성 |
-| POST | `/api/orders` | 주문 생성 |
+| POST | `/api/couples/{id}/album/compose` | 앨범 자동 구성 (body: selected_photo_ids) |
+| POST | `/api/couples/{id}/orders` | 주문 생성 |
+| GET | `/api/orders/{id}` | 주문 단건 조회 |
 | PATCH | `/api/orders/{id}/status` | 상태 전이 |
 | GET | `/api/orders/{id}/export` | ZIP 익스포트 (Lv3) |
 
-OpenAPI 문서: `http://localhost:8000/docs`
+OpenAPI 자동 문서: `http://localhost:8000/docs` (포트는 `.env` 의 `API_PORT`)
 
 ---
 
@@ -305,7 +308,7 @@ cd frontend
 npm test -- --run
 ```
 
-현재 상태: **177 frontend tests passed**, 백엔드 라우터/서비스/모델 전 영역 통과.
+현재 상태: **백엔드 280 + 프론트엔드 177 테스트 통과** (총 457개).
 
 ---
 
