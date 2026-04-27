@@ -9,21 +9,10 @@ import TimelineChapter from '../components/TimelineChapter';
 import Toast from '../components/Toast';
 import PhotoCurationModal from '../components/PhotoCurationModal';
 import type { TimelineResponse, Chapter } from '../types';
+import { loadChapterTitleOverrides, setChapterTitleOverride } from '../utils/chapterTitle';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_SELECTED_KEY = 'weddinglog_selected_photos';
-// 챕터 제목 사용자 편집 — { [chapterId]: customTitle }.
-// 백엔드 CHAPTER_MAPPING 은 고정이라 localStorage 로 클라이언트 오버라이드.
-const LS_CHAPTER_TITLES = 'weddinglog_chapter_titles';
-
-function loadChapterTitleOverrides(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(LS_CHAPTER_TITLES);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
 
 function calcPages(selectedCount: number): number {
   if (!selectedCount) return 0;
@@ -45,11 +34,8 @@ export default function Timeline() {
   const [titleOverrides, setTitleOverrides] = useState<Record<string, string>>(() => loadChapterTitleOverrides());
 
   function handleTitleChange(chapterId: string | number, newTitle: string) {
-    setTitleOverrides((prev) => {
-      const next = { ...prev, [String(chapterId)]: newTitle };
-      try { localStorage.setItem(LS_CHAPTER_TITLES, JSON.stringify(next)); } catch { /* quota */ }
-      return next;
-    });
+    const next = setChapterTitleOverride(String(chapterId), newTitle);
+    setTitleOverrides(next);
   }
 
   // ?curate=1 query 진입 시 자동으로 정리 모달 오픈 (헤더의 "앨범 주문" 버튼).

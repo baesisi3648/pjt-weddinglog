@@ -14,6 +14,7 @@ import type { AlbumLayout } from '../types/album';
 import type { OrderFormat, OrderCoverType } from '../types/order';
 import type { Photo } from '../types/photo';
 import { photoUrl } from '../utils/photo';
+import { applyOverrideByCanonicalTitle } from '../utils/chapterTitle';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_KEY = 'weddinglog_selected_photos';
@@ -186,7 +187,15 @@ export default function OrderCheckout() {
     setComposeError(null);
     try {
       const res = await composeAlbum(COUPLE_ID, photoIds);
-      setAlbumLayout(res.album_layout);
+      // Timeline 에서 사용자가 바꾼 챕터 제목을 앨범에도 적용 (canonical title 매칭).
+      const overridden: AlbumLayout = {
+        ...res.album_layout,
+        chapters: res.album_layout.chapters.map((c) => ({
+          ...c,
+          title: applyOverrideByCanonicalTitle(c.title),
+        })),
+      };
+      setAlbumLayout(overridden);
       setAlbumSource(res.source);
     } catch (err) {
       const e = err as { message?: string };
