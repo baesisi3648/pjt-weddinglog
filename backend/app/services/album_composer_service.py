@@ -143,9 +143,9 @@ class AlbumComposerService:
         self._client: Any | None = None
         if self.ai_available:
             try:
-                from openai import OpenAI  # 지연 import
+                from openai import AsyncOpenAI  # 지연 import — async-native
 
-                self._client = OpenAI()
+                self._client = AsyncOpenAI()
             except Exception as exc:  # noqa: BLE001
                 logger.warning(
                     "AlbumComposer: OpenAI client init failed (%s) — fallback.",
@@ -228,10 +228,9 @@ class AlbumComposerService:
             "target_pages": math.ceil(len(metas) / 2.5),
         }
 
-        # sync OpenAI 호출을 별도 스레드에서 실행 + 타임아웃 강제.
-        # FastAPI 이벤트 루프 블록 방지 + 응답 지연 시 폴백 보장.
-        def _call() -> Any:
-            return self._client.chat.completions.create(  # type: ignore[union-attr]
+        # AsyncOpenAI 네이티브 await — 이벤트 루프 비차단 + 타임아웃은 SDK 가 강제.
+        try:
+            completion = await self._client.chat.completions.create(  # type: ignore[union-attr]
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": _SYSTEM_PROMPT},
@@ -245,12 +244,6 @@ class AlbumComposerService:
                 response_format={"type": "json_object"},
                 temperature=0.6,
                 timeout=_OPENAI_TIMEOUT_SEC,
-            )
-
-        try:
-            completion = await asyncio.wait_for(
-                asyncio.to_thread(_call),
-                timeout=_OPENAI_TIMEOUT_SEC + 2.0,
             )
         except asyncio.TimeoutError as exc:
             raise TimeoutError(

@@ -38,8 +38,8 @@ from app.seed import seed_initial_data
 logger = logging.getLogger(__name__)
 
 
-def _check_openai_available(api_key: str | None) -> bool:
-    """OpenAI API 키 유효성을 1회 확인한다.
+async def _check_openai_available(api_key: str | None) -> bool:
+    """OpenAI API 키 유효성을 1회 확인한다 (async, lifespan 에서만 호출).
 
     - 키가 비어있으면 False
     - 키가 있으면 `models.list()` 로 검증 (가벼운 호출, 크레딧 소모 無)
@@ -52,11 +52,11 @@ def _check_openai_available(api_key: str | None) -> bool:
         return False
 
     try:
-        from openai import OpenAI  # 지연 import (테스트/오프라인 환경 안전)
+        from openai import AsyncOpenAI  # async-native (서비스 클라이언트와 일치)
 
-        client = OpenAI(api_key=api_key.strip(), timeout=5.0)
+        client = AsyncOpenAI(api_key=api_key.strip(), timeout=5.0)
         # models.list 는 인증 및 네트워크만 검증하며 실제 추론 비용이 없다.
-        client.models.list()
+        await client.models.list()
         logger.info("OpenAI API is available")
         return True
     except Exception as exc:  # noqa: BLE001 — 어떤 실패든 폴백으로
@@ -89,7 +89,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _seed_session.close()
 
     # OpenAI 가용성 1회 체크 → app.state 에 캐시
-    app.state.openai_available = _check_openai_available(settings.OPENAI_API_KEY)
+    app.state.openai_available = await _check_openai_available(settings.OPENAI_API_KEY)
 
     logger.info(
         "WeddingLog backend started (openai_available=%s)",

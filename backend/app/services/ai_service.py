@@ -190,9 +190,9 @@ class AIService:
         if self.available:
             try:
                 # 지연 import: 오프라인/테스트 환경에서 openai 미설치 시 안전.
-                from openai import OpenAI
+                from openai import AsyncOpenAI  # async-native
 
-                self._client = OpenAI()
+                self._client = AsyncOpenAI()
             except Exception as exc:  # noqa: BLE001
                 logger.warning(
                     "AIService: OpenAI client init failed (%s) — fallback mode.",
@@ -281,7 +281,7 @@ class AIService:
             "각 캡션은 서로 다른 감정과 시점을 담아야 합니다."
         )
 
-        completion = self._client.chat.completions.create(  # type: ignore[union-attr]
+        completion = await self._client.chat.completions.create(  # type: ignore[union-attr]
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": _CAPTION_SYSTEM_PROMPT},
@@ -337,9 +337,8 @@ class AIService:
             "위 조건에 맞는 결혼 준비 일정 15개를 생성해주세요."
         )
 
-        # openai>=1.x 의 동기 클라이언트 — 비동기 래핑 없이 호출 (IO 블록은 짧음).
-        # 실제 프로덕션에서는 AsyncOpenAI 로 교체 가능.
-        completion = self._client.chat.completions.create(  # type: ignore[union-attr]
+        # AsyncOpenAI 네이티브 await — 이벤트 루프 비차단.
+        completion = await self._client.chat.completions.create(  # type: ignore[union-attr]
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
