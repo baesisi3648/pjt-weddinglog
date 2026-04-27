@@ -56,7 +56,7 @@ export default function Landing() {
             to="/home"
             className="px-5 py-2 rounded-full bg-coral text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
           >
-            데모 둘러보기
+            둘러보기
           </Link>
         </div>
       </header>
@@ -94,7 +94,7 @@ export default function Landing() {
                 to="/home"
                 className="px-8 py-3.5 rounded-full bg-coral text-white text-[15px] font-medium hover:opacity-90 transition-opacity"
               >
-                데모 둘러보기 →
+                둘러보기 →
               </Link>
               <a
                 href="#how"
@@ -260,7 +260,7 @@ export default function Landing() {
                   />
                 </div>
                 <figcaption
-                  className="font-hand-ko text-[16px] text-ink-muted leading-snug px-1"
+                  className="font-hand-ko text-[16px] text-ink-muted leading-snug text-center"
                   style={{ letterSpacing: '-0.3px' }}
                 >
                   {item.caption}
@@ -294,14 +294,11 @@ export default function Landing() {
               펼쳐 보세요.<br />
               <span className="whitespace-nowrap">한 권의 책처럼.</span>
             </h2>
-            <p className="mt-5 text-[16px] leading-[1.7] text-ink-muted">
-              로그인 없이 데모 데이터로 5분이면 충분합니다.
-            </p>
             <Link
               to="/home"
               className="mt-10 inline-block px-10 py-4 rounded-full bg-coral text-white text-[16px] font-medium hover:opacity-90 transition-opacity"
             >
-              데모 둘러보기 →
+              둘러보기 →
             </Link>
           </div>
         </div>

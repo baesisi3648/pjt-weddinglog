@@ -13,6 +13,10 @@ interface Props {
   layout: AlbumLayout;
   photos: Photo[];
   onChange: (next: AlbumLayout) => void;
+  /** 책 첫 장(BlessingsPage) 메인 사진 — 교체된 경우에만 전달, 아니면 기본값 사용 */
+  blessingMainPhotoUrl?: string;
+  blessingMainPhotoId?: string;
+  onChangeBlessingMainPhoto?: (photoId: string) => void;
 }
 
 function getPhoto(photos: Photo[], id: string): Photo | undefined {
@@ -169,13 +173,22 @@ function PhotoPickerModal({ photos, onPick, onClose, currentId }: PickerModalPro
 }
 
 // ─── AlbumEditor 메인 ──────────────────────────────────────────────────────
-export default function AlbumEditor({ layout, photos, onChange }: Props) {
+export default function AlbumEditor({
+  layout,
+  photos,
+  onChange,
+  blessingMainPhotoUrl,
+  blessingMainPhotoId,
+  onChangeBlessingMainPhoto,
+}: Props) {
   const [picker, setPicker] = useState<{
     chapterIdx: number;
     pageIdx: number;
     slotIdx: number;
     currentId?: string;
   } | null>(null);
+  // 축하 메시지 페이지 메인 사진 교체 모달
+  const [blessingPickerOpen, setBlessingPickerOpen] = useState(false);
 
   // 페이지 번호 재부여 (모든 변경 후 호출)
   function renumberPages(next: AlbumLayout): AlbumLayout {
@@ -232,6 +245,13 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
     onChange(renumberPages(next));
   }
 
+  // 페이지 캡션 변경
+  function changeCaption(chapterIdx: number, pageIdx: number, caption: string) {
+    const next = structuredClone(layout) as AlbumLayout;
+    next.chapters[chapterIdx].pages[pageIdx].caption = caption || null;
+    onChange(renumberPages(next));
+  }
+
   // 페이지 추가 (해당 챕터 끝에 T1 1장)
   function addPage(chapterIdx: number) {
     const next = structuredClone(layout) as AlbumLayout;
@@ -265,7 +285,7 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
       role="region"
       aria-label="앨범 편집"
     >
-      {/* 책 첫 장 — 축하 메시지 페이지 (read-only 미리보기, 풀폭) */}
+      {/* 책 첫 장 — 축하 메시지 페이지 (메인 사진 교체 가능) */}
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between border-b border-line pb-2">
           <div className="flex items-baseline gap-3 flex-wrap">
@@ -273,19 +293,25 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
               INTRO
             </span>
             <h3 className="font-display-md text-[18px] text-ink">
-              축하 메시지 (책 첫 장)
+              축하 메시지
             </h3>
             <span className="text-[12px] text-ink-muted">
-              본식 사진 + 메시지 9개 + QR
+              사진 + 메시지 + QR
             </span>
           </div>
-          <span className="text-[11px] text-ink-muted italic">
-            책 미리보기에서 확인
-          </span>
+          {onChangeBlessingMainPhoto && (
+            <button
+              type="button"
+              onClick={() => setBlessingPickerOpen(true)}
+              className="px-3 py-1 text-[12px] text-ink hover:text-coral border border-line hover:border-coral rounded-full transition-colors"
+            >
+              메인 사진 교체
+            </button>
+          )}
         </div>
         <div className="border border-line bg-bg overflow-hidden">
           <div className="aspect-[3/2] w-full">
-            <BlessingsPage variant="editor" />
+            <BlessingsPage variant="editor" mainPhoto={blessingMainPhotoUrl} />
           </div>
         </div>
       </section>
@@ -331,13 +357,13 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
                 className="border border-line bg-bg flex flex-col"
               >
                 {/* 페이지 컨트롤바 */}
-                <div className="px-3 py-2 flex items-center justify-between border-b border-line text-[12px]">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-ink-muted">P.{page.page_number}</span>
+                <div className="px-3 py-2 flex items-center justify-between gap-3 border-b border-line text-[12px]">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="font-mono text-ink-muted shrink-0">P.{page.page_number}</span>
                     <select
                       value={page.template}
                       onChange={(e) => changeTemplate(chIdx, pgIdx, e.target.value as LayoutTemplate)}
-                      className="bg-bg border border-line px-2 py-1 text-[11px] text-ink focus:outline-none focus:border-coral"
+                      className="bg-bg border border-line px-2 py-1 text-[11px] text-ink focus:outline-none focus:border-coral shrink-0"
                       aria-label="레이아웃 템플릿"
                     >
                       {TEMPLATES.map((t) => (
@@ -346,11 +372,18 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
                         </option>
                       ))}
                     </select>
-                    {page.caption && (
-                      <span className="italic text-ink-muted truncate max-w-[180px]">
-                        {page.caption}
-                      </span>
-                    )}
+                    {/* 캡션 — 인라인 편집 (브라우저 자동완성 끄기) */}
+                    <input
+                      type="text"
+                      value={page.caption ?? ''}
+                      onChange={(e) => changeCaption(chIdx, pgIdx, e.target.value)}
+                      placeholder="캡션 (선택)"
+                      aria-label="페이지 캡션"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className="flex-1 min-w-0 bg-bg border border-transparent hover:border-line focus:border-coral italic text-[12px] text-ink-muted placeholder:text-line px-2 py-1 outline-none transition-colors"
+                    />
                   </div>
                   <div className="flex items-center gap-1">
                     <button
@@ -416,6 +449,16 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
           currentId={picker.currentId}
           onPick={(id) => replacePhoto(picker.chapterIdx, picker.pageIdx, picker.slotIdx, id)}
           onClose={() => setPicker(null)}
+        />
+      )}
+
+      {/* 축하 메시지 페이지 메인 사진 교체 모달 */}
+      {blessingPickerOpen && onChangeBlessingMainPhoto && (
+        <PhotoPickerModal
+          photos={photos}
+          currentId={blessingMainPhotoId}
+          onPick={(id) => onChangeBlessingMainPhoto(id)}
+          onClose={() => setBlessingPickerOpen(false)}
         />
       )}
     </div>

@@ -14,6 +14,8 @@ const PAGE_H = 380;
 interface Props {
   layout: AlbumLayout;
   photos: Photo[];
+  /** 축하 메시지 페이지 메인 사진 (사용자가 교체했으면 그 URL, 아니면 기본값 사용) */
+  blessingMainPhoto?: string;
   onClose: () => void;
 }
 
@@ -132,7 +134,7 @@ type BookItem =
   | { kind: 'page'; page: AlbumPage };
 
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
-export default function BookPreviewModal({ layout, photos, onClose }: Props) {
+export default function BookPreviewModal({ layout, photos, blessingMainPhoto, onClose }: Props) {
   // 책 페이지 평탄화 — 빈 페이지 패리티 제거.
   // 챕터 인트로 페이지가 좌측에 와도 가운데 정렬 디자인이라 자연스럽고,
   // BlessingsPage 직후 P.1 이 같은 spread 에서 바로 보이도록.
@@ -230,7 +232,7 @@ export default function BookPreviewModal({ layout, photos, onClose }: Props) {
           {/* 축복 메시지 첫 페이지 — 좌측 빈 면 + 우측 본식 사진 + 손글씨 */}
           <PageView className="bg-bg" />
           <PageView>
-            <BlessingsPage variant="book" />
+            <BlessingsPage variant="book" mainPhoto={blessingMainPhoto} />
           </PageView>
 
           {/* 본문 페이지들 — 챕터 인트로(글만) / 사진 페이지 */}

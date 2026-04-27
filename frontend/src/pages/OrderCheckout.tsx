@@ -17,6 +17,9 @@ import { photoUrl } from '../utils/photo';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_KEY = 'weddinglog_selected_photos';
+// 축하 메시지 페이지 메인 사진(편집된) — Photo.id 또는 절대 URL.
+// 비어있으면 BlessingsPage 의 BLESSING_MAIN_PHOTO 기본값 사용.
+const LS_BLESSING_MAIN = 'weddinglog_blessing_main_photo_id';
 
 // 가격 계산
 function calcPrice(format: OrderFormat, coverType: OrderCoverType, quantity: number) {
@@ -93,6 +96,28 @@ export default function OrderCheckout() {
 
   // ── 책 미리보기 모달 ──
   const [bookPreviewOpen, setBookPreviewOpen] = useState(false);
+
+  // ── 축하 메시지 페이지의 메인 사진 (편집됐다면 Photo.id, 아니면 null=기본 사진) ──
+  const [blessingMainPhotoId, setBlessingMainPhotoId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(LS_BLESSING_MAIN);
+    } catch {
+      return null;
+    }
+  });
+  function changeBlessingMainPhoto(photoId: string) {
+    setBlessingMainPhotoId(photoId);
+    try {
+      localStorage.setItem(LS_BLESSING_MAIN, photoId);
+    } catch {
+      /* private mode 등 무시 */
+    }
+  }
+  // photoMap 에 해당 id 가 있으면 그 file_url 사용, 아니면 기본 BlessingsPage 내부 default.
+  const blessingMainPhotoUrl =
+    blessingMainPhotoId && photoMap[blessingMainPhotoId]
+      ? photoMap[blessingMainPhotoId].file_url
+      : undefined;
 
   // LocalStorage에서 사진 ID 로드
   useEffect(() => {
@@ -368,6 +393,9 @@ export default function OrderCheckout() {
                   layout={albumLayout}
                   photos={previewPhotos}
                   onChange={setAlbumLayout}
+                  blessingMainPhotoUrl={blessingMainPhotoUrl}
+                  blessingMainPhotoId={blessingMainPhotoId ?? undefined}
+                  onChangeBlessingMainPhoto={changeBlessingMainPhoto}
                 />
               </div>
             )}
@@ -715,6 +743,7 @@ export default function OrderCheckout() {
         <BookPreviewModal
           layout={albumLayout}
           photos={previewPhotos}
+          blessingMainPhoto={blessingMainPhotoUrl}
           onClose={() => setBookPreviewOpen(false)}
         />
       )}

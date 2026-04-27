@@ -199,7 +199,7 @@ export default function EventDetail() {
           className="block font-label-caps text-label-caps text-on-surface-variant mb-4 uppercase"
           htmlFor="event-memo"
         >
-          Memoir
+          Memo
         </label>
         <textarea
           id="event-memo"

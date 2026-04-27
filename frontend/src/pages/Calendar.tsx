@@ -455,14 +455,28 @@ export default function Calendar() {
               const isSelected = selectedDay === d;
               const isSunday = dayOfWeek === 0;
 
-              // Multi-day 이벤트는 사진 모자이크에서 제외 (중복 표시 방지 — bar 로만 노출)
-              const singleDayEv = ev.filter((e) => !e.is_multi_day);
-              const evWithPhotos = singleDayEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
-              const evWithoutPhotos = singleDayEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
+              // 사진 모자이크 노출 정책:
+              //  · single-day 이벤트는 해당 날짜에 표시
+              //  · multi-day 이벤트는 시작일 셀에만 표시 (그 외 날엔 bar만)
+              //    → 같은 사진이 여러 날 중복되지 않으면서, 사진이 없는 일은 없음
+              const photoableEv = ev.filter((e) => {
+                if (!e.is_multi_day) return true;
+                return dateToDayNum(e.date, viewYear, viewMonth) === d;
+              });
+              const evWithPhotos = photoableEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) > 0);
+              const evWithoutPhotos = photoableEv.filter((e) => (eventPhotosMap[e.id]?.length ?? 0) === 0);
               const shownPhotoEvents = evWithPhotos.slice(0, 2);
               const shownLabelEvents = evWithoutPhotos.slice(0, Math.max(0, 3 - shownPhotoEvents.length));
               const totalShown = shownPhotoEvents.length + shownLabelEvents.length;
-              const moreCount = singleDayEv.length - totalShown;
+              const moreCount = photoableEv.length - totalShown;
+
+              // 셀 클릭 정책:
+              //  · single-day 이벤트가 있고 빈 영역 클릭 → 일정 추가 (기존)
+              //  · multi-day 만 있고 single-day 가 없으면 → 그 multi-day 이벤트 상세로 이동
+              //    (사용자가 multi-day 가 깔린 날 빈 영역 클릭하면 일정 추가가 뜨던 문제 해결)
+              const singleDayCount = ev.filter((e) => !e.is_multi_day).length;
+              const onlyMultiDayHere = singleDayCount === 0 && bars.length > 0;
+              const firstMultiDayId = bars[0]?.event.id;
 
               return (
                 <button
@@ -472,6 +486,10 @@ export default function Calendar() {
                   }`}
                   onClick={() => {
                     setSelectedDay(d);
+                    if (onlyMultiDayHere && firstMultiDayId) {
+                      navigate(`/events/${firstMultiDayId}`);
+                      return;
+                    }
                     const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     setEventForm({ mode: 'create', date: dateStr });
                   }}
