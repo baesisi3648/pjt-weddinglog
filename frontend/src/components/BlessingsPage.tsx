@@ -59,45 +59,16 @@ export default function BlessingsPage({
         </div>
       </div>
 
-      {/* 우상단 QR — 클릭 시 메시지 일람 모달 */}
+      {/* 우상단 QR — 클릭 시 메시지 일람 모달 (절반 사이즈) */}
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="absolute top-2 right-2 bg-white p-1.5 rounded-sm shadow-md hover:scale-105 transition-transform"
+        className="absolute top-2 right-2 bg-white p-1 rounded-sm shadow-md hover:scale-105 transition-transform"
         aria-label="축하 메시지 전체 보기"
         title="QR 스캔 또는 클릭하면 모든 축하 메시지를 볼 수 있어요"
       >
-        <QRCodeSVG value={qrUrl} size={42} bgColor="#ffffff" fgColor="#1A1614" />
-        <div
-          className="font-mono text-[6px] tracking-[0.15em] text-ink-muted mt-0.5 text-center"
-          aria-hidden="true"
-        >
-          SCAN ME
-        </div>
+        <QRCodeSVG value={qrUrl} size={24} bgColor="#ffffff" fgColor="#1A1614" />
       </button>
-
-      {/* 상단 가운데 — 손글씨 타이틀 */}
-      <div className="absolute inset-x-0 top-[5%] flex flex-col items-center text-white text-center px-6 pointer-events-none">
-        <p
-          className="font-hand-en text-[14px] tracking-wider opacity-90"
-          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
-        >
-          To my dearest
-        </p>
-        <h1
-          className="font-hand-ko text-[32px] sm:text-[40px] leading-[1.1] mt-1"
-          style={{
-            textShadow: '0 2px 4px rgba(0,0,0,0.45)',
-            letterSpacing: '-0.5px',
-          }}
-        >
-          우리에게 와준 모든 마음들
-        </h1>
-        <span
-          aria-hidden="true"
-          className="block w-12 h-px bg-white/85 mt-3 opacity-90"
-        />
-      </div>
 
       {/* 메시지 8~10개 — 외곽 슬롯에 분산 */}
       {messages.map((m) => {
@@ -126,18 +97,6 @@ export default function BlessingsPage({
         );
       })}
 
-      {/* 하단 가운데 — 마무리 한 줄 */}
-      <div className="absolute inset-x-0 bottom-[5%] flex justify-center text-white text-center px-6 pointer-events-none">
-        <p
-          className="font-hand-ko text-[18px]"
-          style={{
-            textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-            letterSpacing: '-0.3px',
-          }}
-        >
-          축하해 주신 모든 분들께 ✿
-        </p>
-      </div>
 
       {/* 메시지 일람 팝업 */}
       {open && (
