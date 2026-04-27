@@ -78,8 +78,9 @@ function AlbumPageContent({ page, photos }: { page: AlbumPage; photos: Photo[] }
   const ids = page.photo_ids;
   const slot = (i: number, cls: string) => <PhotoSlot id={ids[i]} photos={photos} className={cls} />;
 
-  if (page.template === 'T1') {
+  if (page.template === 'T1' || page.template === 'T5') {
     // 1장 풀 페이지 — 사진 비율 유지(contain), 위아래 여백, 하단 캡션.
+    // T5(챕터 커버 사진)도 동일 레이아웃으로 표시 (책에서는 텍스트 인트로가 따로 있음).
     return (
       <div className="w-full h-full p-6 flex flex-col bg-bg">
         <div className="flex-1 flex items-center justify-center overflow-hidden">
@@ -136,8 +137,8 @@ type BookItem =
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
 export default function BookPreviewModal({ layout, photos, blessingMainPhoto, onClose }: Props) {
   // 책 페이지 평탄화 — 빈 페이지 패리티 제거.
-  // 챕터 인트로 페이지가 좌측에 와도 가운데 정렬 디자인이라 자연스럽고,
-  // BlessingsPage 직후 P.1 이 같은 spread 에서 바로 보이도록.
+  // 각 챕터: [텍스트 인트로 페이지] + [T5 커버 사진(P.1)] + [T1 본문 사진들...]
+  // T5 페이지를 건너뛰지 않음 — P.1 사진이 손실되지 않도록.
   const flatPages = useMemo(() => {
     const out: BookItem[] = [];
     for (const ch of layout.chapters) {
@@ -147,8 +148,7 @@ export default function BookPreviewModal({ layout, photos, blessingMainPhoto, on
         chapterNumber: ch.chapter_number,
         chapterTitle: ch.title,
       });
-      // 첫 페이지(=원래 T5 cover)는 챕터 인트로 페이지로 대체했으므로 본문은 [1:] 부터.
-      for (const pg of ch.pages.slice(1)) {
+      for (const pg of ch.pages) {
         out.push({ kind: 'page', page: pg });
       }
     }

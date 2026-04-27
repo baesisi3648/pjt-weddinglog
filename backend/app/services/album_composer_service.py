@@ -105,26 +105,26 @@ _SYSTEM_PROMPT = (
     "앨범 레이아웃을 설계합니다.\n"
     "\n"
     "레이아웃 템플릿 (photo_count 엄격 준수):\n"
-    "- T1 Full Bleed (1장): 임팩트 컷, CEREMONY/WEDDING_PHOTO 우선.\n"
-    "- T2 Half Split (2장): 좌우 대비. ★ 자동 구성에서 가장 자주 사용.\n"
-    "- T3 Hero+Two (3장): 큰 1장 + 작은 2장. (가급적 사용 자제)\n"
-    "- T4 Grid 2x2 (4장): 4장 그리드. (사용자가 명시 요청 시에만)\n"
+    "- T1 Full Bleed (1장): ★ 모든 본문 페이지. 사진 1장을 한 페이지에.\n"
     "- T5 Cover (1장): 챕터 표지, 각 챕터 page_number=1 에만 사용.\n"
+    "\n"
+    "★★★ 절대 금지: T2/T3/T4 는 절대 사용하지 마세요. "
+    "정통 양장본은 한 페이지에 한 장이 원칙입니다.\n"
     "\n"
     "규칙:\n"
     "1. 시간 흐름 챕터 그룹핑 (timeline_service 와 동일: 함께 쌓아온 날들 → "
     "둘이 함께 준비한 시간 → 카메라 앞에서, 우리 → 그 날 — 결혼식 → 첫 여행).\n"
     "2. 각 챕터의 첫 페이지(page_number=1)는 반드시 T5 Cover.\n"
-    "3. ★ 자동 구성은 T1/T2 위주 (T3/T4 사용 자제). 사진 한 장이 살아남게.\n"
-    "4. 페이지의 photo_ids 길이 = 해당 템플릿의 photo_count (엄격 일치).\n"
+    "3. ★ 모든 본문 페이지(page_number ≥ 2)는 반드시 T1. 사진 1장.\n"
+    "4. 페이지의 photo_ids 길이 = 해당 템플릿의 photo_count (T1=1, T5=1).\n"
     "5. 하나의 사진은 최대 한 페이지에만 등장.\n"
-    "6. 총 페이지 수 ≈ ceil(사진 수 / 1.8), ±20% 허용.\n"
+    "6. 총 페이지 수 = 챕터별로 (사진 수). T5 가 1장 + 나머지 T1 으로 1장씩.\n"
     "7. color 는 'coral' 1개로 통일.\n"
     "\n"
     "응답은 반드시 JSON 객체로 다음 스키마를 따라야 합니다:\n"
     '{"total_photos": int, "total_pages": int, "generated_by": "ai", '
     '"chapters": [{"chapter_number": int, "title": str, "color": str, '
-    '"pages": [{"page_number": int, "template": "T1|T2|T3|T4|T5", '
+    '"pages": [{"page_number": int, "template": "T1|T5", '
     '"photo_ids": [str, ...], "caption": str|null}]}]}'
 )
 
@@ -269,9 +269,15 @@ class AlbumComposerService:
 
     @staticmethod
     def _validate_page_photo_counts(layout: AlbumLayoutSchema) -> None:
-        """각 페이지의 photo_ids 길이가 템플릿 photo_count 와 일치하는지 검증."""
+        """각 페이지의 photo_ids 길이 + 템플릿 정책(T1/T5만 허용) 검증."""
+        ALLOWED = {"T1", "T5"}
         for chapter in layout.chapters:
             for page in chapter.pages:
+                if page.template not in ALLOWED:
+                    raise ValueError(
+                        f"Template {page.template} not allowed; "
+                        f"only T1/T5 (한 페이지 한 장 정책)"
+                    )
                 expected = get_photo_count(page.template)
                 if len(page.photo_ids) != expected:
                     raise ValueError(
