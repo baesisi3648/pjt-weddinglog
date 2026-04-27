@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { CoupleProvider } from './context/CoupleContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import App from './App';
 import './styles/globals.css';
 
@@ -11,10 +12,12 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <CoupleProvider>
-        <App />
-      </CoupleProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <CoupleProvider>
+          <App />
+        </CoupleProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );
