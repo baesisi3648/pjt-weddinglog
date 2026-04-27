@@ -190,7 +190,7 @@ export default function OrderCheckout() {
       setAlbumSource(res.source);
     } catch (err) {
       const e = err as { message?: string };
-      setComposeError(e.message ?? 'AI 앨범 구성에 실패했습니다.');
+      setComposeError(e.message ?? '앨범 구성에 실패했습니다.');
     } finally {
       setComposeLoading(false);
     }
@@ -326,7 +326,7 @@ export default function OrderCheckout() {
                   className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin"
                   aria-hidden="true"
                 />
-                <p className="font-body-md text-on-surface-variant">AI가 앨범을 구성하고 있어요...</p>
+                <p className="font-body-md text-on-surface-variant">앨범을 구성하고 있어요...</p>
               </div>
             )}
 
@@ -366,7 +366,7 @@ export default function OrderCheckout() {
                         : 'bg-surface-variant text-on-surface-variant border-outline-variant'
                     }`}
                   >
-                    {albumSource === 'ai' ? 'AI 생성' : '기본 템플릿'}
+                    {albumSource === 'ai' ? '자동 추천' : '기본 템플릿'}
                   </span>
                 </div>
 
@@ -384,7 +384,7 @@ export default function OrderCheckout() {
                     className="px-4 py-2 text-[13px] text-ink-muted hover:text-ink underline-offset-4 hover:underline"
                     onClick={() => runCompose(selectedPhotoIds)}
                   >
-                    AI 다시 구성
+                    다시 구성하기
                   </button>
                 </div>
 

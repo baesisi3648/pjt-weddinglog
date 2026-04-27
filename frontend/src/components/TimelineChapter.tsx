@@ -101,7 +101,7 @@ function PhotoCard({ photo, onToggle }: PhotoCardProps) {
             color: photo.source === 'AI' ? '#693529' : '#524340',
           }}
         >
-          {photo.source === 'AI' ? 'AI' : '템플릿'}
+          {photo.source === 'AI' ? '자동' : '템플릿'}
         </span>
       )}
     </div>

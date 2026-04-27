@@ -130,7 +130,7 @@ describe('OrderCheckout', () => {
   it('compose 로딩 중 스피너/메시지 표시', () => {
     (composeAlbum as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
     renderOrderCheckout();
-    expect(screen.getByText(/AI가 앨범을 구성하고 있어요/)).toBeInTheDocument();
+    expect(screen.getByText(/앨범을 구성하고 있어요/)).toBeInTheDocument();
   });
 
   it('compose 성공 시 총 사진/페이지 요약 표시', async () => {
@@ -141,10 +141,10 @@ describe('OrderCheckout', () => {
     expect(screen.getByText(/3페이지/)).toBeInTheDocument();
   });
 
-  it('AI 생성 배지 표시', async () => {
+  it('자동 추천 배지 표시', async () => {
     renderOrderCheckout();
     await waitFor(() => {
-      expect(screen.getByText('AI 생성')).toBeInTheDocument();
+      expect(screen.getByText('자동 추천')).toBeInTheDocument();
     });
   });
 
@@ -158,7 +158,7 @@ describe('OrderCheckout', () => {
 
   it('Step 2 가격 계산: SQUARE + HARD + 1권 = 170000', async () => {
     renderOrderCheckout();
-    await waitFor(() => expect(screen.getByText('AI 생성')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // 만족 버튼으로 Step 2 진입
     fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
     await waitFor(() => {
@@ -168,7 +168,7 @@ describe('OrderCheckout', () => {
 
   it('Step 2 가격 계산: SQUARE + HARD + 2권 = 340000', async () => {
     renderOrderCheckout();
-    await waitFor(() => expect(screen.getByText('AI 생성')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
     await waitFor(() => expect(screen.getByText(/170,000원/)).toBeInTheDocument());
     // 수량 늘리기
@@ -180,7 +180,7 @@ describe('OrderCheckout', () => {
 
   it('Step 3 전화번호 포맷 검증 실패 → 에러 표시', async () => {
     renderOrderCheckout();
-    await waitFor(() => expect(screen.getByText('AI 생성')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // Step 2 진입
     fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
     await waitFor(() => expect(screen.getByRole('heading', { name: /옵션 선택/ })).toBeInTheDocument());
@@ -210,7 +210,7 @@ describe('OrderCheckout', () => {
 
   it('Step 4 주문 생성 성공 → 주문 ID 렌더링', async () => {
     renderOrderCheckout();
-    await waitFor(() => expect(screen.getByText('AI 생성')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // Step 2
     fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
     await waitFor(() => expect(screen.getByRole('heading', { name: /옵션 선택/ })).toBeInTheDocument());

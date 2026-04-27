@@ -306,7 +306,7 @@ export default function PhotoCurationModal({
               onClick={reapplyAi}
               className="px-3 py-1.5 text-[12px] text-ink-muted hover:text-coral underline-offset-4 hover:underline"
             >
-              AI 추천 다시 적용
+              자동 추천 다시 적용
             </button>
             <button
               onClick={selectAll}

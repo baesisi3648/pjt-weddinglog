@@ -296,11 +296,11 @@ export default function Calendar() {
       if (axiosErr?.response?.status === 409) {
         showToast(
           axiosErr.response.data?.detail ??
-            'AI 체크리스트가 이미 생성되어 있습니다. 기존 일정을 삭제한 뒤 다시 시도해주세요.',
+            '체크리스트가 이미 생성되어 있습니다. 기존 일정을 삭제한 뒤 다시 시도해주세요.',
           'error',
         );
       } else {
-        showToast('AI 체크리스트 생성에 실패했습니다.', 'error');
+        showToast('체크리스트 생성에 실패했습니다.', 'error');
       }
     } finally {
       setAiLoading(false);
@@ -370,7 +370,7 @@ export default function Calendar() {
             disabled={aiLoading || !coupleId}
             className="flex items-center gap-2 px-4 py-2 rounded-full text-primary hover:bg-surface-variant transition-colors border border-transparent font-body-sm text-body-sm disabled:opacity-50"
           >
-            {aiLoading ? '생성 중…' : 'AI로 체크리스트 자동 생성'}
+            {aiLoading ? '생성 중…' : '체크리스트 자동 생성'}
           </button>
 
           {/* 뷰 토글 */}
@@ -403,7 +403,7 @@ export default function Calendar() {
               color: aiSource === 'ai' ? '#693529' : '#524340',
             }}
           >
-            {aiSource === 'ai' ? 'AI 생성' : '기본 템플릿'}
+            {aiSource === 'ai' ? '자동 추천' : '기본 템플릿'}
           </span>
         </div>
       )}
@@ -791,7 +791,7 @@ export default function Calendar() {
       {/* AI 확인 모달 */}
       {confirmAI && (
         <ConfirmModal
-          message="기존 일정이 있습니다. AI 체크리스트를 추가하시겠어요?"
+          message="기존 일정이 있습니다. 체크리스트를 추가하시겠어요?"
           onConfirm={doRequestChecklist}
           onCancel={() => setConfirmAI(false)}
         />

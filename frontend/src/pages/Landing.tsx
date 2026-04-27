@@ -148,7 +148,7 @@ export default function Landing() {
           </div>
           <div className="max-w-[480px] order-1 lg:order-2">
             <p className="font-label-caps text-[12px] tracking-[0.2em] text-coral uppercase mb-4">
-              02 · AI 챕터링
+              02 · 자동 챕터링
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
               누른 적 없는데,<br />
@@ -156,9 +156,9 @@ export default function Landing() {
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
               일상 데이트 → 본격 준비 → 웨딩촬영 → 본식 → 신혼여행.
-              사진과 일정을 시간 흐름대로 자동 챕터로 묶고, AI가 페이지
-              레이아웃까지 추천합니다. 마음에 안 들면 한 번에 기본 레이아웃으로
-              되돌릴 수 있어요.
+              사진과 일정을 시간 흐름대로 자동 챕터로 묶고, 페이지
+              레이아웃까지 자동 추천해 드려요. 마음에 안 들면 한 번에 기본
+              레이아웃으로 되돌릴 수 있어요.
             </p>
           </div>
         </div>

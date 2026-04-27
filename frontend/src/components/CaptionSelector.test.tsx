@@ -33,10 +33,10 @@ describe('CaptionSelector', () => {
 
   it('렌더링된다', () => {
     render(<CaptionSelector {...defaultProps} />);
-    expect(screen.getByText('AI 캡션 추천')).toBeInTheDocument();
+    expect(screen.getByText('캡션 추천')).toBeInTheDocument();
   });
 
-  it('"AI 캡션 추천" 클릭 → requestCaption API 호출', async () => {
+  it('"캡션 추천" 클릭 → requestCaption API 호출', async () => {
     (requestCaption as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       captions: ['캡션1', '캡션2', '캡션3'],
       source: 'ai',
@@ -45,7 +45,7 @@ describe('CaptionSelector', () => {
     render(<CaptionSelector {...defaultProps} />);
 
     await act(async () => {
-      fireEvent.click(screen.getByText('AI 캡션 추천'));
+      fireEvent.click(screen.getByText('캡션 추천'));
     });
 
     await waitFor(() => {
@@ -61,7 +61,7 @@ describe('CaptionSelector', () => {
 
     render(<CaptionSelector {...defaultProps} />);
     await act(async () => {
-      fireEvent.click(screen.getByText('AI 캡션 추천'));
+      fireEvent.click(screen.getByText('캡션 추천'));
     });
 
     await waitFor(() => {
@@ -71,7 +71,7 @@ describe('CaptionSelector', () => {
     });
   });
 
-  it('source=ai → "AI 생성" 배지 표시', async () => {
+  it('source=ai → "자동 추천" 배지 표시', async () => {
     (requestCaption as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       captions: ['캡션1', '캡션2', '캡션3'],
       source: 'ai',
@@ -79,11 +79,11 @@ describe('CaptionSelector', () => {
 
     render(<CaptionSelector {...defaultProps} />);
     await act(async () => {
-      fireEvent.click(screen.getByText('AI 캡션 추천'));
+      fireEvent.click(screen.getByText('캡션 추천'));
     });
 
     await waitFor(() => {
-      expect(screen.getByText('AI 생성')).toBeInTheDocument();
+      expect(screen.getByText('자동 추천')).toBeInTheDocument();
     });
   });
 
@@ -95,7 +95,7 @@ describe('CaptionSelector', () => {
 
     render(<CaptionSelector {...defaultProps} />);
     await act(async () => {
-      fireEvent.click(screen.getByText('AI 캡션 추천'));
+      fireEvent.click(screen.getByText('캡션 추천'));
     });
 
     await waitFor(() => {
@@ -118,7 +118,7 @@ describe('CaptionSelector', () => {
 
     render(<CaptionSelector {...defaultProps} onApply={onApply} />);
     await act(async () => {
-      fireEvent.click(screen.getByText('AI 캡션 추천'));
+      fireEvent.click(screen.getByText('캡션 추천'));
     });
 
     await waitFor(() => screen.getByText('캡션1'));

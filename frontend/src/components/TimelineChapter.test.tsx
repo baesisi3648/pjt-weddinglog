@@ -76,9 +76,9 @@ describe('TimelineChapter', () => {
     expect(unselected).toBeTruthy();
   });
 
-  it('source 배지가 표시된다 (AI/template)', () => {
+  it('source 배지가 표시된다 (자동/template)', () => {
     renderChapter();
-    const aiBadges = screen.getAllByText('AI');
+    const aiBadges = screen.getAllByText('자동');
     expect(aiBadges.length).toBeGreaterThan(0);
   });
 

@@ -41,7 +41,7 @@ export default function CaptionSelector({ photo, event, onApply, onClose }: Capt
       if (data.captions?.length) setSelected(data.captions[0]);
     } catch (err) {
       const e = err as { response?: { data?: { detail?: string } } };
-      setError(e.response?.data?.detail ?? 'AI 캡션 요청에 실패했습니다.');
+      setError(e.response?.data?.detail ?? '캡션 추천에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function CaptionSelector({ photo, event, onApply, onClose }: Capt
             letterSpacing: '0.02em',
           }}
         >
-          AI 생성
+          자동 추천
         </span>
       );
     }
@@ -151,7 +151,7 @@ export default function CaptionSelector({ photo, event, onApply, onClose }: Capt
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M7 2l1 2.5L10.5 5.5 8 6.5 7 9 6 6.5 3.5 5.5 6 4.5 7 2z" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
             </svg>
-            AI 캡션 추천
+            캡션 추천
           </>
         )}
       </button>

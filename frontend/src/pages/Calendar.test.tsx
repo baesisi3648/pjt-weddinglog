@@ -136,16 +136,16 @@ describe('Calendar', () => {
   });
 
   // ── AI 체크리스트 ─────────────────────────────────────────────────────────
-  it('"AI로 체크리스트 자동 생성" 버튼이 표시된다', async () => {
+  it('"체크리스트 자동 생성" 버튼이 표시된다', async () => {
     renderCalendar();
-    expect(screen.getByRole('button', { name: /AI로 체크리스트 자동 생성/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /체크리스트 자동 생성/ })).toBeInTheDocument();
   });
 
   it('일정 없을 때 AI 버튼 클릭 시 POST /api/ai/checklist 호출', async () => {
     (listEvents as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     renderCalendar();
     await waitFor(() => expect(listEvents).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: /AI로 체크리스트 자동 생성/ }));
+    fireEvent.click(screen.getByRole('button', { name: /체크리스트 자동 생성/ }));
     await waitFor(() => {
       expect(requestChecklist).toHaveBeenCalledWith('cpl_001', null);
     });
@@ -154,7 +154,7 @@ describe('Calendar', () => {
   it('일정 있을 때 AI 버튼 클릭 시 확인 모달이 열린다', async () => {
     renderCalendar();
     await waitFor(() => expect(listEvents).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: /AI로 체크리스트 자동 생성/ }));
+    fireEvent.click(screen.getByRole('button', { name: /체크리스트 자동 생성/ }));
     await waitFor(() => {
       expect(screen.getByText(/기존 일정이 있습니다/)).toBeInTheDocument();
     });
@@ -163,7 +163,7 @@ describe('Calendar', () => {
   it('확인 모달에서 "추가" 클릭 시 requestChecklist 호출', async () => {
     renderCalendar();
     await waitFor(() => expect(listEvents).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: /AI로 체크리스트 자동 생성/ }));
+    fireEvent.click(screen.getByRole('button', { name: /체크리스트 자동 생성/ }));
     await waitFor(() => screen.getByText(/기존 일정이 있습니다/));
     fireEvent.click(screen.getByRole('button', { name: '추가' }));
     await waitFor(() => {
@@ -171,14 +171,14 @@ describe('Calendar', () => {
     });
   });
 
-  it('AI 생성 후 source "ai"일 때 "AI 생성" 배지가 표시된다', async () => {
+  it('자동 추천 후 source "ai"일 때 "자동 추천" 배지가 표시된다', async () => {
     (listEvents as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     (requestChecklist as ReturnType<typeof vi.fn>).mockResolvedValue({ events: [], source: 'ai' });
     renderCalendar();
     await waitFor(() => expect(listEvents).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button', { name: /AI로 체크리스트 자동 생성/ }));
+    fireEvent.click(screen.getByRole('button', { name: /체크리스트 자동 생성/ }));
     await waitFor(() => {
-      expect(screen.getByText(/AI 생성/)).toBeInTheDocument();
+      expect(screen.getByText(/자동 추천/)).toBeInTheDocument();
     });
   });
 

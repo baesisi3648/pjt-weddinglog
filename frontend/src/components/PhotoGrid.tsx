@@ -69,14 +69,14 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
                   type="button"
                   onClick={() => setCaptionOpenId(captionOpenId === photo.id ? null : photo.id)}
                 >
-                  AI 캡션 추천
+                  캡션 추천
                 </button>
                 <div className="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{ background: isAI ? '#e89f8e' : '#d7c2bd' }}
                   />
-                  {isAI ? 'AI 생성' : '기본 템플릿'}
+                  {isAI ? '자동 추천' : '기본 템플릿'}
                 </div>
               </div>
 
