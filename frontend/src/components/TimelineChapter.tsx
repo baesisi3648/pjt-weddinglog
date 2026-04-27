@@ -113,19 +113,21 @@ interface TimelineChapterProps {
   onSelectionChange?: (photoId: string, newIsSelected: boolean) => void;
   onToggleSelection?: (photoId: string) => Promise<void>;
   onCaptionChange?: (photoId: string, caption: string) => void;
+  /** 제공 시 챕터 제목 인라인 편집 가능. 미제공 시 read-only h2. */
+  onTitleChange?: (chapterId: string | number, newTitle: string) => void;
 }
 
 /**
  * TimelineChapter — Stitch timeline_desktop 챕터 구조
  * 큰 챕터 번호 (80px) + 제목 + Polaroid 그리드
  */
-export default function TimelineChapter({ chapter, onSelectionChange }: TimelineChapterProps) {
+export default function TimelineChapter({ chapter, onSelectionChange, onTitleChange }: TimelineChapterProps) {
   const chapterNum = padChapterNum(chapter.chapter_number ?? chapter.id);
   const photoCount = chapter.photo_count ?? chapter.photos?.length ?? 0;
 
   return (
     <section className="mb-24" id={`chapter-${chapter.id}`}>
-      {/* 챕터 헤더: 큰 번호 + 제목 */}
+      {/* 챕터 헤더: 큰 번호 + 제목 (편집 가능) */}
       <div className="flex items-baseline gap-6 mb-12">
         <span
           className="font-display-lg text-primary-container tracking-tight leading-none select-none"
@@ -134,18 +136,32 @@ export default function TimelineChapter({ chapter, onSelectionChange }: Timeline
           <span>{chapterNum}</span>
           <span aria-hidden="true">.</span>
         </span>
-        <div>
-          <h2
-            className="font-display-md text-on-surface"
-            style={{ fontSize: '28px' }}
-          >
-            {chapter.title}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            {onTitleChange ? (
+              <input
+                type="text"
+                value={chapter.title}
+                onChange={(e) => onTitleChange(chapter.id, e.target.value)}
+                placeholder="챕터 제목"
+                aria-label="챕터 제목"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                className="font-display-md text-on-surface bg-transparent border border-transparent hover:border-line focus:border-coral px-1 py-0 outline-none transition-colors"
+                style={{ fontSize: '28px', minWidth: '12ch', width: `${Math.max(chapter.title.length + 1, 12)}ch` }}
+              />
+            ) : (
+              <h2 className="font-display-md text-on-surface" style={{ fontSize: '28px' }}>
+                {chapter.title}
+              </h2>
+            )}
             {photoCount > 0 && (
-              <span className="ml-3 font-body-sm text-body-sm text-on-surface-variant">
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
                 · {photoCount}장
               </span>
             )}
-          </h2>
+          </div>
           {chapter.subtitle && (
             <p className="font-body-sm text-on-surface-variant italic mt-1">
               {chapter.subtitle}

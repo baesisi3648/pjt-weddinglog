@@ -12,6 +12,18 @@ import type { TimelineResponse, Chapter } from '../types';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_SELECTED_KEY = 'weddinglog_selected_photos';
+// 챕터 제목 사용자 편집 — { [chapterId]: customTitle }.
+// 백엔드 CHAPTER_MAPPING 은 고정이라 localStorage 로 클라이언트 오버라이드.
+const LS_CHAPTER_TITLES = 'weddinglog_chapter_titles';
+
+function loadChapterTitleOverrides(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(LS_CHAPTER_TITLES);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
 
 function calcPages(selectedCount: number): number {
   if (!selectedCount) return 0;
@@ -29,6 +41,16 @@ export default function Timeline() {
   const [toast, setToast] = useState<string | null>(null);
   // 앨범 만들기 클릭 시 사진 정리 모달 노출
   const [curationOpen, setCurationOpen] = useState(false);
+  // 사용자 편집한 챕터 제목 오버라이드 — id → 새 제목.
+  const [titleOverrides, setTitleOverrides] = useState<Record<string, string>>(() => loadChapterTitleOverrides());
+
+  function handleTitleChange(chapterId: string | number, newTitle: string) {
+    setTitleOverrides((prev) => {
+      const next = { ...prev, [String(chapterId)]: newTitle };
+      try { localStorage.setItem(LS_CHAPTER_TITLES, JSON.stringify(next)); } catch { /* quota */ }
+      return next;
+    });
+  }
 
   // ?curate=1 query 진입 시 자동으로 정리 모달 오픈 (헤더의 "앨범 주문" 버튼).
   // 데이터 로딩 후 한 번만 처리한 뒤 query 삭제 (history 깨끗하게).
@@ -65,7 +87,11 @@ export default function Timeline() {
 
   const totalPhotos = data?.total_photos ?? 0;
   const pagesEstimated = calcPages(selectedCount);
-  const chapters: Chapter[] = data?.chapters ?? [];
+  // 백엔드 챕터 + localStorage 제목 오버라이드 적용.
+  const chapters: Chapter[] = (data?.chapters ?? []).map((c) => {
+    const override = titleOverrides[String(c.id)];
+    return override !== undefined ? { ...c, title: override } : c;
+  });
   const isAlbumEnabled = selectedCount >= 1;
 
   return (
@@ -146,6 +172,7 @@ export default function Timeline() {
               key={chapter.id}
               chapter={chapter}
               onSelectionChange={handleSelectionChange}
+              onTitleChange={handleTitleChange}
             />
           ))}
 
