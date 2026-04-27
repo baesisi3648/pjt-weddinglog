@@ -6,6 +6,7 @@
 //   · GNB: 처음 투명 → 스크롤 시 불투명
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import BlessingsPage from '../components/BlessingsPage';
 
 const HERO_IMG = '/landing/23_wedding_day_2.png';
 const SECTION_IMGS = {
@@ -13,14 +14,20 @@ const SECTION_IMGS = {
   s2: '/landing/16_jeju_prewedding_3.png',
   s3: '/landing/14_wedding_studio_9.png',
 } as const;
-const GALLERY = [
-  '01_picnic_hangang2',
-  '13_rings_gift_3',
-  '14_wedding_studio_9',
-  '16_jeju_prewedding_3',
-  '23_wedding_day_2',
-  '26_bali_beach_5',
+
+// 데모 갤러리 4장 + 캡션 — 시드 데이터의 캡션 톤을 그대로 노출 (차별화 어필)
+const GALLERY: { name: string; caption: string; wide?: boolean }[] = [
+  // 본식 풀폭 (와이드)
+  { name: '23_wedding_day_4', caption: '오늘 우리 결혼함 💍', wide: true },
+  // 2열 첫 줄
+  { name: '01_picnic_hangang2', caption: '벚꽃 아래 피크닉 세팅 완료' },
+  { name: '13_rings_gift_3', caption: '사이즈 맞춰보는 중 💍' },
+  // 2열 둘째 줄
+  { name: '16_jeju_prewedding_3', caption: '맨발로 제주 바다' },
+  { name: '26_bali_beach_5', caption: '우리 둘 발자국만 남기고' },
 ];
+
+const FINAL_CTA_IMG = '/landing/14_wedding_studio_9.png';
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
@@ -80,7 +87,7 @@ export default function Landing() {
               <span className="whitespace-nowrap">그대로 한 권이 됩니다.</span>
             </h1>
             <p className="mt-6 text-[18px] leading-[1.65] text-ink-muted max-w-[520px]">
-              매일의 일정과 사진이 끝나는 날, 자동으로 책 한 권이 됩니다.
+              적어둔 일정과 사진이, 그대로 한 권의 책으로 남습니다.
             </p>
             <div className="mt-10 flex items-center gap-6">
               <Link
@@ -113,8 +120,8 @@ export default function Landing() {
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
               예식장 답사, 스드메 미팅, 청첩장 발송. 매일 일어나는 작은 일들을
-              한 사람이 적어도 두 사람이 기억합니다. 한 일정에 여러 장의 사진을
-              올리고, 짧은 캡션을 붙여둡니다.
+              누가 적어두든, 둘이 함께 기억합니다. 한 일정에 사진 여러 장과
+              짧은 메모를 붙여두면 끝.
             </p>
           </div>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
@@ -148,9 +155,10 @@ export default function Landing() {
               이미 책처럼 묶입니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              카테고리별 자동 챕터링. 웨딩촬영 → 준비의 날들 → 본식 → 신혼여행.
-              AI가 한 번에 페이지 단위 레이아웃까지 추천하고, 마음에 안 들면
-              템플릿으로 즉시 폴백합니다.
+              일상 데이트 → 본격 준비 → 웨딩촬영 → 본식 → 신혼여행.
+              사진과 일정을 시간 흐름대로 자동 챕터로 묶고, AI가 페이지
+              레이아웃까지 추천합니다. 마음에 안 들면 한 번에 기본 레이아웃으로
+              되돌릴 수 있어요.
             </p>
           </div>
         </div>
@@ -168,9 +176,10 @@ export default function Landing() {
               가족에게 한 권씩.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              하드커버 양장본으로 인쇄해 양가 부모님께. 결혼 후 가장 오래 남는
-              선물은 "두 사람이 거기에 있었다"는 증거입니다. 주문 데이터는
-              인쇄 파트너에게 넘길 수 있는 형식으로 한 번에 내보낼 수 있습니다.
+              하드커버 양장본으로 인쇄해 양가 부모님께.
+              두 사람이 함께 만든 시간을 그대로 손에 쥐어드립니다.
+              주문 데이터는 인쇄 파트너에게 한 번에 내보낼 수 있는 형식으로
+              자동 정리됩니다.
             </p>
           </div>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
@@ -180,6 +189,30 @@ export default function Landing() {
               className="w-full h-full object-cover"
               loading="lazy"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 04 · 축하 메시지 (좌 사진 / 우 텍스트) — 차별화 어필 ── */}
+      <section className="py-32 border-t border-line">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* 좌측: BlessingsPage 미니 미리보기 — 실제 결과물 그대로 */}
+          <div className="aspect-[3/2] overflow-hidden rounded-sm shadow-[0_8px_32px_rgba(31,27,18,0.15)] order-2 lg:order-1">
+            <BlessingsPage variant="book" />
+          </div>
+          <div className="max-w-[480px] order-1 lg:order-2">
+            <p className="font-label-caps text-[12px] tracking-[0.2em] text-coral uppercase mb-4">
+              04 · 책의 첫 장에
+            </p>
+            <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
+              모두의 마음이<br />
+              함께 펼쳐집니다.
+            </h2>
+            <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
+              결혼식에서 받은 축하 메시지를 책 첫 장에. 가족이 책을 펼치면
+              그날의 마음이 손글씨로 다시 만나집니다. 우측 상단 QR을 스캔하면
+              영상 메시지로도 이어져요.
+            </p>
           </div>
         </div>
       </section>
@@ -205,42 +238,72 @@ export default function Landing() {
               24개 일정 · 125장 사진 · 1건 주문.
             </p>
           </div>
-          {/* 한 장씩 큰 이미지로 — 모바일 1열, 데스크톱 2열 (각 사진 한 장 한 장이 살아남음) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {GALLERY.map((name, idx) => (
-              <div
-                key={name}
-                className={`overflow-hidden rounded-sm ${
-                  idx === 0 ? 'md:col-span-2 aspect-[16/7]' : 'aspect-[4/3]'
+          {/* 본식 풀폭 와이드 + 2x2 그리드. 각 사진 아래 시드 캡션 그대로 노출 (차별화 어필) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
+            {GALLERY.map((item) => (
+              <figure
+                key={item.name}
+                className={`flex flex-col gap-3 ${
+                  item.wide ? 'md:col-span-2' : ''
                 }`}
               >
-                <img
-                  src={`/landing/${name}.png`}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+                <div
+                  className={`overflow-hidden rounded-sm ${
+                    item.wide ? 'aspect-[16/7]' : 'aspect-[4/3]'
+                  }`}
+                >
+                  <img
+                    src={`/landing/${item.name}.png`}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <figcaption
+                  className="font-hand-ko text-[16px] text-ink-muted leading-snug px-1"
+                  style={{ letterSpacing: '-0.3px' }}
+                >
+                  {item.caption}
+                </figcaption>
+              </figure>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── 마지막 CTA ───────────────────────────────────────────── */}
-      <section className="py-32 border-t border-line">
-        <div className="max-w-[800px] mx-auto px-6 lg:px-10 text-center">
-          <h2 className="font-display-md text-[36px] md:text-[48px] leading-[1.1] text-ink">
-            지금 바로 둘러보세요.
-          </h2>
-          <p className="mt-5 text-[16px] leading-[1.7] text-ink-muted">
-            로그인 없이 데모 데이터로 모든 기능을 확인할 수 있습니다.
-          </p>
-          <Link
-            to="/home"
-            className="mt-10 inline-block px-10 py-4 rounded-full bg-coral text-white text-[16px] font-medium hover:opacity-90 transition-opacity"
-          >
-            데모 둘러보기
-          </Link>
+      {/* ── 마지막 CTA — 노을 실루엣 + 한 줄 카피 ─────────────────── */}
+      <section className="border-t border-line">
+        {/* 풀폭 비주얼 — 결혼 앨범의 마무리 톤 */}
+        <div className="relative w-full aspect-[16/7] overflow-hidden">
+          <img
+            src={FINAL_CTA_IMG}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg" />
+        </div>
+
+        {/* CTA 본체 */}
+        <div className="py-24 lg:py-28">
+          <div className="max-w-[760px] mx-auto px-6 lg:px-10 text-center">
+            <h2
+              className="font-display-md text-[36px] md:text-[48px] leading-[1.1] text-ink"
+              style={{ wordBreak: 'keep-all' }}
+            >
+              펼쳐 보세요.<br />
+              <span className="whitespace-nowrap">한 권의 책처럼.</span>
+            </h2>
+            <p className="mt-5 text-[16px] leading-[1.7] text-ink-muted">
+              로그인 없이 데모 데이터로 5분이면 충분합니다.
+            </p>
+            <Link
+              to="/home"
+              className="mt-10 inline-block px-10 py-4 rounded-full bg-coral text-white text-[16px] font-medium hover:opacity-90 transition-opacity"
+            >
+              데모 둘러보기 →
+            </Link>
+          </div>
         </div>
       </section>
 
