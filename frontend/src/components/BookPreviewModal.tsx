@@ -82,7 +82,19 @@ function ChapterCoverPage({
   );
 }
 
-function AlbumPageContent({ page, photos }: { page: AlbumPage; photos: Photo[] }) {
+// 페이지 하단 가운데 — `-N-` 폴리오. 양장본 정통 톤.
+function PageFolio({ n }: { n: number }) {
+  return (
+    <div
+      className="absolute bottom-2 left-1/2 -translate-x-1/2 font-mono text-[10px] text-ink-muted/70 tracking-[0.15em] pointer-events-none"
+      aria-hidden="true"
+    >
+      — {n} —
+    </div>
+  );
+}
+
+function AlbumPageContent({ page, photos, folio }: { page: AlbumPage; photos: Photo[]; folio?: number }) {
   const ids = page.photo_ids;
   const slot = (i: number, cls: string) => <PhotoSlot id={ids[i]} photos={photos} className={cls} />;
 
@@ -90,57 +102,61 @@ function AlbumPageContent({ page, photos }: { page: AlbumPage; photos: Photo[] }
     // 1장 풀 페이지 — 사진 비율 유지(contain), 위아래 여백, 하단 캡션.
     // T5(챕터 커버 사진)도 동일 레이아웃으로 표시 (책에서는 텍스트 인트로가 따로 있음).
     return (
-      <div className="w-full h-full p-6 flex flex-col bg-bg">
+      <div className="relative w-full h-full p-6 flex flex-col bg-bg">
         <div className="flex-1 flex items-center justify-center overflow-hidden">
           {slot(0, 'w-full h-full')}
         </div>
         {page.caption && (
-          <p className="mt-4 text-[12px] text-ink-muted text-center italic truncate"
+          <p className="mt-4 mb-3 text-[12px] text-ink-muted text-center italic truncate"
              style={{ fontFamily: 'Fraunces, serif' }}>
             {page.caption}
           </p>
         )}
+        {folio !== undefined && <PageFolio n={folio} />}
       </div>
     );
   }
   if (page.template === 'T2') {
     return (
-      <div className="w-full h-full p-3">
-        <div className="flex gap-2 w-full h-full">
+      <div className="relative w-full h-full p-3">
+        <div className="flex gap-2 w-full h-full pb-4">
           {slot(0, 'flex-1 h-full')}
           {slot(1, 'flex-1 h-full')}
         </div>
+        {folio !== undefined && <PageFolio n={folio} />}
       </div>
     );
   }
   if (page.template === 'T3') {
     return (
-      <div className="w-full h-full p-3">
-        <div className="grid grid-cols-3 grid-rows-2 gap-2 w-full h-full">
+      <div className="relative w-full h-full p-3">
+        <div className="grid grid-cols-3 grid-rows-2 gap-2 w-full h-full pb-4">
           {slot(0, 'col-span-2 row-span-2 h-full')}
           {slot(1, 'h-full')}
           {slot(2, 'h-full')}
         </div>
+        {folio !== undefined && <PageFolio n={folio} />}
       </div>
     );
   }
   // T4
   return (
-    <div className="w-full h-full p-3">
-      <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full">
+    <div className="relative w-full h-full p-3">
+      <div className="grid grid-cols-2 grid-rows-2 gap-2 w-full h-full pb-4">
         {slot(0, 'h-full')}
         {slot(1, 'h-full')}
         {slot(2, 'h-full')}
         {slot(3, 'h-full')}
       </div>
+      {folio !== undefined && <PageFolio n={folio} />}
     </div>
   );
 }
 
-// 책 평탄화 항목 타입
+// 책 평탄화 항목 타입 — folio 는 본문 사진 페이지에만 부여 (인트로/표지 제외).
 type BookItem =
   | { kind: 'cover'; chapterNumber: number; chapterTitle: string }
-  | { kind: 'page'; page: AlbumPage };
+  | { kind: 'page'; page: AlbumPage; folio: number };
 
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
 export default function BookPreviewModal({ layout, photos, format, onChangeFormat, blessingMainPhoto, onClose }: Props) {
@@ -151,8 +167,10 @@ export default function BookPreviewModal({ layout, photos, format, onChangeForma
   // 책 페이지 평탄화 — 빈 페이지 패리티 제거.
   // 각 챕터: [텍스트 인트로 페이지] + [T5 커버 사진(P.1)] + [T1 본문 사진들...]
   // T5 페이지를 건너뛰지 않음 — P.1 사진이 손실되지 않도록.
+  // folio 는 사진 페이지에만 1, 2, 3... 으로 책 전체 통합 번호 부여.
   const flatPages = useMemo(() => {
     const out: BookItem[] = [];
+    let folio = 0;
     for (const ch of layout.chapters) {
       if (!ch.pages.length) continue;
       out.push({
@@ -161,7 +179,8 @@ export default function BookPreviewModal({ layout, photos, format, onChangeForma
         chapterTitle: ch.title,
       });
       for (const pg of ch.pages) {
-        out.push({ kind: 'page', page: pg });
+        folio += 1;
+        out.push({ kind: 'page', page: pg, folio });
       }
     }
     return out;
@@ -286,7 +305,7 @@ export default function BookPreviewModal({ layout, photos, format, onChangeForma
             }
             return (
               <PageView key={idx} width={PAGE_W} height={PAGE_H}>
-                <AlbumPageContent page={item.page} photos={photos} />
+                <AlbumPageContent page={item.page} photos={photos} folio={item.folio} />
               </PageView>
             );
           })}
