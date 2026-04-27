@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import type { AlbumLayout, AlbumPage, LayoutTemplate } from '../types/album';
 import { LAYOUT_INFO } from '../types/album';
 import type { Photo } from '../types/photo';
+import BlessingsPage from './BlessingsPage';
 
 const TEMPLATES: LayoutTemplate[] = ['T1', 'T2', 'T3', 'T4', 'T5'];
 
@@ -264,6 +265,31 @@ export default function AlbumEditor({ layout, photos, onChange }: Props) {
       role="region"
       aria-label="앨범 편집"
     >
+      {/* 책 첫 장 — 축하 메시지 페이지 (read-only 미리보기, 풀폭) */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between border-b border-line pb-2">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <span className="font-mono text-[10px] tracking-[0.15em] text-coral">
+              INTRO
+            </span>
+            <h3 className="font-display-md text-[18px] text-ink">
+              축하 메시지 (책 첫 장)
+            </h3>
+            <span className="text-[12px] text-ink-muted">
+              본식 사진 + 메시지 9개 + QR
+            </span>
+          </div>
+          <span className="text-[11px] text-ink-muted italic">
+            책 미리보기에서 확인
+          </span>
+        </div>
+        <div className="border border-line bg-bg overflow-hidden">
+          <div className="aspect-[3/2] w-full">
+            <BlessingsPage variant="editor" />
+          </div>
+        </div>
+      </section>
+
       {layout.chapters.map((chapter, chIdx) => (
         <section key={`${chIdx}-${chapter.title}`} className="flex flex-col gap-3">
           {/* 챕터 헤더 */}

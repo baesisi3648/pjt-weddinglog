@@ -4,6 +4,7 @@ import React, { forwardRef, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import type { AlbumLayout, AlbumPage } from '../types/album';
 import type { Photo } from '../types/photo';
+import BlessingsPage from './BlessingsPage';
 
 // 가로 앨범(landscape) — 결혼 양장본 정통 비율 (3:2).
 // 양면 펼침 시 1080 x 360, 데스크톱 1280px 컨테이너에서 자연스럽게 fit.
@@ -128,27 +129,17 @@ function AlbumPageContent({ page, photos }: { page: AlbumPage; photos: Photo[] }
 // 책 평탄화 항목 타입
 type BookItem =
   | { kind: 'cover'; chapterNumber: number; chapterTitle: string }
-  | { kind: 'page'; page: AlbumPage }
-  | { kind: 'blank' };
+  | { kind: 'page'; page: AlbumPage };
 
 // ─── 메인 모달 ────────────────────────────────────────────────────────────
 export default function BookPreviewModal({ layout, photos, onClose }: Props) {
-  // 책 페이지 평탄화.
-  // react-pageflip showCover=true 기준:
-  //   - child 0       = 앞표지 (우측 단독)
-  //   - child 1, 2    = 첫 spread (좌, 우)
-  //   - child 3, 4    = 두 번째 spread
-  //   - 마지막 child  = 뒤표지 (좌측 단독)
-  // children 안의 본문 = flatPages 배열, flatPages 인덱스 짝수=좌측, 홀수=우측.
-  // 챕터 표지가 항상 우측이려면 push 직전 length 가 홀수여야 함.
+  // 책 페이지 평탄화 — 빈 페이지 패리티 제거.
+  // 챕터 인트로 페이지가 좌측에 와도 가운데 정렬 디자인이라 자연스럽고,
+  // BlessingsPage 직후 P.1 이 같은 spread 에서 바로 보이도록.
   const flatPages = useMemo(() => {
     const out: BookItem[] = [];
     for (const ch of layout.chapters) {
       if (!ch.pages.length) continue;
-      // 챕터 표지를 우측에 두기 위해 좌측 빈 페이지 채움.
-      if (out.length % 2 === 0) {
-        out.push({ kind: 'blank' });
-      }
       out.push({
         kind: 'cover',
         chapterNumber: ch.chapter_number,
@@ -236,11 +227,14 @@ export default function BookPreviewModal({ layout, photos, onClose }: Props) {
             </div>
           </PageView>
 
-          {/* 본문 페이지들 — 빈 페이지 / 챕터 인트로(글만) / 사진 페이지 */}
+          {/* 축복 메시지 첫 페이지 — 좌측 빈 면 + 우측 본식 사진 + 손글씨 */}
+          <PageView className="bg-bg" />
+          <PageView>
+            <BlessingsPage variant="book" />
+          </PageView>
+
+          {/* 본문 페이지들 — 챕터 인트로(글만) / 사진 페이지 */}
           {flatPages.map((item, idx) => {
-            if (item.kind === 'blank') {
-              return <PageView key={idx} className="bg-bg" />;
-            }
             if (item.kind === 'cover') {
               return (
                 <PageView key={idx}>

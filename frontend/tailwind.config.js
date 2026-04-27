@@ -90,6 +90,9 @@ export default {
         display: ['Fraunces', 'serif'],
         body: ['Pretendard', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        // 손글씨 톤 — 결혼 앨범 첫 페이지 축복 메시지용
+        'hand-ko': ['"Nanum Pen Script"', '"Gaegu"', 'cursive'],
+        'hand-en': ['"Caveat"', 'cursive'],
       },
       fontSize: {
         'display-lg': ['48px', { lineHeight: '1.1', letterSpacing: '0.02em', fontWeight: '300' }],
