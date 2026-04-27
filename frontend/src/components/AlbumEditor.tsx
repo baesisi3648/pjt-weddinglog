@@ -252,6 +252,13 @@ export default function AlbumEditor({
     onChange(renumberPages(next));
   }
 
+  // 챕터 제목 변경
+  function changeChapterTitle(chapterIdx: number, title: string) {
+    const next = structuredClone(layout) as AlbumLayout;
+    next.chapters[chapterIdx].title = title;
+    onChange(renumberPages(next));
+  }
+
   // 페이지 추가 (해당 챕터 끝에 T1 1장)
   function addPage(chapterIdx: number) {
     const next = structuredClone(layout) as AlbumLayout;
@@ -317,15 +324,25 @@ export default function AlbumEditor({
       </section>
 
       {layout.chapters.map((chapter, chIdx) => (
-        <section key={`${chIdx}-${chapter.title}`} className="flex flex-col gap-3">
-          {/* 챕터 헤더 */}
-          <div className="flex items-baseline justify-between border-b border-line pb-2">
-            <div className="flex items-baseline gap-3">
-              <span className="font-mono text-[10px] tracking-[0.15em] text-coral">
+        <section key={chIdx} className="flex flex-col gap-3">
+          {/* 챕터 헤더 — 제목은 인라인 편집 가능 */}
+          <div className="flex items-baseline justify-between border-b border-line pb-2 gap-3">
+            <div className="flex items-baseline gap-3 flex-1 min-w-0">
+              <span className="font-mono text-[10px] tracking-[0.15em] text-coral shrink-0">
                 CH.{String(chapter.chapter_number).padStart(2, '0')}
               </span>
-              <h3 className="font-display-md text-[18px] text-ink">{chapter.title}</h3>
-              <span className="text-[12px] text-ink-muted">
+              <input
+                type="text"
+                value={chapter.title}
+                onChange={(e) => changeChapterTitle(chIdx, e.target.value)}
+                placeholder="챕터 제목"
+                aria-label="챕터 제목"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                className="font-display-md text-[18px] text-ink bg-transparent border border-transparent hover:border-line focus:border-coral px-2 py-0.5 outline-none transition-colors flex-1 min-w-0"
+              />
+              <span className="text-[12px] text-ink-muted shrink-0">
                 {chapter.pages.length}페이지
               </span>
             </div>
