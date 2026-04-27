@@ -125,9 +125,17 @@ OPENAI_API_KEY=sk-...
 
 ### Lv3 추가 기능
 
-- ZIP 익스포트 — `/api/orders/{id}/export` 엔드포인트
-- 콘텐츠 구조: `metadata.json` + `chapters/{N}/photos/*.jpg` + `chapters/{N}/captions.json`
-- 파트너사가 받아 그대로 인쇄 입고 가능한 형태
+- ZIP 익스포트 — `GET /api/orders/{id}/export` (response: `application/zip`)
+- 콘텐츠 구조 (`docs/partner-contract.md` 기반):
+  ```
+  {order_id}.zip
+  ├── order.json                       # 주문 메타 + 앨범 레이아웃 (album.chapters[].pages[])
+  ├── captions.json                    # { photo_id: caption } 평탄 매핑
+  └── chapters/
+      └── {NN}_{chapter_key}/          # 예: 01_wedding_photo
+          └── {photo_id}.{ext}         # 원본 사진 (jpg/png)
+  ```
+- 파트너사가 받아 `order.json` 만 보고 인쇄 페이지를 구성, `chapters/.../{photo_id}.{ext}` 로 사진 매칭 가능
 
 ---
 
