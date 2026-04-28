@@ -59,7 +59,8 @@ class ChecklistResponse(BaseModel):
     summary="AI 체크리스트 생성",
     description=(
         "결혼 준비 일정 15개를 자동 생성한다. "
-        "OpenAI 키가 있으면 실제 AI 호출, 없거나 실패 시 사전정의 템플릿으로 폴백."
+        "OpenAI 키가 있으면 실제 AI 호출, 없거나 실패 시 사전정의 템플릿으로 폴백. "
+        "Rate limit: 5회/분 (IP 기준 — RateLimitMiddleware)."
     ),
 )
 async def generate_checklist(
@@ -185,7 +186,8 @@ class CaptionResponse(BaseModel):
     summary="AI 사진 캡션 3개 생성",
     description=(
         "이벤트 컨텍스트(category/date/memo) 기반으로 한국어 캡션 3개를 생성한다. "
-        "OpenAI 키가 없거나 실패하면 카테고리별 사전 캡션으로 폴백."
+        "OpenAI 키가 없거나 실패하면 카테고리별 사전 캡션으로 폴백. "
+        "Rate limit: 30회/분 (IP 기준 — RateLimitMiddleware)."
     ),
 )
 async def generate_caption(

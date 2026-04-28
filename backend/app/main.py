@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import SessionLocal
 from app.init_db import init_db
+from app.limiter import RateLimitMiddleware, configure_enabled, limiter
 from app.routers import (
     ai_router,
     album_router,
@@ -121,6 +122,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Rate limit 미들웨어 — AI 라우터 비용 폭주 방어 (IP 기반 슬라이딩 윈도우).
+    # 한도는 app/limiter.py 의 _DEFAULT_RULES 참고.
+    configure_enabled(settings.RATE_LIMIT_ENABLED)
+    app.add_middleware(RateLimitMiddleware, state=limiter)
 
     # API 라우터 등록
     app.include_router(couples_router)

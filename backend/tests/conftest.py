@@ -79,8 +79,20 @@ def tmp_upload_dir(
 
 @pytest.fixture()
 def client(db_session: Session) -> Generator[TestClient, None, None]:
-    """TestClient — get_db 를 테스트용 세션으로 오버라이드."""
+    """TestClient — get_db 를 테스트용 세션으로 오버라이드.
+
+    Rate limit 은 테스트마다 비활성화한다 (모듈 레벨 limiter 의 enabled 토글).
+    같은 IP 에서 동일 엔드포인트를 빠르게 반복 호출하는 테스트가 많아
+    프로덕션 한도 (5/min, 30/min) 에 걸리면 회귀 위험.
+
+    create_app() 이 내부에서 configure_enabled(settings.RATE_LIMIT_ENABLED) 를
+    호출하므로, 비활성화는 반드시 그 *이후* 에 해야 한다.
+    """
+    from app.limiter import configure_enabled, limiter
+
     app = create_app()
+    _was_enabled = limiter.enabled
+    configure_enabled(False)
 
     def _override_get_db() -> Generator[Session, None, None]:
         try:
@@ -89,6 +101,9 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
             pass
 
     app.dependency_overrides[get_db] = _override_get_db
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        app.dependency_overrides.clear()
+        configure_enabled(_was_enabled)

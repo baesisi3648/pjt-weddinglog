@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     # 로깅
     LOG_LEVEL: str = Field(default="INFO", description="로그 레벨")
 
+    # Rate Limiting — AI 라우터 비용 폭주 방어 (인증 부재 환경 보강)
+    RATE_LIMIT_ENABLED: bool = Field(
+        default=True,
+        description="False 면 모든 rate limit 비활성 (테스트 / 로컬 디버깅 용)",
+    )
+
     # 업로드 경로
     UPLOAD_DIR: Path = Field(
         default=Path("./data/uploads/photos"),

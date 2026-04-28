@@ -301,12 +301,17 @@ OpenAPI 자동 문서: `http://localhost:8000/docs` (포트는 `.env` 의 `API_P
 - 외부 경계 (라우터, AI, 파일 업로드) 와 비즈니스 룰 (가격 계산, `OrderStateMachine`) 은 strict TDD
 - 프레젠테이션 컴포넌트와 유틸은 relaxed TDD
 
-### 6.3 보안 — 파일 업로드
+### 6.3 보안 — 파일 업로드 + AI 비용 폭주 방어
 
 - `photos.id` = `secrets.token_urlsafe(16)` unguessable 서버 UUID (URL Enumeration 방어)
 - 업로드 시 Pillow magic number 검증 (MIME 스푸핑 방어)
 - 저장 파일명은 서버 UUID로 재생성, 원본명은 `original_filename` 컬럼만 보존
 - `pathlib.Path.resolve()` 로 `/app/data/uploads/` prefix 검증 (Path Traversal 방어)
+- **`/api/ai/*` 엔드포인트 IP 기반 rate limit** (`backend/app/limiter.py`) — 인증이 없는 데모 환경에서 OpenAI 비용 폭탄을 막기 위해 슬라이딩 윈도우로 제한:
+  - `/api/ai/checklist` 5회/분
+  - `/api/ai/caption` 30회/분
+  - `/api/couples/{id}/album/compose` 5회/분
+  - 한도 초과 시 429 + `Retry-After: 60`. `RATE_LIMIT_ENABLED=false` 로 비활성 가능 (테스트 / 부하 점검 용)
 
 ### 6.4 AI 폴백을 1급 시민으로
 

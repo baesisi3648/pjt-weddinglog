@@ -39,7 +39,8 @@ router = APIRouter(prefix="/api/couples/{couple_id}/album", tags=["album"])
     summary="AI 앨범 자동 구성",
     description=(
         "선택된 사진들로 앨범 레이아웃을 생성한다. "
-        "OpenAI 키가 있으면 AI 호출, 없거나 실패 시 카테고리 기반 규칙 폴백."
+        "OpenAI 키가 있으면 AI 호출, 없거나 실패 시 카테고리 기반 규칙 폴백. "
+        "Rate limit: 5회/분 (IP 기준 — RateLimitMiddleware, 60초 걸리는 무거운 호출)."
     ),
 )
 async def compose_album(
