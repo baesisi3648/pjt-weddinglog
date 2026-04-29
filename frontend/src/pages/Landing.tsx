@@ -229,13 +229,13 @@ export default function Landing() {
                 className="font-display-md text-[24px] md:text-[32px] leading-[1.2] text-ink"
                 style={{ wordBreak: 'keep-all' }}
               >
-                <span className="whitespace-nowrap">가상 커플 "철수 ♥ 영희"의 1년 기록.</span>
+                <span className="whitespace-nowrap">"철수 ♥ 영희"의 1년 기록.</span>
               </h2>
             </div>
             <p className="text-[13px] text-ink-muted max-w-[280px] md:text-right">
               실제 시연용 시드 데이터.
               <br />
-              24개 일정 · 125장 사진 · 1건 주문.
+              24개 일정 · 123장 사진 · 3건 주문.
             </p>
           </div>
           {/* 본식 풀폭 와이드 + 2x2 그리드. 각 사진 아래 시드 캡션 그대로 노출 (차별화 어필) */}
@@ -255,7 +255,9 @@ export default function Landing() {
                   <img
                     src={`/landing/${item.name}.png`}
                     alt=""
-                    className="w-full h-full object-cover"
+                    // wide 본식 사진은 신랑·신부 얼굴이 상단에 있어 default center crop 으로
+                    // 얼굴이 잘림 → object-position 을 위쪽 30% 로 당김.
+                    className={`w-full h-full object-cover ${item.wide ? '[object-position:center_30%]' : ''}`}
                     loading="lazy"
                   />
                 </div>
