@@ -16,6 +16,7 @@ import type { Photo } from '../types/photo';
 import { photoUrl } from '../utils/photo';
 import { applyOverrideByCanonicalTitle } from '../utils/chapterTitle';
 import { safeStorage } from '../utils/safeStorage';
+import { calcPrice, formatKrw } from '../utils/pricing';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_KEY = 'weddinglog_selected_photos';
@@ -23,14 +24,8 @@ const LS_KEY = 'weddinglog_selected_photos';
 // 비어있으면 BlessingsPage 의 BLESSING_MAIN_PHOTO 기본값 사용.
 const LS_BLESSING_MAIN = 'weddinglog_blessing_main_photo_id';
 
-// 가격 계산
-function calcPrice(format: OrderFormat, coverType: OrderCoverType, quantity: number) {
-  const base = format === 'SQUARE' ? 150000 : 180000;
-  const surcharge = coverType === 'HARD' ? 20000 : 0;
-  return { base, surcharge, total: quantity * (base + surcharge) };
-}
-
-const fmt = (n: number) => n.toLocaleString() + '원';
+// 가격 계산은 utils/pricing.ts 로 추출 (백엔드 단일 소스와 동기, 단위 테스트 포함).
+const fmt = formatKrw;
 
 // 전화번호 정규식 — 하이픈/공백 제거 후 010 + 10~11자리 검증.
 // 허용: "01012345678", "010-1234-5678", "010 1234 5678"
