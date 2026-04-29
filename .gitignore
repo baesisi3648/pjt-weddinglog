@@ -48,9 +48,10 @@ Thumbs.db
 # ===== Claude Code local settings (do not commit) =====
 .claude/
 !.claude/settings.json.example
-
+ 
 # ===== Build artifacts =====
 *.zip
+!reference/*.zip
 build/
 *.db
 *.db-journal
