@@ -309,14 +309,28 @@ export default function OrderCheckout() {
                   >
                     {state === 'done' ? (
                       <span className="text-background text-[12px] font-bold leading-none" aria-hidden="true">✓</span>
-                    ) : state === 'current' ? (
-                      <span className="w-2.5 h-2.5 rounded-full bg-on-surface" />
-                    ) : null}
+                    ) : (
+                      // 모바일(< 640px) 에선 step 번호 노출, 데스크톱에선 기존 dot 유지.
+                      <>
+                        <span
+                          className={`sm:hidden text-[12px] font-bold leading-none ${
+                            state === 'current' ? 'text-on-surface' : 'text-outline'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {s.id}
+                        </span>
+                        {state === 'current' ? (
+                          <span className="hidden sm:block w-2.5 h-2.5 rounded-full bg-on-surface" />
+                        ) : null}
+                      </>
+                    )}
                   </div>
+                  {/* 라벨: 모바일에선 좁아서 겹치는 케이스가 많아 현재 단계만 노출. */}
                   <span
                     className={`absolute -bottom-6 left-1/2 -translate-x-1/2 font-label-caps text-label-caps whitespace-nowrap ${
                       state === 'current' ? 'text-primary' : state === 'done' ? 'text-on-surface' : 'text-outline'
-                    }`}
+                    } ${state === 'current' ? '' : 'hidden sm:inline'}`}
                   >
                     {s.label}
                   </span>
