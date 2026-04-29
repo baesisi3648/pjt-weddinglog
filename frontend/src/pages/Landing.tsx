@@ -87,7 +87,7 @@ export default function Landing() {
               <span className="whitespace-nowrap">그대로 한 권이 됩니다.</span>
             </h1>
             <p className="mt-6 text-[18px] leading-[1.65] text-ink-muted max-w-[520px]">
-              결혼식이 끝나기 전에, 1년의 준비 기록이 한 권의 책으로 도착합니다.
+              결혼식의 여운이 가시기 전에, 1년의 준비 기록이 한 권의 책으로 도착합니다.
             </p>
             <div className="mt-10 flex items-center gap-6">
               <Link
@@ -119,9 +119,8 @@ export default function Landing() {
               사진과 메모를 남깁니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              예식장 답사, 스드메 미팅, 청첩장 발송. 매일 일어나는 작은 일들을
-              누가 적어두든, 둘이 함께 기억합니다. 한 일정에 사진 여러 장과
-              짧은 메모를 붙여두면 끝.
+              웨딩홀 답사, 스튜디오 촬영 등 결혼 준비 과정에서 일어나는 일들을
+              둘만의 캘린더에 사진과 짧은 메모로 적어두면 끝.
             </p>
           </div>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
@@ -151,8 +150,8 @@ export default function Landing() {
               02 · 자동 챕터링
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
-              쌓아둔 사진이<br />
-              자동으로 5개 챕터로 묶입니다.
+              쌓아둔 사진들이<br />
+              자동으로 분류됩니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
               일상 데이트 → 본격 준비 → 웨딩촬영 → 본식 → 신혼여행.
@@ -173,13 +172,12 @@ export default function Landing() {
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
               신혼여행에서 돌아오는 길,<br />
-              앨범도 함께 도착합니다.
+              사진을 담으면 앨범도 함께 도착합니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              신혼여행에서 돌아와 마지막 사진까지 정리하면, 그 다음은 주문
-              한 번. 본식 앨범을 3~6개월 기다리는 대신, 양가 인사 자리에
-              앨범을 들고 갈 수 있는 속도로 받습니다. 본인용과 양가 부모님용을
-              한 번에 인쇄해 함께 전해드립니다.
+              신혼여행 사진까지 정리하면, 그 다음은 주문하기 클릭 한 번으로
+              앨범이 제작됩니다. 부부용과 양가 부모님용을 한 번에 인쇄해 함께
+              전해드립니다.
             </p>
           </div>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
