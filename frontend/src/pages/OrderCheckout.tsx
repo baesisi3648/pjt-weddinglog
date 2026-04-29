@@ -177,8 +177,31 @@ export default function OrderCheckout() {
       setAlbumLayout(overridden);
       setAlbumSource(res.source);
     } catch (err) {
-      const e = err as { message?: string };
-      setComposeError(e.message ?? '앨범 구성에 실패했습니다.');
+      // axios 응답에서 status 코드 / 백엔드 detail 추출.
+      const e = err as {
+        message?: string;
+        code?: string;
+        response?: { status?: number; data?: { detail?: string } };
+      };
+      const status = e.response?.status;
+      const detail = e.response?.data?.detail;
+
+      let userMessage: string;
+      if (status === 429) {
+        userMessage =
+          '앨범 자동 구성 요청이 잠시 막혔어요. 잠시 후 (약 1분) 다시 시도해주세요.';
+      } else if (e.code === 'ECONNABORTED' || e.message === 'Network Error') {
+        userMessage =
+          '네트워크가 잠깐 끊겼어요. 연결 상태를 확인하고 다시 시도해주세요.';
+      } else if (detail) {
+        userMessage = String(detail);
+      } else {
+        userMessage = e.message ?? '앨범 자동 구성에 실패했어요.';
+      }
+
+      setComposeError(userMessage);
+      // 인라인 영역이 화면 아래로 밀려 안 보일 수 있어 Toast 도 함께 발사.
+      setToast({ message: userMessage, type: 'error' });
     } finally {
       setComposeLoading(false);
     }
