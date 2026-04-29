@@ -2,11 +2,13 @@
 
 > 결혼 준비 과정의 일정·사진·축하 메시지를 한 권의 책으로 묶어주는 서비스.
 
-[![Tests](https://img.shields.io/badge/tests-280%20BE%20%2F%20177%20FE-green)]() [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%2018-blue)]() [![Docker](https://img.shields.io/badge/run-docker--compose%20up-success)]()
+[![Tests](https://img.shields.io/badge/tests-280%20BE%20%2F%20218%20FE-green)]() [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%2018-blue)]() [![Docker](https://img.shields.io/badge/run-docker--compose%20up-success)]()
+
+> **개발자** [@baesisi3648](https://github.com/baesisi3648) · **기간** 2026-04-23 ~ 2026-04-29 (7일) · **커밋** 73+ · **메인 도구** Claude Code (Opus 4.7) + Google Stitch MCP
 
 ---
 
-## 1. 서비스 소개
+## 📖 1. 서비스 소개
 
 WeddingLog 는 사용자가 **6개월 ~ 1년에 걸친 결혼 준비 과정**을 가볍게 기록하면, 마지막에 그 기록이 **한 권의 양장본 앨범** 으로 변환되는 서비스입니다. 단순한 SNS 사진첩이 아니라, **준비 과정 자체가 콘텐츠** 가 되는 흐름을 지향합니다.
 
@@ -62,7 +64,7 @@ WeddingLog 는 사용자가 **6개월 ~ 1년에 걸친 결혼 준비 과정**을
 
 ---
 
-## 2. 실행 방법
+## ⚡ 2. 실행 방법
 
 ### Quick Start
 
@@ -125,7 +127,7 @@ OPENAI_API_KEY=sk-...
 
 ---
 
-## 3. 구현 기능
+## ✨ 3. 구현 기능
 
 ### 핵심 기능 (Lv1 — MVP, 사진/일정 기록 + 앨범 미리보기) ✅
 
@@ -177,7 +179,7 @@ OPENAI_API_KEY=sk-...
 
 ---
 
-## 4. 기술 스택 및 아키텍처
+## 🛠 4. 기술 스택 및 아키텍처
 
 ### Backend
 
@@ -247,6 +249,38 @@ OPENAI_API_KEY=sk-...
 └── .env.example
 ```
 
+### 시스템 구성도
+
+```mermaid
+flowchart LR
+  Browser([Browser])
+  subgraph Front[Frontend · Vite + React 18]
+    Pages[Pages<br/>Home·Calendar·Timeline<br/>OrderCheckout·Orders]
+    APIClient[Axios client]
+    Pages --> APIClient
+  end
+  subgraph Back[Backend · FastAPI]
+    RateLimit[RateLimitMiddleware<br/>IP 기반 5~30/min]
+    Routers[Routers<br/>/api/couples · /events<br/>/photos · /ai · /album · /orders]
+    Services[Services<br/>OrderStateMachine<br/>AlbumComposer · ExportService]
+    AIService{AIService}
+    RateLimit --> Routers --> Services
+    Services --> AIService
+  end
+  SQLite[(SQLite<br/>data/weddinglog.db)]
+  OpenAI[/OpenAI<br/>GPT-4o-mini/]
+  Template[/Template<br/>Fallback/]
+  ZIP{{ZIP<br/>order.json + captions<br/>+ chapters/*/*.jpg}}
+
+  Browser -->|"/api/*"| RateLimit
+  APIClient -.->|baseURL VITE_API_URL| Browser
+  Services --> SQLite
+  AIService -->|키 있음| OpenAI
+  AIService -->|키 없음 / 실패| Template
+  Services -->|"GET /orders/:id/export"| ZIP
+  ZIP -.-> Browser
+```
+
 ### 주요 API 엔드포인트
 
 | Method | Path | 설명 |
@@ -269,7 +303,7 @@ OpenAPI 자동 문서: `http://localhost:8000/docs` (포트는 `.env` 의 `API_P
 
 ---
 
-## 5. AI 도구 사용 내역
+## 🤖 5. AI 도구 사용 내역
 
 ### 사용한 AI 도구
 
@@ -307,7 +341,7 @@ OpenAPI 자동 문서: `http://localhost:8000/docs` (포트는 `.env` 의 `API_P
 
 ---
 
-## 6. 설계 의도
+## 🎨 6. 설계 의도
 
 ### 6.1 도메인 분리 — Domain-Guarded 화면 명세
 
@@ -367,18 +401,27 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 ### 6.7 사업적 가능성 + 미구현 확장
 
-이 서비스는 *책 한 권* 을 결과물로 갖는 인쇄 회사의 도메인 위에 있습니다. 그래서 확장 방향도 *책 그 자체의 폭과 깊이* 를 늘리는 쪽이 자연스럽습니다.
+이 서비스는 *책 한 권* 을 결과물로 갖는 인쇄 회사의 도메인 위에 있어, 확장 방향도 *책 그 자체의 폭과 깊이* 를 늘리는 쪽이 자연스럽습니다. 핵심은 *결혼 준비 콘텐츠 → 한 권의 양장본* 이라는 변환을 더 정밀하게 만드는 것이고, 그 정밀도가 곧 인쇄 회사 입장에서의 차별화입니다.
 
-1. **청첩장 QR 로 받는 진짜 축하 메시지** — 현재는 시드된 9개 메시지로 축하 페이지를 구성합니다. 다음 단계는 *모바일 / 종이 청첩장에 부착되는 QR 코드* 로 하객이 본인 폰에서 직접 메시지를 남기게 하고, 본식 직전까지 모인 메시지를 자동으로 책 첫 장에 편집해 넣는 흐름입니다. *책 첫 장 = 사람들의 마음* 이라는 차별점이 시드 데이터가 아니라 진짜 결혼식의 흔적으로 채워집니다.
-2. **AI 캡션 톤 조정** — 지금 `GPT-4o-mini` 가 캡션 3개를 후보로 제시하는데, 양장본 정통 톤 / 캐주얼 / 시적 같은 *책 한 권의 보이스* 를 선택하면 모든 캡션을 일관된 결로 다시 써 주는 흐름. 책의 통일감은 사진보다 글에서 무너지기 쉬워서 가치가 큽니다.
-3. **인쇄물 라인업 확장** — 책 한 권 외에도 *같은 콘텐츠 위에서 파생되는 인쇄물* 로 미니북, 포토카드, 액자 인화 같은 라인업을 같은 주문 흐름에 흡수. 이미 큐레이션된 70 ~ 90장 중 베스트컷을 그대로 다른 형태로 인쇄할 수 있어, 콘텐츠를 다시 만드는 비용 없이 객단가가 올라갑니다.
-4. **다국어 양장본** — 국제 결혼 / 해외 거주 가족 케이스를 위해 영문 / 일문 폰트 페어와 종이 사이즈 (Letter / A4) 옵션을 추가. 현재는 한글 본문 + Pretendard 전제로만 레이아웃이 잡혀 있습니다.
+#### 📈 콘텐츠 — 책 안에 더 진한 흔적
 
-핵심은 *결혼 준비 콘텐츠 → 한 권의 양장본* 이라는 변환을 더 정밀하게 만드는 것이고, 그 정밀도가 곧 인쇄 회사 입장에서의 차별화입니다.
+- [ ] **청첩장 QR 로 받는 진짜 축하 메시지** — 모바일 / 종이 청첩장에 QR 부착 → 하객 본인 폰에서 메시지 남기기 → 본식 직전까지 모인 메시지가 자동으로 책 첫 장에 편집됨. 시드 9개 데이터 → 진짜 결혼식의 흔적으로.
+- [ ] **AI 캡션 톤 조정** — *양장본 정통 / 캐주얼 / 시적* 같은 *책 한 권의 보이스* 를 선택하면 모든 캡션을 일관된 결로 다시 써 줌. 책의 통일감은 사진보다 글에서 무너지기 쉬움.
+
+#### 🛒 인쇄물 라인업 — 같은 콘텐츠, 다른 결과물
+
+- [ ] **미니북 / 포토카드 / 액자 인화** — 큐레이션된 70~90장 중 베스트컷을 다른 형태로. 콘텐츠 재생산 비용 0, 객단가 ↑.
+- [ ] **다국어 양장본** — 국제 결혼 / 해외 거주 가족 케이스. 영문 / 일문 폰트 페어 + Letter / A4 사이즈.
+
+#### 🔧 기술 부채 — Phase 1 백로그
+
+- [ ] **Alembic 마이그레이션** — 현재 `Base.metadata.create_all` 만. 다중 환경 배포 / 스키마 변경 PR 자동 검증 필요해질 때.
+- [ ] **`Order.price_snapshot` 컬럼** — 가격표 변경 후 과거 주문 ZIP 익스포트 시 가격이 어긋나는 위험 차단.
+- [ ] **에러 토스트 시스템 (sonner)** — 현재 `composeAlbum` 1군데만 인라인 처리. 전체 라우트 공통 토스트 도입.
 
 ---
 
-## 7. 테스트 실행
+## ✅ 7. 테스트 실행
 
 ### Backend
 
@@ -403,7 +446,7 @@ npm test -- --run
 
 ---
 
-## 8. 라이선스 / 크레딧
+## 📝 8. 라이선스 / 크레딧
 
 - 더미 사진: nano_banana 시드 (자체 생성)
 - 폰트: Fraunces (Google Fonts), Pretendard (jsdelivr)
