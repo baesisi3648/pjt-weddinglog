@@ -54,6 +54,12 @@ WeddingLog 는 사용자가 **6개월 ~ 1년에 걸친 결혼 준비 과정**을
 
 기존 본식 앨범은 *예쁜 사진을 모아 책으로 만드는 흐름* 입니다. WeddingLog 는 책의 첫 장을 **하객들의 손글씨 축하 메시지 + QR 코드** 로 엽니다. 사진 한 장을 더 넣는 대신, 결혼식에 함께해 준 사람들의 흔적을 표제 다음에 두는 작은 결정입니다.
 
+### 미리보기 — 홈
+
+![Home](docs/screenshots/01_home.png)
+
+> *철수 ♥ 영희 (2026-03-14 결혼 예정) — `docker-compose up` 직후 즉시 보이는 첫 화면. D-day, 다가오는 일정, 최근 사진, CTA 가 한 눈에.*
+
 ---
 
 ## 2. 실행 방법
@@ -131,6 +137,10 @@ OPENAI_API_KEY=sk-...
 - AlbumEditor — 페이지 직접 편집 (사진 교체 / 순서 / 캡션 / 챕터 제목 / 페이지 추가·삭제)
 - 양면 펼침 책 미리보기 (`react-pageflip`)
 
+| 캘린더 — multi-day 이벤트 + 9 카테고리 | 타임라인 — 5 챕터 폴라로이드 |
+|:---:|:---:|
+| ![Calendar](docs/screenshots/02_calendar.png) | ![Timeline](docs/screenshots/03_timeline.png) |
+
 ### 주문 / 비즈니스 로직 (Lv2) ✅
 
 - 4단계 결제 플로우 (만족도 → 옵션 → 정보 → 확인)
@@ -140,6 +150,10 @@ OPENAI_API_KEY=sk-...
   - × 수량
 - 다음 우편번호 API 연동 (한국 표준 주소 입력)
 - `OrderStateMachine` — `pending → processing → completed`, `pending → cancelled`
+
+![Book Preview](docs/screenshots/04_book_preview.png)
+
+> *AlbumEditor 에서 "책으로 미리보기" 클릭 시 `react-pageflip` 양면 펼침 모션. 상단 토글로 1:1 (30×30cm) ↔ 3:2 (35×23cm) 즉시 전환.*
 
 ### 데이터 직렬화 / 익스포트 (Lv3) ✅
 
@@ -156,6 +170,10 @@ OPENAI_API_KEY=sk-...
 ```
 
 파트너사가 받아 `order.json` 만 보고 인쇄 페이지를 구성하고, `chapters/.../{photo_id}.{ext}` 로 사진을 매칭할 수 있는 구조입니다.
+
+![Orders](docs/screenshots/05_orders.png)
+
+> *시드 주문 3건 (pending / processing / cancelled). 각 카드에서 상태 전이 + "데이터 다운로드" (Lv3 ZIP) 직접 호출 가능.*
 
 ---
 
