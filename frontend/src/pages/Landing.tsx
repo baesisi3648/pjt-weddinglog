@@ -87,7 +87,7 @@ export default function Landing() {
               <span className="whitespace-nowrap">그대로 한 권이 됩니다.</span>
             </h1>
             <p className="mt-6 text-[18px] leading-[1.65] text-ink-muted max-w-[520px]">
-              적어둔 일정과 사진이, 그대로 한 권의 책으로 남습니다.
+              결혼식이 끝나기 전에, 1년의 준비 기록이 한 권의 책으로 도착합니다.
             </p>
             <div className="mt-10 flex items-center gap-6">
               <Link
@@ -115,7 +115,7 @@ export default function Landing() {
               01 · 함께 쓰는 캘린더
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
-              D-day 한 칸에<br />
+              둘만의 캘린더에<br />
               사진과 메모를 남깁니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
@@ -151,14 +151,14 @@ export default function Landing() {
               02 · 자동 챕터링
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
-              누른 적 없는데,<br />
-              이미 책처럼 묶입니다.
+              쌓아둔 사진이<br />
+              자동으로 5개 챕터로 묶입니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
               일상 데이트 → 본격 준비 → 웨딩촬영 → 본식 → 신혼여행.
               사진과 일정을 시간 흐름대로 자동 챕터로 묶고, 페이지
-              레이아웃까지 자동 추천해 드려요. 마음에 안 들면 한 번에 기본
-              레이아웃으로 되돌릴 수 있어요.
+              레이아웃까지 함께 추천합니다. 마음에 안 들면 한 번 더 추천받아
+              비교할 수 있습니다.
             </p>
           </div>
         </div>
@@ -169,17 +169,17 @@ export default function Landing() {
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="max-w-[480px]">
             <p className="font-label-caps text-[12px] tracking-[0.2em] text-coral uppercase mb-4">
-              03 · 양가 부모님께
+              03 · 신혼여행 직후
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
-              주문 한 번이면,<br />
-              가족에게 한 권씩.
+              신혼여행에서 돌아오는 길,<br />
+              앨범도 함께 도착합니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              하드커버 양장본으로 인쇄해 양가 부모님께.
-              두 사람이 함께 만든 시간을 그대로 손에 쥐어드립니다.
-              주문 데이터는 인쇄 파트너에게 한 번에 내보낼 수 있는 형식으로
-              자동 정리됩니다.
+              신혼여행에서 돌아와 마지막 사진까지 정리하면, 그 다음은 주문
+              한 번. 본식 앨범을 3~6개월 기다리는 대신, 양가 인사 자리에
+              앨범을 들고 갈 수 있는 속도로 받습니다. 본인용과 양가 부모님용을
+              한 번에 인쇄해 함께 전해드립니다.
             </p>
           </div>
           <div className="aspect-[4/5] overflow-hidden rounded-sm">
@@ -209,9 +209,9 @@ export default function Landing() {
               함께 펼쳐집니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              결혼식에서 받은 축하 메시지를 책 첫 장에. 책을 펼치면
-              그날의 축하 메시지들이 나타납니다. 우측 상단 QR을 스캔하면
-              메시지들을 확인할 수 있어요.
+              결혼식에서 받은 축하 메시지가 책의 첫 장을 엽니다. 책을 펼치면
+              그날의 메시지가 한 페이지에 펼쳐지고, 책 첫 장의 QR을 스캔하면
+              모든 메시지를 모바일에서 확인할 수 있습니다.
             </p>
           </div>
         </div>
