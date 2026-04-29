@@ -150,6 +150,10 @@ OPENAI_API_KEY=sk-...
 |:---:|:---:|
 | ![Calendar](docs/screenshots/02_calendar.png) | ![Timeline](docs/screenshots/03_timeline.png) |
 
+![Book Preview](docs/screenshots/04_book_preview.png)
+
+> *AlbumEditor 에서 "책으로 미리보기" 클릭 시 `react-pageflip` 양면 펼침 모션. 상단 토글로 1:1 (30×30cm) ↔ 3:2 (35×23cm) 즉시 전환.*
+
 ### 주문 / 비즈니스 로직 (Lv2) ✅
 
 - 4단계 결제 플로우 (만족도 → 옵션 → 정보 → 확인)
@@ -159,10 +163,6 @@ OPENAI_API_KEY=sk-...
   - × 수량
 - 다음 우편번호 API 연동 (한국 표준 주소 입력)
 - `OrderStateMachine` — `pending → processing → completed`, `pending → cancelled`
-
-![Book Preview](docs/screenshots/04_book_preview.png)
-
-> *AlbumEditor 에서 "책으로 미리보기" 클릭 시 `react-pageflip` 양면 펼침 모션. 상단 토글로 1:1 (30×30cm) ↔ 3:2 (35×23cm) 즉시 전환.*
 
 ### 데이터 직렬화 / 익스포트 (Lv3) ✅
 

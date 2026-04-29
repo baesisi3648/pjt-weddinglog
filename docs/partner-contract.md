@@ -112,29 +112,3 @@ WeddingLog 가 생성하는 `order.json` 과 **가상 스위트북 API**
 | `chapters_selected` 의 총 photo 0장 | `400 Bad Request`, `"no photos selected"` | 빈 앨범은 인쇄 불가. |
 | 디스크에 사진 파일 누락 | 해당 파일을 ZIP 에서 제외, 로그 경고 | 파트너가 `captions.json` 에는 있는데 asset path 를 찾지 못하면 에러 리포트. |
 | `album_layout` 미존재 | 서버에서 `chapters_selected + photo.category` 기반 폴백 레이아웃 생성 | 파트너는 차이를 알 수 없음 (항상 채워진 layout 수신). |
-
----
-
-## 면접 답변 포인트
-
-> **"Lv3 데이터 모델링의 핵심은 파트너가 ZIP 하나만 받으면 즉시 인쇄 큐에
-> 투입할 수 있는 셀프 완결 구조를 설계한 것.**
->
-> `order.json` 은 주문·스펙·수령인·layout 까지 **주문 1건의 상태 스냅샷**
-> 이다. `captions.json` 은 캡션을 사진 파일명 기준으로 분리해 **O(1) 룩업**
-> 과 **다국어/편집 교체** 를 쉽게 만든다. `chapters/` 디렉토리 구조는 JSON
-> 을 파싱하지 않더라도 파일시스템만 보고 챕터 순서를 읽을 수 있게 설계했다.
->
-> `schema_version` 필드로 API 진화(v1 → v2)에 대비하고, Path Traversal 방어
-> (Council B6) 를 통과한 경로만 ZIP 에 포함시켜 보안을 유지한다. 100MB 이하
-> 주문은 `BytesIO + ZIP_DEFLATED` 메모리 방식으로 처리하고, 이후 대형
-> 프리미엄 상품이 생기면 `/tmp` 스풀링으로 전환하도록 서비스 경계를
-> 잡아두었다."
-
----
-
-## 변경 이력
-
-| 버전 | 날짜 | 변경 | 근거 |
-|------|------|------|------|
-| 1.0 | 2026-04-23 | 최초 스키마 (Lv3 과제) | Phase 6 Lv3 완료 |
