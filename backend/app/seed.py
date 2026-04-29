@@ -21,6 +21,7 @@ import logging
 import shutil
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -716,26 +717,17 @@ def seed_initial_data(db: Session) -> None:
 
 
 def seed_sample_order(db: Session, couple: Couple) -> None:
-    """샘플 주문 1건 시딩 (심사자 시연용).
+    """샘플 주문 3건 시딩 (Lv2 비즈니스 로직 다양성 시연용).
 
     멱등성:
-        - 해당 커플의 주문이 이미 1건 이상 있으면 no-op.
+        - 각 주문은 고정 ID 로 식별. 이미 존재하면 해당 ID 만 건너뜀.
+        - 사용자가 직접 만든 주문은 영향받지 않음.
 
-    구성:
-        - 기존 시드 사진 중 is_selected=True 전체 사용 (Timeline 순서대로
-          5 챕터에 각각 해당 카테고리 사진 묶음).
-        - album_layout = None (프론트가 Step 1 진입 시 별도 compose 호출).
-        - status = pending, quantity = 3, format = SQUARE, cover = HARD.
+    구성 (모든 주문이 동일한 chapters_selected 사용 — 시드 사진 기반):
+        - ord_sample_001: pending,    SQUARE / HARD / qty 3 (양가 + 본인용, 결제 직후)
+        - ord_sample_002: processing, A4     / SOFT / qty 1 (제작 진행 중)
+        - ord_sample_003: cancelled,  SQUARE / SOFT / qty 1 (사용자가 취소)
     """
-    existing = db.query(Order).filter(Order.couple_id == couple.id).count()
-    if existing > 0:
-        logger.debug(
-            "Orders already seeded for couple=%s (count=%d) — skip",
-            couple.id,
-            existing,
-        )
-        return
-
     from app.services.timeline_service import CHAPTER_MAPPING
 
     cat_to_idx: dict[str, int] = {
@@ -777,28 +769,74 @@ def seed_sample_order(db: Session, couple: Couple) -> None:
         ch["photo_ids"] for ch in chapters_selected
     ):
         logger.debug(
-            "No selected photos for couple=%s — skip sample order",
+            "No selected photos for couple=%s — skip sample orders",
             couple.id,
         )
         return
 
-    order = Order(
-        id="ord_sample_001",
-        couple_id=couple.id,
-        format="SQUARE",
-        cover_type="HARD",
-        quantity=3,
-        chapters_selected=chapters_selected,
-        album_layout=None,
-        recipient_name="박영희 어머니",
-        recipient_phone="010-1234-5678",
-        recipient_address="서울시 강남구 테헤란로 123, 101동 202호",
-        status="pending",
-    )
-    db.add(order)
-    db.commit()
-    logger.info(
-        "Seeded sample order id=%s for couple=%s",
-        order.id,
-        couple.id,
-    )
+    # 시드할 3건 정의. 각 항목이 ord_id 로 멱등 — 이미 있으면 건너뜀.
+    sample_orders: list[dict[str, Any]] = [
+        {
+            "id": "ord_sample_001",
+            "format": "SQUARE",
+            "cover_type": "HARD",
+            "quantity": 3,
+            "recipient_name": "박영희 어머니",
+            "recipient_phone": "010-1234-5678",
+            "recipient_address": "서울시 강남구 테헤란로 123, 101동 202호",
+            "status": "pending",
+        },
+        {
+            "id": "ord_sample_002",
+            "format": "A4",
+            "cover_type": "SOFT",
+            "quantity": 1,
+            "recipient_name": "김철수 아버지",
+            "recipient_phone": "010-2222-3333",
+            "recipient_address": "부산시 해운대구 마린시티1로 33, 1203호",
+            "status": "processing",
+        },
+        {
+            "id": "ord_sample_003",
+            "format": "SQUARE",
+            "cover_type": "SOFT",
+            "quantity": 1,
+            "recipient_name": "김철수",
+            "recipient_phone": "010-9999-0000",
+            "recipient_address": "서울시 마포구 양화로 100, 501호",
+            "status": "cancelled",
+        },
+    ]
+
+    seeded_ids: list[str] = []
+    for spec in sample_orders:
+        if db.get(Order, spec["id"]) is not None:
+            continue
+        order = Order(
+            id=spec["id"],
+            couple_id=couple.id,
+            format=spec["format"],
+            cover_type=spec["cover_type"],
+            quantity=spec["quantity"],
+            chapters_selected=chapters_selected,
+            album_layout=None,
+            recipient_name=spec["recipient_name"],
+            recipient_phone=spec["recipient_phone"],
+            recipient_address=spec["recipient_address"],
+            status=spec["status"],
+        )
+        db.add(order)
+        seeded_ids.append(spec["id"])
+
+    if seeded_ids:
+        db.commit()
+        logger.info(
+            "Seeded sample orders %s for couple=%s",
+            seeded_ids,
+            couple.id,
+        )
+    else:
+        logger.debug(
+            "All sample orders already exist for couple=%s — skip",
+            couple.id,
+        )
