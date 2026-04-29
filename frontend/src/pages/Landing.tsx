@@ -171,7 +171,7 @@ export default function Landing() {
               03 · 신혼여행 직후
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
-              신혼여행에서 돌아오는 길,<br />
+              신혼여행을 마지막으로,<br />
               사진을 담으면 앨범도 함께 도착합니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
