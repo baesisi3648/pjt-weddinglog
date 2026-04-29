@@ -317,22 +317,10 @@ OpenAPI 자동 문서: `http://localhost:8000/docs` (포트는 `.env` 의 `API_P
 | AI 도구 | 활용 단계 | 활용 내용 |
 |---------|----------|----------|
 | **Claude Code (Opus 4.7)** | 기획 + 빌드 메인 | 9개 기획 문서 작성, 화면 명세, 태스크 분해, 백엔드/프론트 구현, 테스트, 디버깅 — 50 커밋의 메인 페어 프로그래머 |
-| **가상 패널 리뷰** (Claude 기반) | 기획 보강 | CTO / UX / Security 3 인 관점으로 기획서 검토 → `OrderStateMachine` 별도 분리, `photo_id` unguessable, magic number 검증 등 *실무 디테일* 보강 |
+| **가상 패널 리뷰** (Claude 기반) | 기획 + 코드 교차 감사 | **CTO / 디자이너 / 보안전문가 / 비즈니스** 4인 관점으로 기획서와 코드를 교차 감사. AI 가 *말과 다르게 코드를 쓴* 사례를 잡아 즉시 보완 — ① 보안: `slowapi` 가 FastAPI `APIRouter` 와 호환 안 됨 → 자체 미들웨어 (`backend/app/limiter.py`) 로 재작성. ② 디자인: 기획서 *4-색 토큰만 사용* 약속 vs 실제 코드 hex 25곳 → CSS 변수 단일 소스로 일괄 정리. ③ CTO: 가격표가 `schemas/order.py` + `services/export_service.py` 두 곳 중복 → `backend/app/constants/pricing.py` 단일 모듈로 통합. |
 | **Google Stitch MCP** | 디자인 단계 | 6개 화면 (Home / Calendar / EventDetail / Timeline / OrderCheckout / Orders) HTML/JSX 목업 생성 → React 18 포팅 입력 |
 | **OpenAI GPT-4o-mini** | 앱 내 런타임 | 체크리스트 자동 생성 / 사진 캡션 추천 / 앨범 레이아웃 자동 구성 (모두 폴백 짝지어둠) |
 | **nano_banana** | 더미 데이터 | 시드용 결혼 준비 사진 123장 생성 (한강 피크닉 / 발리 신혼여행 등 시나리오별) |
-
-### 정직한 회고 — 실수와 보완
-
-AI 가 잘못 답하거나 *말과 다르게 코드를 쓴* 사례가 있었지만, **가상 패널 리뷰** (CTO / UX / Security / 디자인 / 기술 / 비즈니스 6인 관점 코드 감사) 를 반복하면서 발견 즉시 보완해 나갔습니다.
-
-- **라이브러리 호환 문제 — `slowapi` → 자체 미들웨어** — AI 가 권장한 `slowapi` 가 FastAPI `APIRouter` 의 데코레이터와 호환되지 않아 6번 호출해도 rate limit 이 안 걸렸습니다. 보안 패널의 라이브 curl 검증으로 발견 후 약 3시간 디버깅 끝에 자체 in-memory 슬라이딩 윈도우 미들웨어 (`backend/app/limiter.py`) 로 재작성.
-
-- **기획-코드 불일치 — Tailwind 토큰 약속 vs hex 하드코드** — AI 가 기획서에서 *"4-색 팔레트 토큰만 사용"* 을 명시했지만 실제 컴포넌트 코드에서는 `#EF4444` / `#E8967C` 같은 hex 를 25군데+ 에 직접 박음. 디자인 패널 감사로 발견 → CSS 변수 단일 소스 (`frontend/src/styles/globals.css`) 로 일괄 토큰화.
-
-- **단일 진실의 원천 분산 — 가격표 두 곳 중복 정의** — AI 가 가격표 (`{SQUARE: 150000, A4: 180000}`) 를 `schemas/order.py` 와 `services/export_service.py` 두 곳에 따로 정의. 한쪽만 바꾸면 ZIP 익스포트 가격이 어긋날 위험을 백엔드 패널 감사로 발견 → `backend/app/constants/pricing.py` 단일 모듈로 통합 + 12개 단위 테스트로 회귀 방지.
-
-> 배운 점: AI 산출물은 *기획서 / 코드 / 설명* 어느 한 면만 봐서는 검증되지 않습니다. 다른 페르소나의 시점으로 **교차 감사** 하는 워크플로우가 가장 효과적이었습니다.
 
 ---
 
