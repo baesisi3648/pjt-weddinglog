@@ -160,7 +160,7 @@ describe('OrderCheckout', () => {
     renderOrderCheckout();
     await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // 만족 버튼으로 Step 2 진입
-    fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
+    fireEvent.click(screen.getByRole('button', { name: /주문하기/ }));
     await waitFor(() => {
       expect(screen.getByText(/170,000원/)).toBeInTheDocument();
     });
@@ -169,7 +169,7 @@ describe('OrderCheckout', () => {
   it('Step 2 가격 계산: SQUARE + HARD + 2권 = 340000', async () => {
     renderOrderCheckout();
     await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
+    fireEvent.click(screen.getByRole('button', { name: /주문하기/ }));
     await waitFor(() => expect(screen.getByText(/170,000원/)).toBeInTheDocument());
     // 수량 늘리기
     fireEvent.click(screen.getByRole('button', { name: '수량 늘리기' }));
@@ -182,7 +182,7 @@ describe('OrderCheckout', () => {
     renderOrderCheckout();
     await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // Step 2 진입
-    fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
+    fireEvent.click(screen.getByRole('button', { name: /주문하기/ }));
     await waitFor(() => expect(screen.getByRole('heading', { name: /옵션 선택/ })).toBeInTheDocument());
     // Step 3 진입 (다음으로)
     const nextBtns = screen.getAllByRole('button', { name: /다음으로/ });
@@ -212,7 +212,7 @@ describe('OrderCheckout', () => {
     renderOrderCheckout();
     await waitFor(() => expect(screen.getByText('자동 추천')).toBeInTheDocument());
     // Step 2
-    fireEvent.click(screen.getByRole('button', { name: /만족해요/ }));
+    fireEvent.click(screen.getByRole('button', { name: /주문하기/ }));
     await waitFor(() => expect(screen.getByRole('heading', { name: /옵션 선택/ })).toBeInTheDocument());
     // Step 3
     const nextBtns = screen.getAllByRole('button', { name: /다음으로/ });

@@ -523,11 +523,6 @@ export default function OrderCheckout() {
                       <span aria-hidden="true" className="text-on-surface-variant text-[18px] leading-none px-1">+</span>
                     </button>
                   </div>
-                  {quantity >= 2 ? (
-                    <p className="font-body-sm text-body-sm text-primary italic">양가 부모님께도 드리기 좋은 권수</p>
-                  ) : (
-                    <p className="font-body-sm text-body-sm text-outline italic">1권도 충분합니다</p>
-                  )}
                 </div>
               </div>
 
@@ -721,7 +716,7 @@ export default function OrderCheckout() {
                   className="px-8 py-3 rounded-md bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors font-body-sm text-body-sm shadow-sm flex items-center gap-2"
                   onClick={() => setStep(2)}
                 >
-                  만족해요
+                  주문하기
                   <span aria-hidden="true">→</span>
                 </button>
               )}
