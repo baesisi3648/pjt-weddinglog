@@ -46,20 +46,47 @@ WeddingLog 는 사용자가 **6개월 ~ 1년에 걸친 결혼 준비 과정**을
 
 ## ⚡ 2. 실행 방법
 
-### Quick Start
+### 사전 요구사항
+
+- Docker Desktop **4.0+** (Compose v2 포함)
+- 빈 포트 **3000 / 8000** (충돌 시 아래 「포트 충돌 시」 참고)
+
+### Quick Start — 복사·붙여넣기로 바로 실행
 
 ```bash
+# 1. 저장소 클론
+git clone https://github.com/baesisi3648/pjt-weddinglog.git
+cd pjt-weddinglog
+
+# 2. 환경변수 준비 (선택 — 기본값으로 동작)
+cp .env.example .env
+# OPENAI_API_KEY 가 있다면 .env 에 추가 (없어도 템플릿 폴백으로 전체 UX 확인 가능)
+
+# 3. 실행 — 백엔드 + 프론트엔드 한 번에 기동 (이미지 빌드 포함, 첫 실행 ~3분)
 docker-compose up
+
+# 4. 접속
+# 프론트엔드 — http://localhost:3000
+# 백엔드 OpenAPI 문서 — http://localhost:8000/docs
+# 백엔드 헬스체크 — http://localhost:8000/health
 ```
 
-위 명령 한 번이면 다음이 모두 자동으로 준비됩니다:
+`docker-compose up` 한 번이면 다음이 모두 자동으로 준비됩니다:
 
-- 백엔드 FastAPI (포트 **8000**)
-- 프론트엔드 React (포트 **3000**)
-- SQLite 자동 시딩 — 더미 커플 "철수 ♥ 영희" (wedding_date 2026-03-14) + 24개 일정 + 123장 사진 + 9개 축하 메시지 + 샘플 주문 1건
-- 헬스체크 통과 후 프론트엔드가 백엔드를 의존성으로 기동
+- 백엔드 FastAPI (포트 **8000**) + uvicorn
+- 프론트엔드 React + Vite build (포트 **3000**) — 정적 파일 `serve` 로 서빙
+- SQLite 자동 시딩 — 더미 커플 "철수 ♥ 영희" (wedding_date 2026-03-14) + 24개 일정 + 123장 사진 + 9개 축하 메시지 + 샘플 주문 3건 (pending / processing / cancelled)
+- 헬스체크 통과 후 프론트엔드가 백엔드를 의존성으로 기동 (`depends_on: condition: service_healthy`)
 
-브라우저에서 **http://localhost:3000** 접속.
+### 종료
+
+```bash
+# Ctrl+C 로 포어그라운드 종료 (-d 로 띄웠다면 아래)
+docker-compose down
+
+# 데이터까지 완전 초기화 (시드 다시 돌리고 싶을 때)
+docker-compose down --volumes
+```
 
 ### 포트 충돌 시
 
