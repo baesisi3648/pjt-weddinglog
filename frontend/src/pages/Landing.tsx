@@ -168,14 +168,15 @@ export default function Landing() {
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="max-w-[480px]">
             <p className="font-label-caps text-[12px] tracking-[0.2em] text-coral uppercase mb-4">
-              03 · 신혼여행 직후
+              03 · 결혼식 이후
             </p>
             <h2 className="font-display-md text-[36px] md:text-[44px] leading-[1.15] text-ink">
               신혼여행을 마지막으로,<br />
-              사진을 담으면 앨범도 함께 도착합니다.
+              사진을 담으면<br /> 
+              앨범도 함께 도착합니다.
             </h2>
             <p className="mt-6 text-[16px] leading-[1.75] text-ink-muted">
-              신혼여행 사진까지 정리하면, 그 다음은 주문하기 클릭 한 번으로
+              신혼여행 사진까지 정리하면, 주문하기 클릭 한 번으로
               앨범이 제작됩니다. 부부용과 양가 부모님용을 한 번에 인쇄해 함께
               전해드립니다.
             </p>
