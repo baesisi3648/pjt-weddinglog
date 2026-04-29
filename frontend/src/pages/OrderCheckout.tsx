@@ -15,6 +15,7 @@ import type { OrderFormat, OrderCoverType } from '../types/order';
 import type { Photo } from '../types/photo';
 import { photoUrl } from '../utils/photo';
 import { applyOverrideByCanonicalTitle } from '../utils/chapterTitle';
+import { safeStorage } from '../utils/safeStorage';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_KEY = 'weddinglog_selected_photos';
@@ -99,20 +100,12 @@ export default function OrderCheckout() {
   const [bookPreviewOpen, setBookPreviewOpen] = useState(false);
 
   // ── 축하 메시지 페이지의 메인 사진 (편집됐다면 Photo.id, 아니면 null=기본 사진) ──
-  const [blessingMainPhotoId, setBlessingMainPhotoId] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(LS_BLESSING_MAIN);
-    } catch {
-      return null;
-    }
-  });
+  const [blessingMainPhotoId, setBlessingMainPhotoId] = useState<string | null>(() =>
+    safeStorage.get(LS_BLESSING_MAIN),
+  );
   function changeBlessingMainPhoto(photoId: string) {
     setBlessingMainPhotoId(photoId);
-    try {
-      localStorage.setItem(LS_BLESSING_MAIN, photoId);
-    } catch {
-      /* private mode 등 무시 */
-    }
+    safeStorage.set(LS_BLESSING_MAIN, photoId);
   }
   // photoMap 에 해당 id 가 있으면 그 file_url 사용, 아니면 기본 BlessingsPage 내부 default.
   const blessingMainPhotoUrl =
@@ -122,21 +115,12 @@ export default function OrderCheckout() {
 
   // LocalStorage에서 사진 ID 로드
   useEffect(() => {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) {
+    const ids = safeStorage.getJson<string[]>(LS_KEY, []);
+    if (!ids.length) {
       navigate('/timeline');
       return;
     }
-    try {
-      const ids = JSON.parse(raw) as string[];
-      if (!ids.length) {
-        navigate('/timeline');
-        return;
-      }
-      setSelectedPhotoIds(ids);
-    } catch {
-      navigate('/timeline');
-    }
+    setSelectedPhotoIds(ids);
   }, [navigate]);
 
   // selectedPhotoIds 가 채워지면 timeline 에서 사진 메타 (file_url) 수집.

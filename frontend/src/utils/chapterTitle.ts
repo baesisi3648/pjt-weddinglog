@@ -3,6 +3,8 @@
 // 사용자가 Timeline 에서 바꾼 제목을 localStorage 에 보관하고,
 // Timeline / 앨범 미리보기 모두에서 동일하게 표시한다.
 
+import { safeStorage } from './safeStorage';
+
 const LS_CHAPTER_TITLES = 'weddinglog_chapter_titles';
 
 // 백엔드 CHAPTER_MAPPING 의 canonical title → key 매핑.
@@ -16,20 +18,11 @@ const CANONICAL_TITLE_TO_KEY: Record<string, string> = {
 };
 
 export function loadChapterTitleOverrides(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem(LS_CHAPTER_TITLES);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
+  return safeStorage.getJson<Record<string, string>>(LS_CHAPTER_TITLES, {});
 }
 
 export function saveChapterTitleOverrides(overrides: Record<string, string>): void {
-  try {
-    localStorage.setItem(LS_CHAPTER_TITLES, JSON.stringify(overrides));
-  } catch {
-    /* quota or unavailable — silently ignore */
-  }
+  safeStorage.setJson(LS_CHAPTER_TITLES, overrides);
 }
 
 /** 단일 오버라이드 갱신 — 캡슐화된 헬퍼. */

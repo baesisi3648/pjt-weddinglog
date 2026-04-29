@@ -10,6 +10,7 @@ import Toast from '../components/Toast';
 import PhotoCurationModal from '../components/PhotoCurationModal';
 import type { TimelineResponse, Chapter } from '../types';
 import { loadChapterTitleOverrides, setChapterTitleOverride } from '../utils/chapterTitle';
+import { safeStorage } from '../utils/safeStorage';
 
 const COUPLE_ID = 'cpl_sample_001';
 const LS_SELECTED_KEY = 'weddinglog_selected_photos';
@@ -210,7 +211,7 @@ export default function Timeline() {
               setToast('사진을 1장 이상 선택해주세요.');
               return;
             }
-            localStorage.setItem(LS_SELECTED_KEY, JSON.stringify(selectedIds));
+            safeStorage.setJson(LS_SELECTED_KEY, selectedIds);
             setCurationOpen(false);
             navigate('/order-checkout');
           }}
