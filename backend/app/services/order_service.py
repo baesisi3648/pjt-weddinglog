@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.order import Order
+from app.schemas.enums import OrderStatus
 from app.schemas.order import OrderCreate
 from app.services.order_state_machine import OrderStateMachine
 
@@ -89,7 +90,7 @@ def create(db: Session, couple_id: str, order_in: OrderCreate) -> Order:
         recipient_name=order_in.recipient_name,
         recipient_phone=order_in.recipient_phone,
         recipient_address=order_in.recipient_address,
-        status="pending",
+        status=OrderStatus.pending.value,
     )
     db.add(order)
     db.commit()

@@ -39,8 +39,18 @@ export const COVER_TYPES = Object.freeze({
   SOFT: 'SOFT',
 } as const);
 
+// 백엔드 schemas/enums.py 의 OrderStatus 와 1:1 동기.
+// (이전엔 cancelled 가 누락되어 있었음 — Orders 페이지에서 literal 로 쓰였음.)
 export const ORDER_STATUSES = Object.freeze({
   pending: 'pending',
   processing: 'processing',
   completed: 'completed',
+  cancelled: 'cancelled',
 } as const);
+
+export const ORDER_STATUS_LABELS: Record<keyof typeof ORDER_STATUSES, string> = Object.freeze({
+  pending: '대기 중',
+  processing: '제작 중',
+  completed: '완료',
+  cancelled: '취소',
+});

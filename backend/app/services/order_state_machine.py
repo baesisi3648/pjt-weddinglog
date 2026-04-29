@@ -12,8 +12,11 @@ Council M6:
 설계 선택:
     - 라우터가 얇아지도록 별도 클래스로 분리.
     - 클래스 메서드만 사용 (상태 없음) — 테스트 용이.
+    - 상태 키는 OrderStatus enum value 와 동기 (오타 / 신규 상태 누락 방지).
 """
 from __future__ import annotations
+
+from app.schemas.enums import OrderStatus
 
 
 class OrderStateMachine:
@@ -24,10 +27,10 @@ class OrderStateMachine:
     # · pending → cancelled (사용자 취소 — 제작 시작 전에만 가능)
     # · processing/completed → cancelled (불가)
     ALLOWED_TRANSITIONS: dict[str, set[str]] = {
-        "pending": {"processing", "cancelled"},
-        "processing": {"completed"},
-        "completed": set(),
-        "cancelled": set(),
+        OrderStatus.pending.value: {OrderStatus.processing.value, OrderStatus.cancelled.value},
+        OrderStatus.processing.value: {OrderStatus.completed.value},
+        OrderStatus.completed.value: set(),
+        OrderStatus.cancelled.value: set(),
     }
 
     @classmethod

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { listOrders, updateOrderStatus, getExportUrl } from '../services/order_api';
 import Toast from '../components/Toast';
 import type { Order, OrderStatus } from '../types/order';
+import { ORDER_STATUSES, ORDER_STATUS_LABELS } from '../constants/enums';
 
 const COUPLE_ID = 'cpl_sample_001';
 
@@ -14,10 +15,10 @@ type FilterTab = 'all' | OrderStatus;
 
 const TABS: { id: FilterTab; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'pending', label: '대기 중' },
-  { id: 'processing', label: '제작 중' },
-  { id: 'completed', label: '완료' },
-  { id: 'cancelled', label: '취소' },
+  { id: ORDER_STATUSES.pending, label: ORDER_STATUS_LABELS.pending },
+  { id: ORDER_STATUSES.processing, label: ORDER_STATUS_LABELS.processing },
+  { id: ORDER_STATUSES.completed, label: ORDER_STATUS_LABELS.completed },
+  { id: ORDER_STATUSES.cancelled, label: ORDER_STATUS_LABELS.cancelled },
 ];
 
 const STATUS_STYLES: Record<OrderStatus, { dot: string; bg: string; border: string; text: string; label: string }> = {
@@ -232,7 +233,7 @@ export default function Orders() {
 
                     {/* 상태 전이 버튼 */}
                     <div className="flex items-center gap-3">
-                      {order.status === 'pending' && (
+                      {order.status === ORDER_STATUSES.pending && (
                         <>
                           {/* 사용자 취소 — pending 일 때만 가능 (제작 시작 후엔 불가) */}
                           <button
@@ -240,7 +241,7 @@ export default function Orders() {
                             disabled={isPatching}
                             onClick={() => {
                               if (window.confirm('이 주문을 취소할까요? 취소 후엔 되돌릴 수 없어요.')) {
-                                handleStatusTransition(order.id, 'cancelled');
+                                handleStatusTransition(order.id, ORDER_STATUSES.cancelled);
                               }
                             }}
                           >
@@ -249,22 +250,22 @@ export default function Orders() {
                           <button
                             className="font-body-sm text-body-sm border border-primary-container text-on-surface px-4 py-2 rounded hover:bg-primary-container/10 transition-colors disabled:opacity-50"
                             disabled={isPatching}
-                            onClick={() => handleStatusTransition(order.id, 'processing')}
+                            onClick={() => handleStatusTransition(order.id, ORDER_STATUSES.processing)}
                           >
                             {isPatching ? '처리 중...' : '제작 시작'}
                           </button>
                         </>
                       )}
-                      {order.status === 'processing' && (
+                      {order.status === ORDER_STATUSES.processing && (
                         <button
                           className="font-body-sm text-body-sm border border-primary text-primary px-4 py-2 rounded hover:bg-primary-container/10 transition-colors disabled:opacity-50"
                           disabled={isPatching}
-                          onClick={() => handleStatusTransition(order.id, 'completed')}
+                          onClick={() => handleStatusTransition(order.id, ORDER_STATUSES.completed)}
                         >
                           {isPatching ? '처리 중...' : '완료로 변경'}
                         </button>
                       )}
-                      {order.status === 'completed' && (
+                      {order.status === ORDER_STATUSES.completed && (
                         <button
                           className="font-body-sm text-body-sm border border-outline-variant text-outline px-4 py-2 rounded cursor-not-allowed bg-surface-container-low"
                           disabled
@@ -272,7 +273,7 @@ export default function Orders() {
                           완료
                         </button>
                       )}
-                      {order.status === 'cancelled' && (
+                      {order.status === ORDER_STATUSES.cancelled && (
                         <span className="font-body-sm text-body-sm text-ink-muted px-4 py-2 italic">
                           취소된 주문
                         </span>
