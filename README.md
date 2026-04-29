@@ -2,10 +2,6 @@
 
 > 결혼 준비 과정의 일정·사진·축하 메시지를 한 권의 책으로 묶어주는 서비스.
 
-[![Tests](https://img.shields.io/badge/tests-280%20BE%20%2F%20218%20FE-green)]() [![Stack](https://img.shields.io/badge/stack-FastAPI%20%2B%20React%2018-blue)]() [![Docker](https://img.shields.io/badge/run-docker--compose%20up-success)]()
-
-> **개발자** [@baesisi3648](https://github.com/baesisi3648) · **기간** 2026-04-23 ~ 2026-04-29 (7일) · **커밋** 73+ · **메인 도구** Claude Code (Opus 4.7) + Google Stitch MCP
-
 ---
 
 ## 📖 1. 서비스 소개
