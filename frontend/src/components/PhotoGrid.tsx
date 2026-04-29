@@ -73,8 +73,7 @@ export default function PhotoGrid({ photos = [], event, onDelete, onCaptionChang
                 </button>
                 <div className="flex items-center gap-1.5 font-label-caps text-[10px] text-on-surface-variant">
                   <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: isAI ? '#e89f8e' : '#d7c2bd' }}
+                    className={`w-1.5 h-1.5 rounded-full ${isAI ? 'bg-coral' : 'bg-line'}`}
                   />
                   {isAI ? '자동 추천' : '기본 템플릿'}
                 </div>

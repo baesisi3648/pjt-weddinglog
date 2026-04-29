@@ -2,11 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────
+   디자인 토큰 단일 소스
+   tailwind.config.js 의 theme.colors 와 1:1 동기.
+   인라인 style={{ ... }} 으로 토큰을 참조해야 할 때 var(--wl-*) 사용.
+   ───────────────────────────────────────────────────────────────── */
+:root {
+  /* 4-색 원칙 */
+  --wl-bg: #FFFCF7;
+  --wl-bg-soft: #F8F1E5;
+  --wl-ink: #1A1614;
+  --wl-ink-muted: #6B6058;
+  --wl-line: #E8DFD3;
+  --wl-coral: #C46A53;
+  --wl-coral-soft: #F2D9D0;
+
+  /* 의미적 색 — 폼 검증, 알림 */
+  --wl-error: #BA1A1A;
+  --wl-error-container: #FFDAD6;
+  --wl-warn: #B45309;
+
+  /* 레거시 alias — 일부 컴포넌트가 inline 으로 참조함.
+     기존 fallback 값과 동일하게 유지 (시각 회귀 0). 신규 코드는 위 4-색을 우선. */
+  --wl-ink-2: #5C5149;          /* 본문 보조 (label) */
+  --wl-ink-3: #8A7D74;          /* placeholder 중간 */
+  --wl-ink-4: #BFB5AC;          /* placeholder 약 / disabled */
+  --wl-line-2: #F4EDE2;         /* 약한 구분선 */
+  --wl-surface: #FDFAF5;        /* 표면 (카드 배경) */
+}
+
 @layer base {
   html,
   body {
-    background-color: #fff8f1;
-    color: #1f1b12;
+    background-color: var(--wl-bg);
+    color: var(--wl-ink);
   }
   body {
     font-family: 'Pretendard', sans-serif;

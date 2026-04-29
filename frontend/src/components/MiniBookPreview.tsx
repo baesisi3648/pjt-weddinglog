@@ -13,7 +13,12 @@ interface Props {
 }
 
 // 영상 원칙 — 챕터를 색으로 구분하지 않고 모노톤 + 텍스트로.
-const CHAPTER_BAND = { bg: '#F8F1E5', text: '#1A1614', accent: '#C46A53' } as const;
+// (토큰: tailwind.config.js bg-soft / ink / coral 와 1:1 동기)
+const CHAPTER_BAND = {
+  bg: 'var(--wl-bg-soft)',
+  text: 'var(--wl-ink)',
+  accent: 'var(--wl-coral)',
+} as const;
 
 function getPhoto(photos: Photo[], id: string): Photo | undefined {
   return photos.find((p) => p.id === id);

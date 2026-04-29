@@ -157,7 +157,7 @@ export default function CaptionSelector({ photo, event, onApply, onClose }: Capt
       </button>
 
       {error && (
-        <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 8 }}>{error}</p>
+        <p style={{ color: 'var(--wl-error)', fontSize: 12, marginBottom: 8 }}>{error}</p>
       )}
 
       {/* AI 결과 */}

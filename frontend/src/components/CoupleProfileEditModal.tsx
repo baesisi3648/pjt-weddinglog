@@ -138,7 +138,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
         >
           <h2
             id="couple-edit-modal-title"
-            style={{ fontSize: '18px', fontWeight: 700, color: '#1F2937' }}
+            style={{ fontSize: '18px', fontWeight: 700, color: 'var(--wl-ink)' }}
           >
             프로필 편집
           </h2>
@@ -150,7 +150,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               border: 'none',
               cursor: 'pointer',
               padding: '4px',
-              color: '#6B7280',
+              color: 'var(--wl-ink-muted)',
               lineHeight: 1,
             }}
           >
@@ -173,10 +173,10 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               style={{
                 marginBottom: '16px',
                 padding: '10px 14px',
-                background: '#FEF2F2',
+                background: 'var(--wl-error-container)',
                 borderRadius: '8px',
                 fontSize: '13px',
-                color: '#EF4444',
+                color: 'var(--wl-error)',
               }}
             >
               {apiError}
@@ -187,9 +187,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
           <div style={{ marginBottom: '14px' }}>
             <label
               htmlFor="groom-name"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--wl-ink)', marginBottom: '6px' }}
             >
-              신랑 이름 <span style={{ color: '#EF4444' }}>*</span>
+              신랑 이름 <span style={{ color: 'var(--wl-error)' }}>*</span>
             </label>
             <input
               id="groom-name"
@@ -203,9 +203,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '8px',
-                border: `1px solid ${errors.groom_name ? '#EF4444' : '#D1D5DB'}`,
+                border: `1px solid ${errors.groom_name ? 'var(--wl-error)' : 'var(--wl-line)'}`,
                 fontSize: '14px',
-                color: '#1F2937',
+                color: 'var(--wl-ink)',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -214,7 +214,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               <span
                 id="groom-name-error"
                 role="alert"
-                style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px', display: 'block' }}
+                style={{ fontSize: '12px', color: 'var(--wl-error)', marginTop: '4px', display: 'block' }}
               >
                 {errors.groom_name}
               </span>
@@ -225,9 +225,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
           <div style={{ marginBottom: '14px' }}>
             <label
               htmlFor="bride-name"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--wl-ink)', marginBottom: '6px' }}
             >
-              신부 이름 <span style={{ color: '#EF4444' }}>*</span>
+              신부 이름 <span style={{ color: 'var(--wl-error)' }}>*</span>
             </label>
             <input
               id="bride-name"
@@ -241,9 +241,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '8px',
-                border: `1px solid ${errors.bride_name ? '#EF4444' : '#D1D5DB'}`,
+                border: `1px solid ${errors.bride_name ? 'var(--wl-error)' : 'var(--wl-line)'}`,
                 fontSize: '14px',
-                color: '#1F2937',
+                color: 'var(--wl-ink)',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -252,7 +252,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               <span
                 id="bride-name-error"
                 role="alert"
-                style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px', display: 'block' }}
+                style={{ fontSize: '12px', color: 'var(--wl-error)', marginTop: '4px', display: 'block' }}
               >
                 {errors.bride_name}
               </span>
@@ -263,9 +263,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
           <div style={{ marginBottom: '14px' }}>
             <label
               htmlFor="wedding-date"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--wl-ink)', marginBottom: '6px' }}
             >
-              결혼 예정일 <span style={{ color: '#EF4444' }}>*</span>
+              결혼 예정일 <span style={{ color: 'var(--wl-error)' }}>*</span>
             </label>
             <input
               id="wedding-date"
@@ -278,9 +278,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '8px',
-                border: `1px solid ${errors.wedding_date ? '#EF4444' : '#D1D5DB'}`,
+                border: `1px solid ${errors.wedding_date ? 'var(--wl-error)' : 'var(--wl-line)'}`,
                 fontSize: '14px',
-                color: '#1F2937',
+                color: 'var(--wl-ink)',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -289,7 +289,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               <span
                 id="wedding-date-error"
                 role="alert"
-                style={{ fontSize: '12px', color: '#EF4444', marginTop: '4px', display: 'block' }}
+                style={{ fontSize: '12px', color: 'var(--wl-error)', marginTop: '4px', display: 'block' }}
               >
                 {errors.wedding_date}
               </span>
@@ -300,9 +300,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
           <div style={{ marginBottom: '20px' }}>
             <label
               htmlFor="tagline"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--wl-ink)', marginBottom: '6px' }}
             >
-              한 줄 소개 <span style={{ color: '#9CA3AF', fontWeight: 400 }}>(선택)</span>
+              한 줄 소개 <span style={{ color: 'var(--wl-ink-4)', fontWeight: 400 }}>(선택)</span>
             </label>
             <input
               id="tagline"
@@ -317,9 +317,9 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '8px',
-                border: `1px solid ${errors.tagline ? '#EF4444' : '#D1D5DB'}`,
+                border: `1px solid ${errors.tagline ? 'var(--wl-error)' : 'var(--wl-line)'}`,
                 fontSize: '14px',
-                color: '#1F2937',
+                color: 'var(--wl-ink)',
                 outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -327,7 +327,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
             <div
               style={{
                 fontSize: '11px',
-                color: form.tagline.length > 90 ? '#F59E0B' : '#9CA3AF',
+                color: form.tagline.length > 90 ? 'var(--wl-warn)' : 'var(--wl-ink-4)',
                 marginTop: '4px',
                 textAlign: 'right',
               }}
@@ -338,7 +338,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
               <span
                 id="tagline-error"
                 role="alert"
-                style={{ fontSize: '12px', color: '#EF4444', display: 'block' }}
+                style={{ fontSize: '12px', color: 'var(--wl-error)', display: 'block' }}
               >
                 {errors.tagline}
               </span>
@@ -356,8 +356,8 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 padding: '11px',
                 borderRadius: '10px',
                 border: 'none',
-                background: '#E5E7EB',
-                color: '#374151',
+                background: 'var(--wl-line)',
+                color: 'var(--wl-ink)',
                 fontWeight: 600,
                 fontSize: '14px',
                 cursor: saving ? 'not-allowed' : 'pointer',
@@ -373,7 +373,7 @@ export default function CoupleProfileEditModal({ couple, isOpen, onClose, onSave
                 padding: '11px',
                 borderRadius: '10px',
                 border: 'none',
-                background: saving ? '#E8967C99' : '#E8967C',
+                background: saving ? 'rgba(196, 106, 83, 0.6)' : 'var(--wl-coral)',
                 color: '#fff',
                 fontWeight: 600,
                 fontSize: '14px',

@@ -149,7 +149,7 @@ export default function EventForm({
               htmlFor="event-title"
               style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wl-ink-2, #5C5149)', marginBottom: 6 }}
             >
-              제목 <span style={{ color: '#E8967C' }}>*</span>
+              제목 <span style={{ color: 'var(--wl-coral)' }}>*</span>
             </label>
             <input
               id="event-title"
@@ -163,13 +163,13 @@ export default function EventForm({
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: 14,
-                border: `1px solid ${errors.title ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                border: `1px solid ${errors.title ? 'var(--wl-error)' : 'var(--wl-line, #EDE4D8)'}`,
                 borderRadius: 8, background: 'white',
                 color: 'var(--wl-ink, #2B2420)', outline: 'none',
               }}
             />
             {errors.title && (
-              <span id="title-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+              <span id="title-error" role="alert" style={{ fontSize: 12, color: 'var(--wl-error)', marginTop: 4, display: 'block' }}>
                 {errors.title}
               </span>
             )}
@@ -181,7 +181,7 @@ export default function EventForm({
               htmlFor="event-date"
               style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wl-ink-2, #5C5149)', marginBottom: 6 }}
             >
-              시작 날짜 <span style={{ color: '#E8967C' }}>*</span>
+              시작 날짜 <span style={{ color: 'var(--wl-coral)' }}>*</span>
             </label>
             <input
               id="event-date"
@@ -193,13 +193,13 @@ export default function EventForm({
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: 14,
-                border: `1px solid ${errors.date ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                border: `1px solid ${errors.date ? 'var(--wl-error)' : 'var(--wl-line, #EDE4D8)'}`,
                 borderRadius: 8, background: 'white',
                 color: 'var(--wl-ink, #2B2420)', outline: 'none',
               }}
             />
             {errors.date && (
-              <span id="date-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+              <span id="date-error" role="alert" style={{ fontSize: 12, color: 'var(--wl-error)', marginTop: 4, display: 'block' }}>
                 {errors.date}
               </span>
             )}
@@ -224,13 +224,13 @@ export default function EventForm({
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: 14,
-                border: `1px solid ${errors.end_date ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                border: `1px solid ${errors.end_date ? 'var(--wl-error)' : 'var(--wl-line, #EDE4D8)'}`,
                 borderRadius: 8, background: 'white',
                 color: 'var(--wl-ink, #2B2420)', outline: 'none',
               }}
             />
             {errors.end_date && (
-              <span id="end-date-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+              <span id="end-date-error" role="alert" style={{ fontSize: 12, color: 'var(--wl-error)', marginTop: 4, display: 'block' }}>
                 {errors.end_date}
               </span>
             )}
@@ -242,7 +242,7 @@ export default function EventForm({
               htmlFor="event-category"
               style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--wl-ink-2, #5C5149)', marginBottom: 6 }}
             >
-              카테고리 <span style={{ color: '#E8967C' }}>*</span>
+              카테고리 <span style={{ color: 'var(--wl-coral)' }}>*</span>
             </label>
             <select
               id="event-category"
@@ -253,7 +253,7 @@ export default function EventForm({
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: 14,
-                border: `1px solid ${errors.category ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                border: `1px solid ${errors.category ? 'var(--wl-error)' : 'var(--wl-line, #EDE4D8)'}`,
                 borderRadius: 8, background: 'white',
                 color: category ? 'var(--wl-ink, #2B2420)' : 'var(--wl-ink-4, #BFB5AC)',
                 outline: 'none', appearance: 'none',
@@ -271,7 +271,7 @@ export default function EventForm({
               ))}
             </select>
             {errors.category && (
-              <span id="category-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+              <span id="category-error" role="alert" style={{ fontSize: 12, color: 'var(--wl-error)', marginTop: 4, display: 'block' }}>
                 {errors.category}
               </span>
             )}
@@ -296,14 +296,14 @@ export default function EventForm({
               style={{
                 width: '100%', boxSizing: 'border-box',
                 padding: '10px 12px', fontSize: 14,
-                border: `1px solid ${errors.memo ? '#EF4444' : 'var(--wl-line, #EDE4D8)'}`,
+                border: `1px solid ${errors.memo ? 'var(--wl-error)' : 'var(--wl-line, #EDE4D8)'}`,
                 borderRadius: 8, background: 'white',
                 color: 'var(--wl-ink, #2B2420)', outline: 'none',
                 resize: 'vertical', minHeight: 72,
               }}
             />
             {errors.memo && (
-              <span id="memo-error" role="alert" style={{ fontSize: 12, color: '#EF4444', marginTop: 4, display: 'block' }}>
+              <span id="memo-error" role="alert" style={{ fontSize: 12, color: 'var(--wl-error)', marginTop: 4, display: 'block' }}>
                 {errors.memo}
               </span>
             )}
@@ -329,7 +329,7 @@ export default function EventForm({
               style={{
                 flex: 2, padding: '12px', fontSize: 15, fontWeight: 600,
                 border: 'none', borderRadius: 12,
-                background: submitting ? '#BFB5AC' : '#E8967C',
+                background: submitting ? 'var(--wl-ink-muted)' : 'var(--wl-coral)',
                 color: 'white', cursor: submitting ? 'not-allowed' : 'pointer',
               }}
             >

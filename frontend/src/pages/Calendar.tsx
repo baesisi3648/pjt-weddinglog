@@ -63,16 +63,17 @@ function sameDay(a: Date, b: Date): boolean {
 
 // Multi-day bar — coral 한 가지 + 명도 단계 (영상 "2~3색 원칙")
 // 카테고리는 색이 아닌 텍스트 라벨로 구분한다.
+// (모든 토큰은 tailwind.config.js theme.colors 와 1:1 동기.)
 const CATEGORY_BAR_CLASS: Record<Category, string> = {
-  WEDDING_PHOTO: 'bg-[#C46A53] text-white',
-  HONEYMOON: 'bg-[#C46A53] text-white',
-  CEREMONY: 'bg-[#1A1614] text-white',
-  VENUE: 'bg-[#F2D9D0] text-[#5A2418]',
-  STUDIO_DRESS_MAKEUP: 'bg-[#F2D9D0] text-[#5A2418]',
-  GIFT: 'bg-[#F2D9D0] text-[#5A2418]',
-  INVITATION: 'bg-[#F2D9D0] text-[#5A2418]',
-  REHEARSAL: 'bg-[#F2D9D0] text-[#5A2418]',
-  ETC: 'bg-[#ECE2CF] text-[#4A4138]',
+  WEDDING_PHOTO: 'bg-coral text-white',
+  HONEYMOON: 'bg-coral text-white',
+  CEREMONY: 'bg-ink text-white',
+  VENUE: 'bg-coral-soft text-on-primary-container',
+  STUDIO_DRESS_MAKEUP: 'bg-coral-soft text-on-primary-container',
+  GIFT: 'bg-coral-soft text-on-primary-container',
+  INVITATION: 'bg-coral-soft text-on-primary-container',
+  REHEARSAL: 'bg-coral-soft text-on-primary-container',
+  ETC: 'bg-surface-container-highest text-on-secondary-container',
 } as const;
 
 const MONTH_NAMES = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
