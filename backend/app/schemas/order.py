@@ -30,20 +30,8 @@ from pydantic import (
     field_validator,
 )
 
+from app.constants.pricing import base_price_for, cover_surcharge_for
 from app.schemas.enums import CoverType, OrderFormat, OrderStatus
-
-# -----------------------------------------------------------------------------
-# 가격표 (B2 — resources.yaml.derived 계약과 1:1 동기)
-# -----------------------------------------------------------------------------
-_BASE_PRICES: dict[str, int] = {
-    OrderFormat.SQUARE.value: 150000,
-    OrderFormat.A4.value: 180000,
-}
-
-_COVER_SURCHARGES: dict[str, int] = {
-    CoverType.HARD.value: 20000,
-    CoverType.SOFT.value: 0,
-}
 
 # 전화번호 검증 정규식 — 하이픈 없거나 있어도 OK. 저장 시 자동 정규화.
 # 허용: "01012345678", "010-1234-5678", "010 1234 5678"
@@ -161,7 +149,7 @@ class OrderResponse(OrderBase):
     def base_price(self) -> int:
         """format 에 따른 기본가 (SQUARE=150000, A4=180000)."""
         fmt = self.format.value if hasattr(self.format, "value") else self.format
-        return _BASE_PRICES.get(str(fmt), 0)
+        return base_price_for(str(fmt))
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -172,7 +160,7 @@ class OrderResponse(OrderBase):
             if hasattr(self.cover_type, "value")
             else self.cover_type
         )
-        return _COVER_SURCHARGES.get(str(cov), 0)
+        return cover_surcharge_for(str(cov))
 
     @computed_field  # type: ignore[prop-decorator]
     @property

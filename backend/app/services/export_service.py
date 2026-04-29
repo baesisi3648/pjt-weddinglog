@@ -47,6 +47,11 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.couple import Couple
 from app.models.order import Order
+from app.constants.pricing import (
+    base_price_for,
+    calc_total_price,
+    cover_surcharge_for,
+)
 from app.models.photo import Photo
 from app.services import order_service
 from app.services.timeline_service import CHAPTER_MAPPING
@@ -56,10 +61,6 @@ logger = logging.getLogger(__name__)
 
 # 파트너 계약 스키마 버전 (docs/partner-contract.md 참조).
 EXPORT_SCHEMA_VERSION = "1.0"
-
-# format 별 base_price / cover_surcharge 는 schemas/order.py 와 동일 규칙.
-_BASE_PRICES: dict[str, int] = {"SQUARE": 150000, "A4": 180000}
-_COVER_SURCHARGES: dict[str, int] = {"HARD": 20000, "SOFT": 0}
 
 # key → (index, title) (chapter 디렉토리 번호 결정용).
 _CHAPTER_INDEX_BY_KEY: dict[str, tuple[int, str]] = {
@@ -349,9 +350,9 @@ class ExportService:
         """파트너 계약(docs/partner-contract.md)과 1:1 매핑되는 order.json."""
         fmt = order.format
         cov = order.cover_type
-        base_price = _BASE_PRICES.get(fmt, 0)
-        cover_surcharge = _COVER_SURCHARGES.get(cov, 0)
-        total_price = (base_price + cover_surcharge) * order.quantity
+        base_price = base_price_for(fmt)
+        cover_surcharge = cover_surcharge_for(cov)
+        total_price = calc_total_price(fmt, cov, order.quantity)
 
         # album_layout 재직렬화 — chapters[*].pages[*].photo_refs 포함.
         chapters_out: list[dict[str, Any]] = []
